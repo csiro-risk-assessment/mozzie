@@ -1,4 +1,5 @@
 #   #cython: boundscheck=False, wraparound=False, nonecheck=False
+import time
 import array
 cimport cpython.array as array
 
@@ -237,3 +238,21 @@ cdef class Grid:
     cpdef array.array getActiveIndex(self):
         """Returns the active index of the the global cell array"""
         return self.active_index
+
+    cpdef outputActiveCSV(self, filename):
+        "Outputs the active information to a file"""
+        f = open(filename, 'w')
+        f.write("#Active cell information written at: " + time.asctime() + "\n")
+        f.write("#xmin=" + str(self.xmin) + ",ymin=" + str(self.ymin) + ",cell_size=" + str(self.cell_size) + ",nx=" + str(self.nx) + ",ny=" + str(self.ny) + "\n")
+        cdef unsigned x_ind
+        cdef unsigned y_ind
+        cdef unsigned ind
+        for y_ind in range(self.ny):
+            for x_ind in range(self.nx - 1):
+                ind = self.internal_global_index(x_ind, y_ind)
+                f.write(str(self.active[ind]) + ",")
+            x_ind = self.nx - 1
+            ind = self.internal_global_index(x_ind, y_ind)
+            f.write(str(self.active[ind]) + "\n")
+        f.close()
+

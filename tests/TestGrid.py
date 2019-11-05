@@ -115,6 +115,17 @@ class TestMe(unittest.TestCase):
             self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
          self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv") + " must be CSV formatted.  Each line in the file corresponds to a row (constant y) of cells, so must contain 4 entries (separated by commas).  Each entry must be either 0 (inactive) or 1 (active).  There must be 3 such rows.  The first row corresponds to cells at y=ymin, the next row at y=ymin+cell_size, etc")
 
+   def testOutputActiveCSV(self):
+      fn = os.path.join(findbin, "active_output.csv")
+      if os.path.isfile(fn): os.remove(fn)
+      self.g2.outputActiveCSV(fn)
+      f = open(fn, 'r')
+      data = f.readlines()
+      f.close()
+      self.assertTrue(data[1] == "#xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3\n")
+      self.assertTrue(data[2] == "1,0,1,1\n")
+      self.assertTrue(data[3] == "1,0,1,0\n")
+      self.assertTrue(data[4] == "0,0,1,1\n")
 
 
 if __name__ == '__main__':
