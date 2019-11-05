@@ -1,6 +1,10 @@
 # mozzie
 Mosquito lifecycle, diffusion and advection
 
+## Use
+
+The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  To our knowledge, all python distributions come with `cythonize` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, etc).
+
 ## Spatial structure
 
 Mosquitoes are assumed to advect and diffuse over a grid of square cells, defined by:
@@ -29,5 +33,18 @@ The lines following the header correspond to rows of cells.  The rows appear in 
 
 
 ## Core code descriptions
+
+### `Grid`
+
+This is a cython class that may be imported or cimported into other classes.  It contains geometric information (`xmin`, `ymin`, `cell_size`, `nx` and `ny`), but its main purpose is to handle the following.
+
+- Active and inactive cells.  All other classes need only work with active cells.  These methods are useful:
+  - `setActiveAndInactive(filename)` sets active and inactive cells with file format specified in the "Spatial structure" section, above.
+  - `getNumActiveCells()` returns the number of active cells
+  - `getGlobalIndex()` returns `a`, where `a[i]` is the global index of the active cell `i`
+  - `getActiveIndex()` returns `a`, where `a[i]` is the active cell index of the global cell `i`
+- Adjacency information.  This is contained in two methods: `getConnetionsFrom()` and `getConnectionsTo()`, which both return arrays.  Call the arrays `f` and `t`.  Then `f[i]` is the active cell index, and it is connected to the active cell with index `t[i]`.  So this is a sparse representation of a symmetric adjacency matrix.  Only active cells are considered, so other classes need not know about inactive cells.
+
+`Grid` also contains various other utility methods, and an `outputActiveCSV(filename)` method.
 
 
