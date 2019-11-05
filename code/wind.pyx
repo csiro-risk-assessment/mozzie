@@ -111,12 +111,14 @@ cdef class Wind:
             if len(line) != 2 * self.nx:
                 raise ValueError(data_string_error)
 
+            if y_ind >= self.ny:
+                raise ValueError(data_string_error)
             for i in range(self.nx):
                 self.raw_velx[y_ind * self.nx + i] = line[2 * i] / self.cell_size
                 self.raw_vely[y_ind * self.nx + i] = line[2 * i + 1] / self.cell_size
             y_ind += 1
                 
-        if y_ind != len(self.ny):
+        if y_ind != self.ny:
             raise ValueError(data_string_error)
 
         # now work out which active cells are the advected mosquitoes will end up in
