@@ -11,9 +11,11 @@ cdef class Wind:
     # file containing the processed data, which is: given an active cell, what cells it will advect to
     cdef str processed_wind_fn
 
-    # probability distribution: given a wind speed, what the probability of an advecting mozzie having a certain speed.
-    # This is of the form [[frac0, prob0], [frac1, prob1], [frac2, prob2], ...], where the probability
-    # of a mosquito advecting by frac*wind_speed is prob.  The probs should sum to 1.0
+    # probability distribution: given a wind speed, this gives the probability of an advecting mozzie having a certain speed.
+    # This PDF is of the form [[prob0, frac0], [prob1, frac1], [prob2, frac2], ...], where the probability
+    # of a mosquito tagged as 'advecting', advecting by frac * wind_speed is prob.  The probs should sum to 1.0.
+    # For instance, if advecting mosquitoes always advect at exactly the 0.5 * wind speed, pdf = [[1.0, 0.5]]
+    # For instance, if 30% of advecting mosquitoes always advect 0.1 * wind speed, and the remainder at 0.8 * windspeed, pdf = [[0.3, 0.1], [0.7, 0.8]]
     cdef list pdf
     # number of entries in pdf
     cdef unsigned num_pdf
@@ -57,9 +59,9 @@ cdef class Wind:
             self.pdf = [(float(e[0]), float(e[1])) for e in pdf]
             self.num_pdf = len(self.pdf)
         except:
-            raise ValueError("PDF defining the advecting velocities in terms of the raw velocity must be of the form [[f0, p0], [f1, p1], [f2, p2]...], where p is the probability of a mosquito advecting by speed f*raw_speed.  The p's must sum to unity")
-        if not (sum([p[1] for p in self.pdf]) > 0.999 and sum([p[1] for p in self.pdf]) < 1.001):
-            raise ValueError("PDF defining the advecting velocities in terms of the raw velocity must be of the form [[f0, p0], [f1, p1], [f2, p2]...], where p is the probability of a mosquito advecting by speed f*raw_speed.  The p's must sum to unity")
+            raise ValueError("PDF defining the advecting velocities in terms of the raw velocity must be of the form [[p0, f0], [p1, f1], [p2, f2]...], where p is the probability of a mosquito advecting by speed f*raw_speed.  The p's must sum to unity")
+        if not (sum([p[0] for p in self.pdf]) > 0.999 and sum([p[0] for p in self.pdf]) < 1.001):
+            raise ValueError("PDF defining the advecting velocities in terms of the raw velocity must be of the form [[p0, f0], [p1, f1], [p2, f2]...], where p is the probability of a mosquito advecting by speed f*raw_speed.  The p's must sum to unity")
             
         self.grid = grid
         self.xmin = self.grid.getXmin()
@@ -139,7 +141,7 @@ cdef class Wind:
                     continue
                 velx = self.raw_velx[ind]
                 vely = self.raw_vely[ind]
-                for (f, p) in self.pdf:
+                for (p, f) in self.pdf:
                     # round to the nearest cell
                     newx = x_ind + int(velx * f + 0.5) 
                     newy = y_ind + int(vely * f + 0.5)
