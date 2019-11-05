@@ -36,6 +36,9 @@ cdef class Grid:
     # total size of connect_from (which contains only the active set)
     cpdef unsigned num_connections
 
+    # filename that defines the active cells (defaults to "None")
+    cpdef str active_filename
+
     cdef unsigned internal_global_index(self, unsigned x_ind, unsigned y_ind)
     """provides the index used in this class, given x and y cell number.
     Note that:
@@ -68,11 +71,17 @@ cdef class Grid:
     cdef void buildAdjacency(self)
     """Builds connect_from and connect_to, and num_connections, based on the self.active"""
 
+    cpdef str getActiveFilename(self)
+    """Returns filename that defined the active/inactive cells"""
+
     cpdef float getXmin(self)
-    "Returns x coord of the lower-left corner"""
+    """Returns x coord of the lower-left corner"""
 
     cpdef float getYmin(self)
     "Returns y coord of the lower-left corner"""
+
+    cpdef float getCellSize(self)
+    "Returns cell side length"""
 
     cpdef unsigned getNx(self)
     "Returns number of cells in x direction"""
@@ -101,5 +110,5 @@ cdef class Grid:
     cpdef array.array getActiveIndex(self)
     """Returns the active index of the the global cell array"""
 
-    cpdef outputActiveCSV(self, filename)
+    cpdef outputActiveCSV(self, str filename)
     "Outputs the active information to a file"""

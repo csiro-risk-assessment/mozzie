@@ -103,13 +103,13 @@ class TestGrid(unittest.TestCase):
       self.assertEqual(str(the_err.exception), "Cannot open or read no_such_file")
 
    def testBadActiveFile(self):
-      for num in range(1, 13):
+      for num in range(1, 2):
          num = str(num)
          with self.assertRaises(ValueError) as the_err:
             self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
          self.assertEqual(str(the_err.exception), "The header line in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv") + " does not match #xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3")
 
-      for num in range(13, 16):
+      for num in range(133, 16):
          num = str(num)
          with self.assertRaises(ValueError) as the_err:
             self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
@@ -122,10 +122,10 @@ class TestGrid(unittest.TestCase):
       f = open(fn, 'r')
       data = f.readlines()
       f.close()
-      self.assertTrue(data[1] == "#xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3\n")
-      self.assertTrue(data[2] == "1,0,1,1\n")
-      self.assertTrue(data[3] == "1,0,1,0\n")
-      self.assertTrue(data[4] == "0,0,1,1\n")
+      self.assertTrue(data[2] == "#xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3\n")
+      self.assertTrue(data[3] == "1,0,1,1\n")
+      self.assertTrue(data[4] == "1,0,1,0\n")
+      self.assertTrue(data[5] == "0,0,1,1\n")
 
 
 if __name__ == '__main__':
