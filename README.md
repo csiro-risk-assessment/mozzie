@@ -43,7 +43,7 @@ This is a cython class that may be imported or cimported into other classes.  It
   - `getNumActiveCells()` returns the number of active cells
   - `getGlobalIndex()` returns `a`, where `a[i]` is the global index of the active cell `i`
   - `getActiveIndex()` returns `a`, where `a[i]` is the active cell index of the global cell `i`
-- Adjacency information.  This is contained in two methods: `getConnetionsFrom()` and `getConnectionsTo()`, which both return arrays.  Call the arrays `f` and `t`.  Then `f[i]` is the active cell index, and it is connected to the active cell with index `t[i]`.  So this is a sparse representation of a symmetric adjacency matrix.  Only active cells are considered, so other classes need not know about inactive cells.
+- Adjacency information.  This may be retrieved from two methods: `getConnetionsFrom()` and `getConnectionsTo()`, which both return arrays.  Call the arrays `f` and `t`.  Then `f[i]` is the active cell index, and it is connected to the active cell with index `t[i]`.  So this is a sparse representation of a symmetric adjacency matrix.  Only active cells are considered, so other classes need not know about inactive cells.
 
 `Grid` also contains various other utility methods, and an `outputActiveCSV(filename)` method.
 

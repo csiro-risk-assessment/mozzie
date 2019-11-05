@@ -17,7 +17,7 @@ def flattenarrayequal(a, b):
 def arraydiff(a, b):
    return sum([x - y for x, y in zip(a, b)])
 
-class TestMe(unittest.TestCase):
+class TestGrid(unittest.TestCase):
 
    def setUp(self):
       self.g1 = Grid(1.0, 2.0, 3.0, 4, 3)

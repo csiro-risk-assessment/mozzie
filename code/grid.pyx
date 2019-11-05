@@ -1,41 +1,10 @@
 #   #cython: boundscheck=False, wraparound=False, nonecheck=False
 import time
-import array
-cimport cpython.array as array
+
+# maximum number of nearest neighbours that are possible for each cell
+cdef unsigned max_num_nn = 4
 
 cdef class Grid:
-    """Defines the grid"""
-
-    # lower-left corner
-    cpdef float xmin, ymin
-
-    # cell side-length
-    cpdef float cell_size
-
-    # number of cells in x and y directions
-    cpdef unsigned nx, ny
-
-    # number of cells
-    cpdef unsigned num_cells
-
-    # whether a cell is active (1) or not (0)
-    cpdef array.array active
-
-    # number of active cells
-    cpdef unsigned num_active_cells
-
-    # global_index[i] = global index of the active cell index.  Here i ranges from 0 to num_active_cells - 1, and the global_index values will be between 0 and num_cells - 1
-    cpdef array.array global_index
-
-    # active[i] = active cell index of the global cell index.  Here i ranges from 0 to num_cells - 1, and active_index values will range from 0 to num_active_cells - 1
-    cpdef array.array active_index
-
-    # connectivity information: connect_from[i] is a cell number that connects to cell number connect_to[i].  These arrays contain only active cells
-    cpdef array.array connect_from
-    cpdef array.array connect_to
-
-    # total size of connect_from (which contains only the active set)
-    cpdef unsigned num_connections
 
     def __init__(self, float xmin, float ymin, float cell_size, unsigned nx, unsigned ny):
 
@@ -51,11 +20,17 @@ cdef class Grid:
         self.num_cells = nx * ny
 
         # initialise activity information to "all active"
+        # This should never be resized, without eventually making its size = self.num_cells, for we use the unsafe access to the raw C pointer
         self.active = array.array('I', [1] * self.num_cells)
+
+        # initialise active_index to dummy values "num_cells" which indicates active_index[i] is "not an active cell"
+        # This should never be resized, for we use the unsafe access to the raw C pointer
+        self.active_index = array.array('I', [self.num_cells] * self.num_cells) # use some dummy values
 
         # build active and adjacency information
         self.computeNumActive()
         self.buildAdjacency()
+
 
     cdef unsigned internal_global_index(self, unsigned x_ind, unsigned y_ind):
         """provides the index used in this class, given x and y cell number.
@@ -88,7 +63,7 @@ cdef class Grid:
         except:
             raise IOError('Cannot open or read ' + filename)
 
-        self.active = array.array('I', [])
+        self.active = array.array('I', []) # warning: need to check the final length = self.num_cells, otherwise self.active.data.as_uints will fail somewhere
         checked_header = False
         header_string_error = "The header line in " + filename + " does not match #xmin=" + str(self.xmin) + ",ymin=" + str(self.ymin) + ",cell_size=" + str(self.cell_size) + ",nx=" + str(self.nx) + ",ny=" + str(self.ny)
         data_string_error = "Data in " + filename + " must be CSV formatted.  Each line in the file corresponds to a row (constant y) of cells, so must contain " + str(self.nx) + " entries (separated by commas).  Each entry must be either 0 (inactive) or 1 (active).  There must be " + str(self.ny) + " such rows.  The first row corresponds to cells at y=ymin, the next row at y=ymin+cell_size, etc"
@@ -141,25 +116,26 @@ cdef class Grid:
         """Computes self.num_active_cells, self.global_index.  Also, checks if there are entries that are not zero or one"""
 
         self.num_active_cells = 0
-        self.global_index = array.array('I', [])
-        self.active_index = array.array('I', [self.num_cells] * self.num_cells) # use some dummy values
+        self.global_index = array.array('I', [0] * self.num_cells) # maximum size it can be: below we resize it smaller
         cdef unsigned i
         for i in range(len(self.active)):
-            if self.active[i] == 0:
-                continue
-            elif self.active[i] == 1:
-                array.extend(self.global_index, array.array('I', [i]))
-                self.active_index[i] = self.num_active_cells
+            if self.active.data.as_uints[i] == 0:
+                self.active_index.data.as_uints[i] = self.num_cells
+            elif self.active.data.as_uints[i] == 1:
+                self.global_index.data.as_uints[self.num_active_cells] = i
+                self.active_index.data.as_uints[i] = self.num_active_cells
                 self.num_active_cells += 1
             else:
                 raise ValueError("Data in active matrix that determines whether a cell is active or inactive must be only 0 or 1, but yours includes the number " + str(self.active[i]))
+        array.resize(self.global_index, self.num_active_cells)
 
     cdef void buildAdjacency(self):
         """Builds connect_from and connect_to, and num_connections, based on the self.active"""
 
-        # build connectivity information
-        self.connect_from = array.array('I', [])
-        self.connect_to = array.array('I', [])
+        # initialise connectivity information to a very large array.  This is for efficiency (can use data.as_uints below) and we resize appropriately at the very end
+        self.connect_from = array.array('I', [0] * self.num_cells * max_num_nn)
+        self.connect_to = array.array('I', [0] * self.num_cells * max_num_nn)
+        self.num_connections = 0
         cdef unsigned x_ind
         cdef unsigned y_ind
         cdef unsigned ind
@@ -167,31 +143,37 @@ cdef class Grid:
         for y_ind in range(self.ny):
             for x_ind in range(self.nx - 1):
                 ind = self.internal_global_index(x_ind, y_ind)
-                if (self.active[ind] == 1 and self.active[ind + 1] == 1):
-                    self.connect_from.extend(array.array('I', [self.active_index[ind]]))
-                    self.connect_to.extend(array.array('I', [self.active_index[ind + 1]]))
+                if (self.active.data.as_uints[ind] == 1 and self.active.data.as_uints[ind + 1] == 1):
+                    self.connect_from.data.as_uints[self.num_connections] = self.active_index.data.as_uints[ind]
+                    self.connect_to.data.as_uints[self.num_connections] = self.active_index.data.as_uints[ind + 1]
+                    self.num_connections += 1
         # connecting to left neighbour
         for y_ind in range(self.ny):
             for x_ind in range(1, self.nx):
                 ind = self.internal_global_index(x_ind, y_ind)
-                if (self.active[ind] == 1 and self.active[ind - 1] == 1):
-                    self.connect_from.extend(array.array('I', [self.active_index[ind]]))
-                    self.connect_to.extend(array.array('I', [self.active_index[ind - 1]]))
+                if (self.active.data.as_uints[ind] == 1 and self.active.data.as_uints[ind - 1] == 1):
+                    self.connect_from.data.as_uints[self.num_connections] = self.active_index.data.as_uints[ind]
+                    self.connect_to.data.as_uints[self.num_connections] = self.active_index.data.as_uints[ind - 1]
+                    self.num_connections += 1
         # connecting to bottom neighbour
         for y_ind in range(1, self.ny):
             for x_ind in range(self.nx):
                 ind = self.internal_global_index(x_ind, y_ind)
-                if (self.active[ind] == 1 and self.active[ind - self.nx] == 1):
-                    self.connect_from.extend(array.array('I', [self.active_index[ind]]))
-                    self.connect_to.extend(array.array('I', [self.active_index[ind - self.nx]]))
+                if (self.active.data.as_uints[ind] == 1 and self.active.data.as_uints[ind - self.nx] == 1):
+                    self.connect_from.data.as_uints[self.num_connections] = self.active_index.data.as_uints[ind]
+                    self.connect_to.data.as_uints[self.num_connections] = self.active_index.data.as_uints[ind - self.nx]
+                    self.num_connections += 1
         # connecting to top neighbour
         for y_ind in range(self.ny - 1):
             for x_ind in range(self.nx):
                 ind = self.internal_global_index(x_ind, y_ind)
-                if (self.active[ind] == 1 and self.active[ind + self.nx] == 1):
-                    self.connect_from.extend(array.array('I', [self.active_index[ind]]))
-                    self.connect_to.extend(array.array('I', [self.active_index[ind + self.nx]]))
-        self.num_connections = len(self.connect_from)
+                if (self.active.data.as_uints[ind] == 1 and self.active.data.as_uints[ind + self.nx] == 1):
+                    self.connect_from.data.as_uints[self.num_connections] = self.active_index.data.as_uints[ind]
+                    self.connect_to.data.as_uints[self.num_connections] = self.active_index.data.as_uints[ind + self.nx]
+                    self.num_connections += 1
+        array.resize(self.connect_from, self.num_connections)
+        array.resize(self.connect_to, self.num_connections)
+
 
 
 
