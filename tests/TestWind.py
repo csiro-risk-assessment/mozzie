@@ -112,6 +112,30 @@ class TestWind(unittest.TestCase):
             w.parseProcessedFile()
          self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_wind_processed" + num + ".csv") + " must be CSV formatted.  Each line must contain integer1,integer2,float , where integer1 = active cell index from where mosquitoes are advecting; integer2 = active cell index to which mosquitoes are advecting; float = probability of this occuring")
 
+      num = "11"
+      w = Wind("no_file", os.path.join(findbin, "bad_wind_processed" + num + ".csv"), [[1, 1]], self.g2)
+      with self.assertRaises(ValueError) as the_err:
+         w.parseProcessedFile()
+      self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_wind_processed" + num + ".csv") + " is incorrectly bounded.  Bad line = 1234,2,0.1")
+
+      num = "12"
+      w = Wind("no_file", os.path.join(findbin, "bad_wind_processed" + num + ".csv"), [[1, 1]], self.g2)
+      with self.assertRaises(ValueError) as the_err:
+         w.parseProcessedFile()
+      self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_wind_processed" + num + ".csv") + " is incorrectly bounded.  Bad line = 0,12345,0.1")
+
+      num = "13"
+      w = Wind("no_file", os.path.join(findbin, "bad_wind_processed" + num + ".csv"), [[1, 1]], self.g2)
+      with self.assertRaises(ValueError) as the_err:
+         w.parseProcessedFile()
+      self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_wind_processed" + num + ".csv") + " is incorrectly bounded.  Bad line = 0,0,-0.1")
+
+      num = "14"
+      w = Wind("no_file", os.path.join(findbin, "bad_wind_processed" + num + ".csv"), [[1, 1]], self.g2)
+      with self.assertRaises(ValueError) as the_err:
+         w.parseProcessedFile()
+      self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_wind_processed" + num + ".csv") + " is incorrectly bounded.  Bad line = 0,0,1.1")
+
 
 
    def testGetRawWindFilename(self):

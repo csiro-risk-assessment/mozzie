@@ -53,6 +53,8 @@ cdef class Wind:
 
     cdef array.array active_index
 
+    cdef unsigned num_active_cells
+
     def __init__(self, str raw_wind_fn, str processed_wind_fn, list pdf, Grid grid):
 
         self.raw_wind_fn = raw_wind_fn
@@ -83,6 +85,7 @@ cdef class Wind:
         self.ny = self.grid.getNy()
         self.num_cells = self.grid.getNumCells()
         self.active_index = self.grid.getActiveIndex()
+        self.num_active_cells = self.grid.getNumActiveCells()
         self.processed_data_computed = 0
 
         self.raw_velx = array.array('f', [])
@@ -206,6 +209,8 @@ cdef class Wind:
                 raise ValueError(data_string_error)
             if len(line) != 3:
                 raise ValueError(data_string_error)
+            if afr >= self.num_active_cells or ato >= self.num_active_cells or app > 1.0 or app < 0.0:
+                raise ValueError("Data in " + self.processed_wind_fn + " is incorrectly bounded.  Bad line = " + ",".join(line))
 
             self.advection_from[self.num_advection] = afr
             self.advection_to[self.num_advection] = ato
