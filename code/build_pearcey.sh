@@ -6,4 +6,6 @@ gcc_flags="-shared -fno-strict-aliasing -Wsign-compare -Wunreachable-code -DNDEB
 mpicc $gcc_flags grid.c -o grid.so
 mpicc $gcc_flags wind.c -o wind.so
 mpicc $gcc_flags cell.c -o cell.so
+mpicc $gcc_flags spatial.c -o spatial.so
+
 

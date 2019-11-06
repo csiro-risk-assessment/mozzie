@@ -28,7 +28,7 @@ class TestDiffusion_2(unittest.TestCase):
       for i in range(self.grid.getNumActiveCells()):
          self.all_cells.append(Cell())
       # centre cell starts with nonzero population
-      pop = range(Cell().getNumberOfPopulations())
+      pop = list(range(Cell().getNumberOfPopulations()))
       self.all_cells[17].setPopulations(pop)
 
       # initialise the spatial structure with timestep = 0.5 and diffusion coefficient = 0.075
