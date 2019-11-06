@@ -74,7 +74,7 @@ A `Wind` object is only of use if `getProcessedDataComputed()==1`.  Upon constru
 - `parseRawFile()`.  This parses the raw file defined in the constructor, to extract the velocity at each cell.  This data is then processed in the following way.
   - For each active cell, a mosquito is advected by that cell's velocity for `time0` (specified in the `pdf`).  Whichever cell it reaches (can be the same cell), there is a probability `prob0` of it exiting the airstream to that cell.  If that cell is active, that cell's ID and the probability is recorded.
   - Then it is advected by that new cell's velocity for time `time1 - time0`.  It may end up in another new cell (or the same cell), and if that cell is active, information is recorded again.
-  - This process is repeated until the `pdf` is exhausted
+  - This process is repeated until the `pdf` is exhausted.
   - This process is repeated for all active cells.
   - This has the consequence that if a mosquito ends its advection in a inactive cell it is assumed to instantly die, but mosquitoes may in principal pass over inactive cells, using the wind in those cells to reach active cells.  If a mosquito ever advects outside the grid's boundary they are assumed to instantly die.
   - The result may be written to a file using `outputProcessedCSV()`.
@@ -86,7 +86,7 @@ After this, the `Wind` object is fully operational, and the useful methods are:
 - `getAdvectionP()`, returns the array `p`.
 - `getNumAdvection()`, returns the length of `f` (which equals the length of `t`, which also equals the length of `p`).
 
-For any `i`, `f[i]` is the active cell index from which a mosquito is advecting, `t[i]` is the active cell index to which it is advecting, and `p[i]` is the probability of this occuring.  This is stored in the processed data file and may be outputted using outputProcessedCSV().
+For any `i`, `f[i]` is the active cell index from which a mosquito is advecting, `t[i]` is the active cell index to which it is advecting, and `p[i]` is the probability of this occuring.  This is stored in the processed data file and may be outputted using `outputProcessedCSV()`.
 
-Note that `f` may not contain all active cell indices.  For instance, for a cell on the grid boundary, wind may instantly advect all mosquitoes out of the domain.  Hence, `p` is the probability of moving from `f` to `t`, given that the mosquito is indeed advecting, and not simply the probability of advecting away from `f`.  This latter probability is specified elsewhere in the code.
+Note that `f` may not contain all active cell indices.  For instance, for a cell on the grid boundary, wind may instantly advect all mosquitoes out of the domain.  Hence, `p` is the probability of moving from `f` to `t`, given that the mosquito is indeed advecting.  It is not simply the probability of advecting away from `f`.  This latter probability is specified elsewhere in the code.
 
