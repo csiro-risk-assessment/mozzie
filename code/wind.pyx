@@ -5,56 +5,6 @@ import array
 cimport cpython.array as array
 
 cdef class Wind:
-
-    # file containing the raw wind data.  The units used should match those used in Grid (eg, km)
-    cdef str raw_wind_fn
-
-    # file containing the processed data, which is: given an active cell, what cells it will advect to
-    cdef str processed_wind_fn
-
-    # probability distribution of times an advecting mosquito will stay in the air and be advected by the wind.
-    # This PDF is of the form [[time0, prob0], [time1, prob1], [time2, prob2], ...].
-    # The times must be in the same time unit as the wind data (for instance, days).
-    # The probabilities should sum to 1 (prob0 + prob1 + ... = 1).
-    # For instance, if all mosquitoes that are being advected by the wind stay in the wind for 0.5 days, then pdf = [[0.5, 1.0]]
-    # For instance, if 30% of mosquitoes stay in the wind for 0.1 days, and 70% stay in the wind for 0.4 days, then pdf = [[0.1, 0.3], [0.4, 0.7]]
-    # For instance, if all mosquitoes stay in the wind for 0.5 days, BUT an internal timestep of 0.1 days is required to accurately track advective movements, then pdf = [[0.1, 0], [0.2, 0], [0.3, 0], [0.4, 0], [0.5, 1.0]]
-    cdef list pdf
-    # number of entries in pdf
-    cdef unsigned num_pdf
-
-    # the grid (which defines cell_size, etc)
-    cdef Grid grid
-    
-    # lower-left corner
-    cdef float xmin, ymin
-
-    # cell side-length
-    cdef float cell_size
-
-    # number of cells in x and y directions
-    cdef unsigned nx, ny
-
-    # total number of cells
-    cdef unsigned num_cells
-
-    # whether advection_from, etc, has been build (raw_wind_fn or processed_wind_fn has been read) (0 = false, 1 = true)
-    cdef int processed_data_computed
-
-    # raw velocity in the x and y direction DIVIDED by cell_size defined in grid (ie, vel_x = number of grid cells/unit time)
-    cdef array.array raw_velx
-    cdef array.array raw_vely
-
-    # processed advective transfer
-    cdef array.array advection_from
-    cdef array.array advection_to
-    cdef array.array advection_p
-    cdef unsigned num_advection
-
-    cdef array.array active_index
-
-    cdef unsigned num_active_cells
-
     def __init__(self, str raw_wind_fn, str processed_wind_fn, list pdf, Grid grid):
 
         self.raw_wind_fn = raw_wind_fn
