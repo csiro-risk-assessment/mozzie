@@ -21,12 +21,21 @@ cpdef array.array advecting_indices = array.array('I', [0, 4, 10])
 cdef class Cell:
     """Holds and manipulates information at a single cell"""
 
-    # the population array at the node
-    cpdef array.array population
-    
     def __init__(self):
         """Initialise the Cell with a zero population"""
         self.population = array.array('f', [0.0] * num_populations)
+
+    cpdef unsigned getNumberOfPopulations(self):
+        return num_populations
+
+    cpdef setPopulations(self, list pops):
+        """Set the populations in the cell"""
+        if len(pops) != num_populations:
+            raise ValueError("Number of population values must be " + str(num_populations))
+        self.population = array.array('f', pops)
+    
+    cpdef array.array getPopulation(self):
+        return self.population
 
     cpdef unsigned getNumberOfDiffusingPopulations(self):
         return num_diffusing
