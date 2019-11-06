@@ -3,7 +3,9 @@ Mosquito lifecycle, diffusion and advection
 
 ## Use
 
-The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  To our knowledge, all python distributions come with `cythonize` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, etc).
+The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  To our knowledge, all python distributions come 
+with `cythonize` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory 
+we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, etc).
 
 ## Units
 
@@ -16,7 +18,8 @@ Mosquitoes are assumed to advect and diffuse over a grid of square cells, define
 - the cell side-length
 - (nx, ny): the number of cells in the x and y directions
 
-The cells can be "active" or "inactive".  This is specified through a CSV file.  The CSV file must contain a header (that begins with `#xmin`, etc) that specifies the quantities mentioned above (this facilitates error-checking) and data arranged in rows.  Here is an example file:
+The cells can be "active" or "inactive".  This is specified through a CSV file.  The CSV file must contain a header (that begins with `#xmin`, etc) that specifies the quantities mentioned 
+above (this facilitates error-checking) and data arranged in rows.  Here is an example file:
 ```
 #xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3
 1,0,1,1
