@@ -11,18 +11,16 @@ from grid import Grid
 def arrayequal(a, b):
    return all([a[i] == b[i] for i in range(0, len(a))])
 
-def flattenarrayequal(a, b):
-   return arrayequal(misc.common.flatten(a), misc.common.flatten(b))
-
-def arraydiff(a, b):
-   return sum([x - y for x, y in zip(a, b)])
-
 class TestGrid(unittest.TestCase):
 
    def setUp(self):
       self.g1 = Grid(1.0, 2.0, 3.0, 4, 3)
       self.g2 = Grid(1.0, 2.0, 3.0, 4, 3)
       self.g2.setActiveAndInactive(os.path.join(findbin, "inactive_active.csv"))
+
+   def testGetActiveFilename(self):
+      self.assertTrue("None", self.g1.getActiveFilename())
+      self.assertTrue("inactive_active.csv", self.g2.getActiveFilename())
 
    def testNegativeCellSize(self):
       with self.assertRaises(ValueError) as the_err:
@@ -36,6 +34,10 @@ class TestGrid(unittest.TestCase):
    def testGetYmin(self):
       self.assertEqual(self.g1.getYmin(), 2.0)
       self.assertEqual(self.g2.getYmin(), 2.0)
+
+   def testGetCellSize(self):
+      self.assertEqual(self.g1.getCellSize(), 3.0)
+      self.assertEqual(self.g2.getCellSize(), 3.0)
 
    def testGetNx(self):
       self.assertEqual(self.g1.getNx(), 4)
@@ -103,13 +105,18 @@ class TestGrid(unittest.TestCase):
       self.assertEqual(str(the_err.exception), "Cannot open or read no_such_file")
 
    def testBadActiveFile(self):
-      for num in range(1, 2):
+      for num in range(1, 12):
          num = str(num)
          with self.assertRaises(ValueError) as the_err:
             self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
          self.assertEqual(str(the_err.exception), "The header line in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv") + " does not match #xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3")
 
-      for num in range(133, 16):
+      num = "12"
+      with self.assertRaises(ValueError) as the_err:
+         self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
+      self.assertEqual(str(the_err.exception), "Header line of the form #xmin=... not found in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
+
+      for num in range(13, 16):
          num = str(num)
          with self.assertRaises(ValueError) as the_err:
             self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))

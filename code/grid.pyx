@@ -1,4 +1,5 @@
 #   #cython: boundscheck=False, wraparound=False, nonecheck=False
+import os
 import time
 
 # maximum number of nearest neighbours that are possible for each cell
@@ -63,7 +64,7 @@ cdef class Grid:
                 data = f.readlines()
         except:
             raise IOError('Cannot open or read ' + filename)
-        self.active_filename = filename
+        self.active_filename = os.path.basename(filename)
 
         self.active = array.array('I', []) # warning: need to check the final length = self.num_cells, otherwise self.active.data.as_uints will fail somewhere
         checked_header = False

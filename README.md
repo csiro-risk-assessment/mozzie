@@ -5,6 +5,10 @@ Mosquito lifecycle, diffusion and advection
 
 The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  To our knowledge, all python distributions come with `cythonize` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, etc).
 
+## Units
+
+The units used should be consistent throughout.  For instance, if the spatial grid is defined using km, and the time-step is measured in days, then the diffusivity should have units km*km/day, and the wind velocity should be in km/day.
+
 ## Spatial structure
 
 Mosquitoes are assumed to advect and diffuse over a grid of square cells, defined by:
