@@ -14,6 +14,8 @@ cdef class Cell:
 
     cpdef unsigned getNumberOfDiffusingPopulations(self)
 
+    cpdef array.array getDiffusingIndices(self)
+
     cpdef float getDiffusingSingletonNoCheck(self, unsigned diffusing_index)
 
     cpdef array.array getDiffusingPopulation(self)

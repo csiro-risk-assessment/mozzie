@@ -40,6 +40,9 @@ cdef class Cell:
     cpdef unsigned getNumberOfDiffusingPopulations(self):
         return num_diffusing
 
+    cpdef array.array getDiffusingIndices(self):
+        return diffusing_indices
+
     cpdef float getDiffusingSingletonNoCheck(self, unsigned diffusing_index):
         return self.population.data.as_floats[diffusing_indices.data.as_uints[diffusing_index]]
 
