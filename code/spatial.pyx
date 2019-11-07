@@ -106,14 +106,14 @@ cdef class Spatial:
         # population counter
         cdef unsigned p
         # utility indeces
-        cdef unsigned i, j
+        cdef unsigned i, j, k
 
         # grab all the diffusing populations
         for ind in range(self.num_active_cells):
             i = ind * self.num_diffusing_populations_at_cell
             j = ind * self.num_populations_at_cell
             for p in range(self.num_diffusing_populations_at_cell):
-                self.all_diffusing_populations.data.as_floats[i + p] = self.all_pops[j + self.diffusing_indices[p]]
+                self.all_diffusing_populations.data.as_floats[i + p] = self.all_pops.data.as_floats[j + self.diffusing_indices.data.as_uints[p]]
 
         # initialise the self.change_diff in populations, which is just the amount that comes out of the cells
         for i in range(self.num_diffusing_populations_total):
@@ -136,7 +136,8 @@ cdef class Spatial:
             i = ind * self.num_diffusing_populations_at_cell
             j = ind * self.num_populations_at_cell
             for p in range(self.num_diffusing_populations_at_cell):
-                self.all_pops[j + self.diffusing_indices[p]] += self.change_diff.data.as_floats[i + p]
+                k = j + self.diffusing_indices.data.as_uints[p]
+                self.all_pops.data.as_floats[k] = self.all_pops.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
                 
     cpdef outputCSV(self, str filename, unsigned population):
         """Outputs cell information for given population number to filename in CSV format"""
