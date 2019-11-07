@@ -14,9 +14,9 @@ from populations import Populations
 from spatial import Spatial
 
 # setup the grid and the active/inactive information
-sys.stdout.write("Initialising grid...")
+sys.stdout.write("Initialising grid (without building adjacency list)...")
 start = time.clock()
-g1 = Grid(-4614384.0,-3967418.0,5000.0,1517,1667)
+g1 = Grid(-4614384.0, -3967418.0, 5000.0, 1517, 1667, False)
 sys.stdout.write(" " + str(time.clock() - start) + "s\n")
 
 sys.stdout.write("Setting active and inactive...")

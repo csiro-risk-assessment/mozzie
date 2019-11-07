@@ -13,7 +13,7 @@ cdef class Populations:
 
         self.num_pops = self.num_active_cells * self.num_pop_per_cell
         
-        self.pop = array.array('f', [0.0] * self.num_active_cells * self.num_pop_per_cell)
+        self.pop = array.clone(array.array('f', []), self.num_active_cells * self.num_pop_per_cell, zero = True)
 
 
     cdef array.array getPopulations(self):

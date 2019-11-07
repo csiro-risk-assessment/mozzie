@@ -40,6 +40,12 @@ cdef class Wind:
     # total number of cells
     cdef unsigned num_cells
 
+    # active_index[i] = active cell index of the global cell index i.  Here i ranges from 0 to num_cells - 1, and active_index values will range from 0 to num_active_cells - 1
+    cdef array.array active_index
+
+    # number of active cells
+    cdef unsigned num_active_cells
+
     # whether advection_from, etc, has been build (raw_wind_fn or processed_wind_fn has been read) (0 = false, 1 = true)
     cdef int processed_data_computed
 
@@ -53,9 +59,11 @@ cdef class Wind:
     cdef array.array advection_p
     cdef unsigned num_advection
 
-    cdef array.array active_index
+    # unsigned array template to make array creation faster
+    cpdef array.array uint_template
 
-    cdef unsigned num_active_cells
+    # float array template to make array creation faster
+    cpdef array.array float_template
 
     # the parser that provides the wind information by parsing either raw_wind_fn or processed_wind_fn
     cpdef SpatialDependence windParser

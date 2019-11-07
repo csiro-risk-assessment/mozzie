@@ -38,13 +38,16 @@ cdef class Wind:
         self.num_active_cells = self.grid.getNumActiveCells()
         self.processed_data_computed = 0
 
-        self.raw_velx = array.array('f', [])
-        self.raw_vely = array.array('f', [])
+        #self.raw_velx = array.array('f', [])
+        #self.raw_vely = array.array('f', [])
 
-        self.advection_from = array.array('I', [])
-        self.advection_to = array.array('I', [])
-        self.advection_p = array.array('f', [])
+        #self.advection_from = array.array('I', [])
+        #self.advection_to = array.array('I', [])
+        #self.advection_p = array.array('f', [])
         self.num_advection = 0
+
+        self.uint_template = array.array('I', [])
+        self.float_template = array.array('f', [])
 
     cpdef parseRawFile(self):
         """Parse the raw wind file specified in the constructor, then processes this data to produce advection_from, etc"""
@@ -52,10 +55,11 @@ cdef class Wind:
         self.windParser.parse(self.raw_wind_fn, "wind_raw", [])
         self.raw_velx = self.windParser.getData0()
         self.raw_vely = self.windParser.getData1()
+        cdef float scale = 1.0 / self.cell_size
         cdef unsigned ind
         for ind in range(self.num_cells):
-            self.raw_velx.data.as_floats[ind] = self.raw_velx.data.as_floats[ind] / self.cell_size
-            self.raw_vely.data.as_floats[ind] = self.raw_vely.data.as_floats[ind] / self.cell_size
+            self.raw_velx.data.as_floats[ind] = scale * self.raw_velx.data.as_floats[ind]
+            self.raw_vely.data.as_floats[ind] = scale * self.raw_vely.data.as_floats[ind]
         self.processRawVelocities()
         self.processed_data_computed = 1
 
@@ -78,10 +82,14 @@ cdef class Wind:
     cdef void processRawVelocities(self):
         "works out which active cells the advected mosquitoes will end up in"""
         # size the arrays to the maximum they're ever going to be
-        self.advection_from = array.array('I', [0] * self.num_cells * self.num_pdf)
-        self.advection_to = array.array('I', [0] * self.num_cells * self.num_pdf)
-        self.advection_p = array.array('f', [0.0] * self.num_cells * self.num_pdf)
+        self.advection_from = array.clone(self.uint_template, self.num_cells * self.num_pdf, zero = False)
+        self.advection_to = array.clone(self.uint_template, self.num_cells * self.num_pdf, zero = False)
+        self.advection_p = array.clone(self.float_template, self.num_cells * self.num_pdf, zero = False)
         self.num_advection = 0
+
+        cdef array.array dts = array.array('f', [e[0] for e in self.pdf])
+        cdef array.array prs = array.array('f', [e[1] for e in self.pdf])
+        cdef unsigned pdf_ind
         
         cdef unsigned x_ind, y_ind # x and y grid indices
         cdef float velx, vely # velocity
@@ -100,7 +108,7 @@ cdef class Wind:
             for x_ind in range(self.nx):
                 has_advected = 0
                 from_ind = self.grid.internal_global_index(x_ind, y_ind)
-                active_from_ind = self.active_index[from_ind]
+                active_from_ind = self.active_index.data.as_uints[from_ind]
                 if active_from_ind == self.num_cells:
                     # this is not an active cell: ignore it
                     continue
@@ -110,10 +118,12 @@ cdef class Wind:
                 # this makes the loop over self.pdf work
                 to_ind = from_ind
                 active_to_ind = active_from_ind
-                for (ti, pr) in self.pdf:
+                for pdf_ind in range(self.num_pdf):
+                    ti = dts.data.as_floats[pdf_ind]
+                    pr = prs.data.as_floats[pdf_ind]
                     # evaluate the velocity at the current position of the mosquito
-                    velx = self.raw_velx[to_ind]
-                    vely = self.raw_vely[to_ind]
+                    velx = self.raw_velx.data.as_floats[to_ind]
+                    vely = self.raw_vely.data.as_floats[to_ind]
                     # update its real-numbered position
                     xnew += velx * ti
                     ynew += vely * ti
@@ -128,17 +138,17 @@ cdef class Wind:
                     if maybe_new_ind == to_ind and has_advected == 1:
                         # mosquito has not actually entered a new cell, so if an active cell, just add to the previous probability
                         if active_to_ind != self.num_cells:
-                            self.advection_p[self.num_advection - 1] += pr
+                            self.advection_p.data.as_floats[self.num_advection - 1] = self.advection_p.data.as_floats[self.num_advection - 1] + pr
                     else:
                          # mosquito has enetered new cell (or has_advected == 0, so we need to increment self.num_advected)
                         has_advected = 1
                         to_ind = maybe_new_ind
-                        active_to_ind = self.active_index[to_ind]
+                        active_to_ind = self.active_index.data.as_uints[to_ind]
                         # if active then record it
                         if active_to_ind != self.num_cells:
-                            self.advection_from[self.num_advection] = active_from_ind
-                            self.advection_to[self.num_advection] = active_to_ind
-                            self.advection_p[self.num_advection] = pr
+                            self.advection_from.data.as_uints[self.num_advection] = active_from_ind
+                            self.advection_to.data.as_uints[self.num_advection] = active_to_ind
+                            self.advection_p.data.as_floats[self.num_advection] = pr
                             self.num_advection += 1
         array.resize(self.advection_from, self.num_advection)
         array.resize(self.advection_to, self.num_advection)
@@ -157,7 +167,7 @@ cdef class Wind:
         f.write("#active_cell_id_from,active_cell_id_to,probability\n")
         cdef unsigned ind
         for ind in range(self.num_advection):
-            f.write(str(self.advection_from[ind]) + "," + str(self.advection_to[ind]) + "," + str(self.advection_p[ind]) + "\n")
+            f.write(str(self.advection_from.data.as_uints[ind]) + "," + str(self.advection_to.data.as_uints[ind]) + "," + str(self.advection_p.data.as_floats[ind]) + "\n")
         f.close()
 
     cpdef str getRawWindFilename(self):

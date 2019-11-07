@@ -14,9 +14,9 @@ cdef class SpatialDependence:
         self.num_cells = nx * ny
         self.required_header = "#xmin=" + str(xmin) + ",ymin=" + str(ymin) + ",cell_size=" + str(cell_size) + ",nx=" + str(nx) + ",ny=" + str(ny)
         self.filetype = "NO_FILETYPE"
-        self.data0 = array.array('I', [])
-        self.data1 = array.array('I', [])
-        self.data2 = array.array('I', [])
+        self.uint_template = array.array('I', [])
+        self.float_template = array.array('f', [])
+
 
     cpdef parse(self, str filename, str filetype, list required_additional_headers):
         if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed"):
@@ -36,16 +36,18 @@ cdef class SpatialDependence:
         except:
             raise
 
+        cdef unsigned lendata
         # Size data with full-sized arrays
         if filetype == "active_inactive":
-            self.data0 = array.clone(array.array('I', []), self.num_cells, zero=False)
+            self.data0 = array.clone(self.uint_template, self.num_cells, zero=False)
         elif filetype == "wind_raw":
-            self.data0 = array.clone(array.array('f', []), self.num_cells, zero=False)
-            self.data1 = array.clone(array.array('f', []), self.num_cells, zero=False)
+            self.data0 = array.clone(self.float_template, self.num_cells, zero=False)
+            self.data1 = array.clone(self.float_template, self.num_cells, zero=False)
         elif filetype == "wind_processed":
-            self.data0 = array.clone(array.array('I', []), len(data), zero=False)
-            self.data1 = array.clone(array.array('I', []), len(data), zero=False)
-            self.data2 = array.clone(array.array('f', []), len(data), zero=False)
+            lendata = len(data)
+            self.data0 = array.clone(self.uint_template, lendata, zero=False)
+            self.data1 = array.clone(self.uint_template, lendata, zero=False)
+            self.data2 = array.clone(self.float_template, lendata, zero=False)
 
         # Read the data
         cdef unsigned ind = 0
@@ -128,13 +130,13 @@ cdef class SpatialDependence:
         cdef unsigned num_active = len(global_index)
         cdef unsigned i
         if self.filename == "active_inactive":
-            c0 = array.clone(array.array('I', []), num_active, zero = False)
+            c0 = array.clone(self.uint_template, num_active, zero = False)
             for i in range(num_active):
                 c0.data.as_uints[i] = self.data0.data.as_uints[global_index.data.as_uints[i]]
             self.data0 = c0
         elif self.filename == "wind_raw":
-            c0 = array.clone(array.array('f', []), num_active, zero = False)
-            c1 = array.clone(array.array('f', []), num_active, zero = False)
+            c0 = array.clone(self.float_template, num_active, zero = False)
+            c1 = array.clone(self.float_template, num_active, zero = False)
             for i in range(num_active):
                 c0.data.as_floats[i] = self.data0.data.as_floats[global_index.data.as_uints[i]]
                 c1.data.as_floats[i] = self.data1.data.as_floats[global_index.data.as_uints[i]]

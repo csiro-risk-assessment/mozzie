@@ -41,6 +41,11 @@ cdef class SpatialDependence:
     # event more imported data
     cdef array.array data2
 
+    # unsigned array template, for faster building of arrays
+    cdef array.array uint_template
+    # float array template, for faster building of arrays
+    cdef array.array float_template
+
     cpdef parse(self, str filename, str filetype, list required_additional_headers)
     """Parses filename and places data into self.data internal data structures
     Filename must have the following format:

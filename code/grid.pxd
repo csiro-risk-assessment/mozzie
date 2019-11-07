@@ -18,6 +18,9 @@ cdef class Grid:
     # number of cells
     cpdef unsigned num_cells
 
+    # a template for making an unsigned integer arrays quickly
+    cpdef array.array uint_template
+
     # whether a cell is active (1) or not (0)
     cpdef array.array active
 
@@ -27,7 +30,7 @@ cdef class Grid:
     # global_index[i] = global index of the active cell index i.  Here i ranges from 0 to num_active_cells - 1, and the global_index values will be between 0 and num_cells - 1
     cpdef array.array global_index
 
-    # active[i] = active cell index of the global cell index i.  Here i ranges from 0 to num_cells - 1, and active_index values will range from 0 to num_active_cells - 1
+    # active_index[i] = active cell index of the global cell index i.  Here i ranges from 0 to num_cells - 1, and active_index values will range from 0 to num_active_cells - 1
     cpdef array.array active_index
 
     # connectivity information: connect_from[i] is a cell number that connects to cell number connect_to[i].  These arrays contain only active cells
@@ -109,10 +112,14 @@ cdef class Grid:
     """Returns the connections to the active cells"""
 
     cpdef array.array getGlobalIndex(self)
-    """Returns the global index of the active cells"""
+    """Returns the global index of the active cells
+    The returned array is global_index[i] = global cell index of the active cell index i.
+    Here i ranges from 0 to num_active_cells - 1, and the values of global_index range from 0 to num_cells - 1"""
 
     cpdef array.array getActiveIndex(self)
-    """Returns the active index of the the global cell array"""
+    """Returns the active index of the the global cell array.
+    The returned array is active_index[i] = active cell index of the global cell index i.
+    Here i ranges from 0 to num_cells - 1, and the values of active_index range from 0 to num_active_cells - 1"""
 
     cpdef outputActiveCSV(self, str filename)
     "Outputs the active information to a file"""

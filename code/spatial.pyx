@@ -83,9 +83,10 @@ cdef class Spatial:
         self.diffusing_indices = Cell().getDiffusingIndices()
         self.num_diffusing_populations_total = self.num_active_cells * self.num_diffusing_populations_at_cell
         # initialize change_diff
-        self.change_diff = array.clone(array.array('f', []), self.num_diffusing_populations_total, zero = False)
+        cdef array.array float_template = array.array('f', [])
+        self.change_diff = array.clone(float_template, self.num_diffusing_populations_total, zero = False)
         # initialize all_diffusing_populations
-        self.all_diffusing_populations = array.clone(array.array('f', []), self.num_diffusing_populations_total, zero = False)
+        self.all_diffusing_populations = array.clone(float_template, self.num_diffusing_populations_total, zero = False)
 
         self.connections_from = self.grid.getConnectionsFrom()
         self.connections_to = self.grid.getConnectionsTo()

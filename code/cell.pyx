@@ -23,7 +23,7 @@ cdef class Cell:
 
     def __init__(self):
         """Initialise the Cell with a zero population"""
-        self.population = array.array('f', [0.0] * num_populations)
+        self.population = array.clone(array.array('f', []), num_populations, zero = True)
 
     cpdef unsigned getNumberOfPopulations(self):
         return num_populations

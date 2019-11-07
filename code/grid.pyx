@@ -1,13 +1,14 @@
 #   #cython: boundscheck=False, wraparound=False, nonecheck=False
 import os
 import time
+from libc.string cimport memset
 
 # maximum number of nearest neighbours that are possible for each cell
 cdef unsigned max_num_nn = 4
 
 cdef class Grid:
 
-    def __init__(self, float xmin, float ymin, float cell_size, unsigned nx, unsigned ny):
+    def __init__(self, float xmin, float ymin, float cell_size, unsigned nx, unsigned ny, build_adjacency_list = True):
 
         if cell_size <= 0.0:
             raise ValueError("Cell size must be positive")
@@ -20,18 +21,31 @@ cdef class Grid:
 
         self.num_cells = nx * ny
 
+        self.uint_template = array.array('I', [])
+
         # initialise activity information to "all active"
         # This should never be resized, without eventually making its size = self.num_cells, for we use the unsafe access to the raw C pointer
-        self.active = array.array('I', [1] * self.num_cells)
+        self.active = array.clone(self.uint_template, self.num_cells, zero = False)
+        cdef unsigned ind
+        for ind in range(self.num_cells):
+            self.active.data.as_uints[ind] = 1
         self.active_filename = "None"
+        self.num_active_cells = self.num_cells
 
-        # initialise active_index to dummy values "num_cells" which indicates active_index[i] is "not an active cell"
+        # initialise active_index, so active_index[i] = i, since all cells are currently active
         # This should never be resized, for we use the unsafe access to the raw C pointer
-        self.active_index = array.array('I', [self.num_cells] * self.num_cells) # use some dummy values
+        self.active_index = array.clone(self.uint_template, self.num_cells, zero = False)
+        for ind in range(self.num_cells):
+            self.active_index.data.as_uints[ind] = ind
 
-        # build active and adjacency information
-        self.computeNumActive()
-        self.buildAdjacency()
+        # initialise global_index, so global_index[i] = i, since all cells are currently active
+        self.global_index = array.clone(self.uint_template, self.num_cells, zero = False)
+        for ind in range(self.num_cells):
+            self.global_index.data.as_uints[ind] = ind
+
+        # build adjacency information
+        if build_adjacency_list:
+            self.buildAdjacency()
 
 
     cdef unsigned internal_global_index(self, unsigned x_ind, unsigned y_ind):
@@ -73,7 +87,7 @@ cdef class Grid:
         """Computes self.num_active_cells, self.global_index.  Also, checks if there are entries that are not zero or one"""
 
         self.num_active_cells = 0
-        self.global_index = array.array('I', [0] * self.num_cells) # maximum size it can be: below we resize it smaller
+        self.global_index = array.clone(self.uint_template, self.num_cells, zero = False) # maximum size it can be: below we resize it smaller
         cdef unsigned i
         for i in range(len(self.active)):
             if self.active.data.as_uints[i] == 0:
@@ -90,8 +104,8 @@ cdef class Grid:
         """Builds connect_from and connect_to, and num_connections, based on the self.active"""
 
         # initialise connectivity information to a very large array.  This is for efficiency (can use data.as_uints below) and we resize appropriately at the very end
-        self.connect_from = array.array('I', [0] * self.num_cells * max_num_nn)
-        self.connect_to = array.array('I', [0] * self.num_cells * max_num_nn)
+        self.connect_from = array.clone(self.uint_template,  self.num_cells * max_num_nn, zero = False)
+        self.connect_to = array.clone(self.uint_template, self.num_cells * max_num_nn, zero = False)
         self.num_connections = 0
         cdef unsigned x_ind
         cdef unsigned y_ind
