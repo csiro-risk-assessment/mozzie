@@ -37,14 +37,18 @@ if True:
       start = timeit.default_timer()
       w.parseRawFile()
       sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
+   output_required = False
+   if output_required:
       sys.stdout.write("Outputting particle-tracking result (not necessary if particle-tracking pre-done)...")
       start = timeit.default_timer()
       w.outputProcessedCSV()
       sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
-   sys.stdout.write("Inputing the particle-tracking result...")
-   start = timeit.default_timer()
-   w.parseProcessedFile()
-   sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
+   input_required = False
+   if input_required:
+      sys.stdout.write("Inputing the particle-tracking result...")
+      start = timeit.default_timer()
+      w.parseProcessedFile()
+      sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 
 # define mosquito populations
 sys.stdout.write("Defining the populations...")
