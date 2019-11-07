@@ -105,22 +105,29 @@ class TestGrid(unittest.TestCase):
       self.assertEqual(str(the_err.exception), "Cannot open or read no_such_file")
 
    def testBadActiveFile(self):
-      for num in range(1, 12):
+      for num in range(1, 13):
          num = str(num)
          with self.assertRaises(ValueError) as the_err:
             self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
-         self.assertEqual(str(the_err.exception), "The header line in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv") + " does not match #xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3")
+         self.assertEqual(str(the_err.exception), "Header lines in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv") + " must include #xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3")
 
-      num = "12"
-      with self.assertRaises(ValueError) as the_err:
-         self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
-      self.assertEqual(str(the_err.exception), "Header line of the form #xmin=... not found in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
-
-      for num in range(13, 16):
+      for num in range(13, 15):
          num = str(num)
          with self.assertRaises(ValueError) as the_err:
             self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
-         self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv") + " must be CSV formatted.  Each line in the file corresponds to a row (constant y) of cells, so must contain 4 entries (separated by commas).  Each entry must be either 0 (inactive) or 1 (active).  There must be 3 such rows.  The first row corresponds to cells at y=ymin, the next row at y=ymin+cell_size, etc")
+         self.assertEqual(str(the_err.exception), "There must be 4 entries per line in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
+
+      for num in range(15, 16):
+         num = str(num)
+         with self.assertRaises(ValueError) as the_err:
+            self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
+         self.assertEqual(str(the_err.exception), "There must be 3 data lines in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
+
+      for num in range(16, 17):
+         num = str(num)
+         with self.assertRaises(ValueError) as the_err:
+            self.g1.setActiveAndInactive(os.path.join(findbin, "bad_inactive_active" + num + ".csv"))
+         self.assertEqual(str(the_err.exception), "The data entries in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv must be either 0 or 1"))
 
    def testOutputActiveCSV(self):
       fn = os.path.join(findbin, "active_output.csv")

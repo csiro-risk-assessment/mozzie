@@ -9,6 +9,7 @@ sys.path.append(findbin + "/../code")
 from grid import Grid
 from cell import Cell
 from spatial import Spatial
+from populations import Populations
 
 def arrayfuzzyequal(a, b, eps):
    return all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(0, len(a))])
@@ -22,18 +23,15 @@ class TestDiffusion_2(unittest.TestCase):
       # now make some inactive
       self.grid.setActiveAndInactive(os.path.join(findbin, "inactive_active_8x8.csv"))
       
-
-      # build all cells
-      self.all_cells = []
-      for i in range(self.grid.getNumActiveCells()):
-         self.all_cells.append(Cell())
+      # all the populations
+      self.all_pops = Populations(self.grid)
       # centre cell starts with nonzero population
       pop = list(range(Cell().getNumberOfPopulations()))
-      self.all_cells[17].setPopulations(pop)
+      self.all_pops.setPopulation(17, pop)
 
       # initialise the spatial structure with timestep = 0.5 and diffusion coefficient = 0.075
       # hence diffusion_d = 0.6
-      self.spatial = Spatial(0.5, 0.075, self.grid, self.all_cells)
+      self.spatial = Spatial(0.5, 0.075, self.grid, self.all_pops)
 
 
    def testDiffuse1(self):

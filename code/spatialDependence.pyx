@@ -1,0 +1,170 @@
+import time
+import array
+cimport cpython.array as array
+
+cdef class SpatialDependence:
+
+    def __init__(self, float xmin, float ymin, float cell_size, unsigned nx, unsigned ny):
+
+        self.xmin = xmin
+        self.ymin = ymin
+        self.cell_size = cell_size
+        self.nx = nx
+        self.ny = ny
+        self.num_cells = nx * ny
+        self.required_header = "#xmin=" + str(xmin) + ",ymin=" + str(ymin) + ",cell_size=" + str(cell_size) + ",nx=" + str(nx) + ",ny=" + str(ny)
+        self.filetype = "NO_FILETYPE"
+        self.data0 = array.array('I', [])
+        self.data1 = array.array('I', [])
+        self.data2 = array.array('I', [])
+
+    cpdef parse(self, str filename, str filetype, list required_additional_headers):
+        if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed"):
+            raise ValueError("filetype not recognized")
+        self.filetype = filetype
+
+        # open and read file
+        try:
+            with open(filename, 'r') as f:
+                data = f.readlines()
+        except:
+            raise IOError('Cannot open or read ' + filename)
+
+        # check the header
+        try:
+            self.checkHeader(data, filename, required_additional_headers + [self.required_header])
+        except:
+            raise
+
+        # Size data with full-sized arrays
+        if filetype == "active_inactive":
+            self.data0 = array.clone(array.array('I', []), self.num_cells, zero=False)
+        elif filetype == "wind_raw":
+            self.data0 = array.clone(array.array('f', []), self.num_cells, zero=False)
+            self.data1 = array.clone(array.array('f', []), self.num_cells, zero=False)
+        elif filetype == "wind_processed":
+            self.data0 = array.clone(array.array('I', []), len(data), zero=False)
+            self.data1 = array.clone(array.array('I', []), len(data), zero=False)
+            self.data2 = array.clone(array.array('f', []), len(data), zero=False)
+
+        # Read the data
+        cdef unsigned ind = 0
+        cdef unsigned i, j
+        for line in data:
+            if not line.strip():
+                continue
+            line = line.strip()
+            if line.startswith("#"):
+                continue
+            try:
+                line = line.split(",")
+                if filetype == "active_inactive":
+                    if ind >= self.num_cells:
+                        raise ValueError("There must be " + str(self.ny) + " data lines in " + filename)
+                    if len(line) != self.nx:
+                        raise ValueError("There must be " + str(self.nx) + " entries per line in " + filename)
+                    for i in range(self.nx):
+                        j = int(line[i])
+                        if not (j == 0 or j == 1):
+                            raise ValueError("The data entries in " + filename + " must be either 0 or 1")
+                        self.data0.data.as_uints[ind] = j
+                        ind += 1
+                elif filetype == "wind_raw":
+                    if ind >= self.num_cells:
+                        raise ValueError("There must be " + str(self.ny) + " data lines in " + filename)
+                    if len(line) != 2 * self.nx:
+                        raise ValueError("There must be " + str(2 * self.nx) + " entries per line in " + filename)
+                    for i in range(self.nx):
+                        self.data0.data.as_floats[ind] = float(line[2 * i])
+                        self.data1.data.as_floats[ind] = float(line[2 * i + 1])
+                        ind += 1
+                elif filetype == "wind_processed":
+                    if len(line) != 3:
+                        raise ValueError("There must be 3 entries per line in " + filename)
+                    self.data0.data.as_uints[ind] = int(line[0])
+                    self.data1.data.as_uints[ind] = int(line[1])
+                    self.data2.data.as_floats[ind] = float(line[2])
+                    ind += 1
+            except:
+                raise 
+
+        if filetype == "active_inactive" or filetype == "wind_raw":
+            if ind != self.num_cells:
+                raise ValueError("There must be " + str(self.ny) + " data lines in " + filename)
+        elif filetype == "wind_processed":
+            array.resize(self.data0, ind)
+            array.resize(self.data1, ind)
+            array.resize(self.data2, ind)
+
+
+    cdef checkHeader(self, list data, str filename, list required_headers):
+        headers_found = []
+        for line in data:
+            if not line.strip():
+                continue
+            line = line.strip()
+            # all filetypes must have this header:
+            if line.startswith("#"):
+                if line in required_headers:
+                    headers_found.append(line)
+                continue
+            else:
+                # must be starting to read data
+                break
+        if len(headers_found) != len(required_headers):
+            raise ValueError("Header lines in " + filename + " must include " + "\n".join(required_headers))
+
+
+    cpdef array.array getData0(self):
+        return self.data0
+    cpdef array.array getData1(self):
+        return self.data1
+    cpdef array.array getData2(self):
+        return self.data2
+
+    cpdef void restrictToActive(self, array.array global_index):
+        cdef array.array c0
+        cdef array.array c1
+        cdef unsigned num_active = len(global_index)
+        cdef unsigned i
+        if self.filename == "active_inactive":
+            c0 = array.clone(array.array('I', []), num_active, zero = False)
+            for i in range(num_active):
+                c0.data.as_uints[i] = self.data0.data.as_uints[global_index.data.as_uints[i]]
+            self.data0 = c0
+        elif self.filename == "wind_raw":
+            c0 = array.clone(array.array('f', []), num_active, zero = False)
+            c1 = array.clone(array.array('f', []), num_active, zero = False)
+            for i in range(num_active):
+                c0.data.as_floats[i] = self.data0.data.as_floats[global_index.data.as_uints[i]]
+                c1.data.as_floats[i] = self.data1.data.as_floats[global_index.data.as_uints[i]]
+            self.data0 = c0
+            self.data1 = c1
+
+    cpdef outputCSV(self, str filename, array.array active, str inactive_value, str additional_header_lines):
+        f = open(filename, 'w')
+        f.write("#File written at: " + time.asctime() + "\n")
+        f.write(self.required_header + "\n")
+        f.write(additional_header_lines)
+        cdef unsigned x_ind
+        cdef unsigned y_ind
+        cdef unsigned ind, active_ind
+        for y_ind in range(self.ny):
+            for x_ind in range(self.nx - 1):
+                ind = y_ind * self.nx + x_ind
+                active_ind = active[ind]
+                if active_ind == self.num_cells:
+                    # inactive cell
+                    f.write(inactive_value + ",")
+                else:
+                    f.write(str(self.data0[active_ind]) + ",")
+            x_ind = self.nx - 1
+            ind = y_ind * self.nx + x_ind
+            active_ind = active[ind]
+            if active_ind == self.num_cells:
+                # inactive cell
+                f.write(inactive_value + "\n")
+            else:
+                f.write(str(self.data0[active_ind]) + "\n")
+        f.close()
+

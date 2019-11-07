@@ -8,3 +8,4 @@ mpicc $gcc_flags wind.c -o wind.so
 mpicc $gcc_flags cell.c -o cell.so
 mpicc $gcc_flags spatial.c -o spatial.so
 mpicc $gcc_flags populations.c -o populations.so
+mpicc $gcc_flags spatialDependence.c -o spatialDependence.so

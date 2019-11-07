@@ -1,6 +1,7 @@
 import array
 cimport cpython.array as array
 from grid cimport Grid
+from spatialDependence cimport SpatialDependence
 
 cdef class Wind:
     """Defines wind advection.
@@ -55,6 +56,9 @@ cdef class Wind:
     cdef array.array active_index
 
     cdef unsigned num_active_cells
+
+    # the parser that provides the wind information by parsing either raw_wind_fn or processed_wind_fn
+    cpdef SpatialDependence windParser
 
     cpdef parseRawFile(self)
     """Parse the raw wind file specified in the constructor, then processes this data to produce advection_from, etc"""

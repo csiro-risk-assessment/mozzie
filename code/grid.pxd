@@ -1,5 +1,6 @@
 import array
 cimport cpython.array as array
+from spatialDependence cimport SpatialDependence
 
 cdef class Grid:
     """Defines the grid, most imporantly the active cells and nearest-neighbour connections between them.
@@ -38,6 +39,9 @@ cdef class Grid:
 
     # filename that defines the active cells (defaults to "None")
     cpdef str active_filename
+
+    # the parser that provides the active cells by parsing active_filename
+    cpdef SpatialDependence activeParser
 
     cdef unsigned internal_global_index(self, unsigned x_ind, unsigned y_ind)
     """provides the index used in this class, given x and y cell number.

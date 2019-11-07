@@ -59,40 +59,10 @@ cdef class Grid:
         - Each row must have nx comma-separated entries.
         - The entries are either 0 (cell is inactive) or 1 (cell is active)"""
 
-        try:
-            with open(filename, 'r') as f:
-                data = f.readlines()
-        except:
-            raise IOError('Cannot open or read ' + filename)
+        self.activeParser = SpatialDependence(self.xmin, self.ymin, self.cell_size, self.nx, self.ny)
+        self.activeParser.parse(filename, "active_inactive", [])
+        self.active = self.activeParser.getData0()
         self.active_filename = os.path.basename(filename)
-
-        self.active = array.array('I', []) # warning: need to check the final length = self.num_cells, otherwise self.active.data.as_uints will fail somewhere
-        checked_header = False
-        data_string_error = "Data in " + filename + " must be CSV formatted.  Each line in the file corresponds to a row (constant y) of cells, so must contain " + str(self.nx) + " entries (separated by commas).  Each entry must be either 0 (inactive) or 1 (active).  There must be " + str(self.ny) + " such rows.  The first row corresponds to cells at y=ymin, the next row at y=ymin+cell_size, etc"
-        for line in data:
-            if not line.strip():
-                continue
-            line = line.strip()
-            if line.startswith("#xmin"):
-                self.checkHeaderLine(filename, line)
-                checked_header = True
-                continue
-            if line.startswith("#"):
-                continue
-            # can only get here if we should be reading data
-            if not checked_header:
-                raise ValueError("Header line of the form #xmin=... not found in " + filename)
-
-            try:
-                line = [int(i) for i in line.split(",")]
-            except:
-                raise ValueError(data_string_error)
-            if len(line) != self.nx:
-                raise ValueError(data_string_error)
-            array.extend(self.active, array.array('I', line))
-
-        if len(self.active) != self.num_cells:
-            raise ValueError(data_string_error)
 
         # build active and adjacency information
         self.computeNumActive()
@@ -233,23 +203,3 @@ cdef class Grid:
             ind = self.internal_global_index(x_ind, y_ind)
             f.write(str(self.active[ind]) + "\n")
         f.close()
-
-    def checkHeaderLine(self, str filename, str header_line):
-        """catches the most common errors in the header line, which should be of the form: #xmin=blahblah"""
-        header_string_error = "The header line in " + filename + " does not match #xmin=" + str(self.xmin) + ",ymin=" + str(self.ymin) + ",cell_size=" + str(self.cell_size) + ",nx=" + str(self.nx) + ",ny=" + str(self.ny)
-        line = header_line.split(",")
-        if len(line) != 5:
-            raise ValueError(header_string_error)
-        if not (line[0].startswith("#xmin=") and line[1].startswith("ymin=") and line[2].startswith("cell_size=") and line[3].startswith("nx=") and line[4].startswith("ny=")):
-            raise ValueError(header_string_error)
-        try:
-            xmin = float(line[0].split("=")[1])
-            ymin = float(line[1].split("=")[1])
-            cell_size = float(line[2].split("=")[1])
-            nx = int(line[3].split("=")[1])
-            ny = int(line[4].split("=")[1])
-        except:
-            raise ValueError(header_string_error)
-        if not (xmin == self.xmin and ymin == self.ymin and cell_size == self.cell_size and nx == int(self.nx) and ny == int(self.ny)):
-            raise ValueError(header_string_error)
-        

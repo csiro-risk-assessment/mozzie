@@ -9,6 +9,7 @@ sys.path.append(findbin + "/../code")
 from grid import Grid
 from cell import Cell
 from spatial import Spatial
+from populations import Populations
 
 def arrayfuzzyequal(a, b, eps):
    return all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(0, len(a))])
@@ -20,17 +21,15 @@ class TestDiffusion_1(unittest.TestCase):
       nx = 8
       self.grid = Grid(-0.25 * nx, -0.25 * nx, 0.5, nx, nx)
 
-      # build all cells
-      self.all_cells = []
-      for i in range(nx * nx):
-         self.all_cells.append(Cell())
+      # all the populations
+      self.all_pops = Populations(self.grid)
       # centre cell starts with nonzero population
       pop = list(range(Cell().getNumberOfPopulations()))
-      self.all_cells[(nx * (nx + 1)) // 2].setPopulations(pop)
+      self.all_pops.setPopulation((nx * (nx + 1)) // 2, pop)
 
       # initialise the spatial structure with timestep = 0.5 and diffusion coefficient = 0.075
       # hence diffusion_d = 0.6
-      self.spatial = Spatial(0.5, 0.075, self.grid, self.all_cells)
+      self.spatial = Spatial(0.5, 0.075, self.grid, self.all_pops)
 
 
    def testDiffuse1(self):

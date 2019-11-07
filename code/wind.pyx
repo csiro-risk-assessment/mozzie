@@ -48,128 +48,30 @@ cdef class Wind:
 
     cpdef parseRawFile(self):
         """Parse the raw wind file specified in the constructor, then processes this data to produce advection_from, etc"""
-
-        # utility indices
-        cdef unsigned i, ind, active_ind
-        # x and y indices
-        cdef unsigned x_ind, y_ind
-        
-        try:
-            with open(self.raw_wind_fn, 'r') as f:
-                data = f.readlines()
-        except:
-            raise IOError('Cannot open or read ' + self.raw_wind_fn)
-
-        self.raw_velx = array.array('f', [0.0] * self.grid.getNumCells())
-        self.raw_vely = array.array('f', [0.0] * self.grid.getNumCells())
-        checked_header = False
-        data_string_error = "Data in " + self.raw_wind_fn + " must be CSV formatted.  Each line in the file corresponds to a row (constant y) of cells, so must contain " + str(2 * self.nx) + " entries (separated by commas).  Entries come (vel_x, vel_y) pairs, so a row is of the form vx0,vy0,vx1,vy1,vx2,vy2,....  There must be " + str(self.ny) + " such rows.  The first row corresponds to cells at y=ymin, the next row at y=ymin+cell_size, etc"
-        y_ind = 0
-        for line in data:
-            if not line.strip():
-                continue
-            line = line.strip()
-            if line.startswith("#xmin"):
-                self.grid.checkHeaderLine(self.raw_wind_fn, line)
-                checked_header = True
-                continue
-            if line.startswith("#"):
-                continue
-            # can only get here if we should be reading data
-            if not checked_header:
-                raise ValueError("Header line of the form #xmin=... not found in " + self.raw_wind_fn)
-
-            try:
-                line = [float(vel_comp) for vel_comp in line.split(",")]
-            except:
-                raise ValueError(data_string_error)
-            if len(line) != 2 * self.nx:
-                raise ValueError(data_string_error)
-
-            if y_ind >= self.ny:
-                raise ValueError(data_string_error)
-            for i in range(self.nx):
-                self.raw_velx[y_ind * self.nx + i] = line[2 * i] / self.cell_size
-                self.raw_vely[y_ind * self.nx + i] = line[2 * i + 1] / self.cell_size
-            y_ind += 1
-                
-        if y_ind != self.ny:
-            raise ValueError(data_string_error)
-
+        self.windParser = SpatialDependence(self.xmin, self.ymin, self.cell_size, self.nx, self.ny)
+        self.windParser.parse(self.raw_wind_fn, "wind_raw", [])
+        self.raw_velx = self.windParser.getData0()
+        self.raw_vely = self.windParser.getData1()
+        cdef unsigned ind
+        for ind in range(self.num_cells):
+            self.raw_velx.data.as_floats[ind] = self.raw_velx.data.as_floats[ind] / self.cell_size
+            self.raw_vely.data.as_floats[ind] = self.raw_vely.data.as_floats[ind] / self.cell_size
         self.processRawVelocities()
         self.processed_data_computed = 1
 
     cpdef parseProcessedFile(self):
         """Parse the processed wind file specified in the constructor, putting the results in advection_from, etc"""
+        self.windParser = SpatialDependence(self.xmin, self.ymin, self.cell_size, self.nx, self.ny)
+        self.windParser.parse(self.processed_wind_fn, "wind_processed", ["#Active cells defined by file " + self.grid.getActiveFilename(), "#raw_vel_filename=" + os.path.basename(self.raw_wind_fn), "#processed_pdf=" + str(self.pdf)])
+        self.advection_from = self.windParser.getData0()
+        self.advection_to = self.windParser.getData1()
+        self.advection_p = self.windParser.getData2()
+        self.num_advection = len(self.advection_from)
 
-        try:
-            with open(self.processed_wind_fn, 'r') as f:
-                data = f.readlines()
-        except:
-            raise IOError('Cannot open or read ' + self.processed_wind_fn)
-
-        # size the arrays to the maximum possible length (there will be header lines in data)
-        self.advection_from = array.array('I', [0] * len(data))
-        self.advection_to = array.array('I', [0] * len(data))
-        self.advection_p = array.array('f', [0.0] * len(data))
-        self.num_advection = 0
-
-        cdef unsigned afr, ato
-        cdef float app
-
-        checked_xmin_header = False
-        checked_active_header = False
-        checked_raw_fn = False
-        checked_pdf = False
-        data_string_error = "Data in " + self.processed_wind_fn + " must be CSV formatted.  Each line must contain integer1,integer2,float , where integer1 = active cell index from where mosquitoes are advecting; integer2 = active cell index to which mosquitoes are advecting; float = probability of this occuring"
-        for line in data:
-            if not line.strip():
-                continue
-            line = line.strip()
-            if line.startswith("#xmin"):
-                self.grid.checkHeaderLine(self.processed_wind_fn, line)
-                checked_xmin_header = True
-                continue
-            if line.startswith("#Active"):
-                if line != "#Active cells defined by file " + self.grid.getActiveFilename():
-                    raise ValueError("Active cell filename in " + self.processed_wind_fn + " incompatible with that specified in the grid, which is " + self.grid.getActiveFilename())
-                checked_active_header = True
-                continue
-            if line.startswith("#raw_vel_filename"):
-                if line != "#raw_vel_filename=" + os.path.basename(self.raw_wind_fn):
-                    raise ValueError("Raw velocity filename in " + self.processed_wind_fn + " incompatible with that specified in the wind constructor, which is " + os.path.basename(self.raw_wind_fn))
-                checked_raw_fn = True
-                continue
-            if line.startswith("#processed_pdf"):
-                if line != "#processed_pdf=" + str(self.pdf):
-                    raise ValueError("PDF specified in " + self.processed_wind_fn + " incompatible with that specified in the wind constructor.  Remember the file's version is processed to give dt values rather than t values")
-                checked_pdf = True
-                continue
-            if line.startswith("#"):
-                continue
-
-            # can only get here if we should be reading data
-            if not (checked_xmin_header and checked_active_header and checked_raw_fn and checked_pdf):
-                raise ValueError("Not all header lines found in " + self.processed_wind_fn)
-
-            try:
-                line = line.split(",")
-                afr, ato, app = int(line[0]), int(line[1]), float(line[2])
-            except:
-                raise ValueError(data_string_error)
-            if len(line) != 3:
-                raise ValueError(data_string_error)
-            if afr >= self.num_active_cells or ato >= self.num_active_cells or app > 1.0 or app < 0.0:
-                raise ValueError("Data in " + self.processed_wind_fn + " is incorrectly bounded.  Bad line = " + ",".join(line))
-
-            self.advection_from[self.num_advection] = afr
-            self.advection_to[self.num_advection] = ato
-            self.advection_p[self.num_advection] = app
-            self.num_advection += 1
-
-        array.resize(self.advection_from, self.num_advection)
-        array.resize(self.advection_to, self.num_advection)
-        array.resize(self.advection_p, self.num_advection)
+        cdef unsigned ind
+        for ind in range(self.num_advection):
+            if self.advection_from.data.as_uints[ind] >= self.num_active_cells or self.advection_to.data.as_uints[ind] >= self.num_active_cells or self.advection_p.data.as_floats[ind] > 1.0 or self.advection_p.data.as_floats[ind] < 0.0:
+                raise ValueError("Data in " + self.processed_wind_fn + " is incorrectly bounded.  Bad data line number = " + str(ind))
 
         self.processed_data_computed = 1
 
