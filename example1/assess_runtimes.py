@@ -1,6 +1,7 @@
 # Processes wind vectors given by Nick into a single file, wind.csv, and changing to m/day
 import os
 import sys
+import array
 
 sys.stdout.write("NOTE: You will have to run this a few times to properly assess runtimes\n")
 sys.stdout.write("      This is because your runtime will be impacted by other processes on your system\n\n")
@@ -30,6 +31,33 @@ sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 sys.stdout.write("There are " + str(g1.getNumActiveCells()) + " active cells\n")
 
 
+# define mosquito populations and parameters
+sys.stdout.write("Defining the populations...")
+start = timeit.default_timer()
+cell = CellDynamicsStatic15_9_3_2()
+all_pops = PopulationsAndParameters(g1, cell)
+sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
+# some place has a non-zero population
+sys.stdout.write("Introducing mosquitoes...")
+start = timeit.default_timer()
+pop = list(range(all_pops.getCell().getNumberOfPopulations() + all_pops.getCell().getNumberOfParameters()))
+all_pops.setPopulationAndParameters(g1.getNumActiveCells() // 2, pop)
+sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
+
+# initialise the spatial structure with timestep = 1 day and diffusion coefficient = 1E4 m^2/day and advection fraction = 0.5
+# No wind
+sys.stdout.write("Defining the spatial structure, ready for diffusion...")
+start = timeit.default_timer()
+spatial = SpatialDynamics(1.0, 1E4, 0.5, g1, array.array('f', []), [], all_pops)
+sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
+
+sys.stdout.write("Diffusing\n")
+start = timeit.default_timer()
+for i in range(1, 11):
+   sys.stdout.write("Time step " + str(i) + "\n")
+   spatial.diffuse()
+sys.stdout.write("Time for 1 diffusion step = " + str((timeit.default_timer() - start) / 10.0) + "s\n")
+
 if True:
    sys.stdout.write("Initialising wind...")
    start = timeit.default_timer()
@@ -54,31 +82,6 @@ if True:
       w.parseProcessedFile()
       sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 
-# define mosquito populations and parameters
-sys.stdout.write("Defining the populations...")
-start = timeit.default_timer()
-cell = CellDynamicsStatic15_9_3_2()
-all_pops = PopulationsAndParameters(g1, cell)
-sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
-# some place has a non-zero population
-sys.stdout.write("Introducing mosquitoes...")
-start = timeit.default_timer()
-pop = list(range(all_pops.getCell().getNumberOfPopulations() + all_pops.getCell().getNumberOfParameters()))
-all_pops.setPopulationAndParameters(g1.getNumActiveCells() // 2, pop)
-sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
-
-# initialise the spatial structure with timestep = 1 day and diffusion coefficient = 1E4 m^2/day
-sys.stdout.write("Defining the spatial structure, ready for diffusion...")
-start = timeit.default_timer()
-spatial = SpatialDynamics(1.0, 1E4, g1, all_pops)
-sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
-
-sys.stdout.write("Diffusing\n")
-start = timeit.default_timer()
-for i in range(1, 11):
-   sys.stdout.write("Time step " + str(i) + "\n")
-   spatial.diffuse()
-sys.stdout.write("Time for 1 diffusion step = " + str((timeit.default_timer() - start) / 10.0) + "s\n")
 
 
 sys.exit(0)

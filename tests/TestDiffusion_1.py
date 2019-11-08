@@ -29,13 +29,12 @@ class TestDiffusion_1(unittest.TestCase):
       pop = list(range(self.cell.getNumberOfPopulations() + self.cell.getNumberOfParameters()))
       self.all_quantities.setPopulationAndParameters((nx * (nx + 1)) // 2, pop)
 
-      # initialise the spatial dynamics with timestep = 0.5 and diffusion coefficient = 0.075
-      # hence diffusion_d = 0.6
-      self.spatial = SpatialDynamics(0.5, 0.075, self.grid, self.all_quantities)
+      self.spatial = SpatialDynamics(self.grid, self.all_quantities)
 
 
    def testDiffuse1(self):
-      self.spatial.diffuse()
+      # diffuse with timestep = 0.5 and diffusion coefficient = 0.075, hence diffusion_d = 0.6
+      self.spatial.diffuse(0.5, 0.075)
       self.spatial.outputCSV(os.path.join(findbin, "2D_diffusion_out_1.csv"), 2)
       with open(os.path.join(findbin, "2D_diffusion_out_1.csv")) as f:
          data = f.readlines()
@@ -45,7 +44,7 @@ class TestDiffusion_1(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[4].strip().split(",")], [0, 0, 0, 0.3, 0.8, 0.3, 0, 0], 1E-5))
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[5].strip().split(",")], [0, 0, 0, 0, 0.3, 0, 0, 0], 1E-5))
       
-      self.spatial.diffuse()
+      self.spatial.diffuse(0.5, 0.075)
       self.spatial.outputCSV(os.path.join(findbin, "2D_diffusion_out_2.csv"), 2)
       with open(os.path.join(findbin, "2D_diffusion_out_2.csv")) as f:
          data = f.readlines()

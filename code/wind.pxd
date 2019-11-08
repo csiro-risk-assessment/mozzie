@@ -96,19 +96,19 @@ cdef class Wind:
     """Returns 1 if processed advection data has been computed"""
 
     cpdef array.array getAdvectionFrom(self)
-    """Before calling this, check that getFileRead() == 1.
+    """Before calling this, check that getProcessedDataComputed() == 1.
     Returns an array containing active cell indices from which advection occurs.
     For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
     getAdvectionTo()[i] with probability getAdvectionP()[i]"""
     
     cpdef array.array getAdvectionTo(self)
-    """Before calling this, check that getFileRead() == 1.
+    """Before calling this, check that getProcessedDataComputed() == 1.
     Returns an array containing active cell indices to which advection occurs.
     For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
     getAdvectionTo()[i] with probability getAdvectionP()[i]"""
     
     cpdef array.array getAdvectionP(self)
-    """Before calling this, check that getFileRead() == 1.
+    """Before calling this, check that getProcessedDataComputed() == 1.
     Returns an array containing advection probability.active cell indices to which advection occurs.
     For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
     getAdvectionTo()[i] with probability getAdvectionP()[i]"""
