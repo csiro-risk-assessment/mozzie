@@ -3,12 +3,16 @@ cimport cpython.array as array
 from wind cimport Wind
 from grid cimport Grid
 from populationsAndParameters cimport PopulationsAndParameters
+from cellDynamics cimport CellDynamicsBase
 
 cdef class SpatialDynamics:
     """Performs the diffusion and advection over the grid"""
 
     # the grid
     cdef Grid grid
+
+    # a reference to the cell in the PopulationsAndParameters
+    cdef CellDynamicsBase cell
 
     # all the quantities (populations and parameters) of all active cells
     cpdef array.array all_quantities
@@ -61,15 +65,21 @@ cdef class SpatialDynamics:
     # all the advecting populations.  This is a class variable to avoid repeated allocations every time advect() is called
     cdef array.array all_advecting_populations
 
+    # a C array for passing to the cell evolve method
+    cdef array.array cell_params_and_props
+    # a C array for rapid passing to the cell evolve method
+    cdef float[:] c_cell_params_and_props
+
     def __init__(self, Grid grid, PopulationsAndParameters pap):
 
         self.grid = grid
+        self.cell = pap.getCell()
         self.all_quantities = pap.quantities
 
         cdef unsigned i
 
         self.num_active_cells = self.grid.getNumActiveCells()
-        self.num_quantities_at_cell = pap.getCell().getNumberOfPopulations() + pap.getCell().getNumberOfParameters()
+        self.num_quantities_at_cell = self.cell.getNumberOfPopulations() + self.cell.getNumberOfParameters()
         if len(self.all_quantities) != self.num_active_cells * self.num_quantities_at_cell:
             raise ValueError("Incorrect size of all_quantities: " + str(len(self.all_quantities)) + " which should be the product of " + str(self.num_active_cells) + " and " + str(self.num_quantities_at_cell))
         
@@ -77,8 +87,8 @@ cdef class SpatialDynamics:
         
         cdef array.array float_template = array.array('f', [])
 
-        self.num_diffusing_populations_at_cell = pap.getCell().getNumberOfDiffusingPopulations()
-        self.diffusing_indices = pap.getCell().getDiffusingIndices()
+        self.num_diffusing_populations_at_cell = self.cell.getNumberOfDiffusingPopulations()
+        self.diffusing_indices = self.cell.getDiffusingIndices()
         self.num_diffusing_populations_total = self.num_active_cells * self.num_diffusing_populations_at_cell
         # initialize change_diff
         self.change_diff = array.clone(float_template, self.num_diffusing_populations_total, zero = False)
@@ -94,13 +104,16 @@ cdef class SpatialDynamics:
             self.connections_from.data.as_uints[i] = self.num_diffusing_populations_at_cell * self.connections_from.data.as_uints[i]
             self.connections_to.data.as_uints[i] = self.num_diffusing_populations_at_cell * self.connections_to.data.as_uints[i]
         
-        self.num_advecting_populations_at_cell = pap.getCell().getNumberOfAdvectingPopulations()
-        self.advecting_indices = pap.getCell().getAdvectingIndices()
+        self.num_advecting_populations_at_cell = self.cell.getNumberOfAdvectingPopulations()
+        self.advecting_indices = self.cell.getAdvectingIndices()
         self.num_advecting_populations_total = self.num_active_cells * self.num_advecting_populations_at_cell
         # initialize change_adv
         self.change_adv = array.clone(float_template, self.num_advecting_populations_total, zero = False)
         # initialize all_advecting_populations
         self.all_advecting_populations = array.clone(float_template, self.num_advecting_populations_total, zero = False)
+
+        self.cell_params_and_props = array.clone(float_template, self.num_quantities_at_cell, zero = False)
+        self.c_cell_params_and_props = self.cell_params_and_props
 
 
     cpdef void diffuse(self, float dt, float diffusion_coeff):
@@ -202,7 +215,28 @@ cdef class SpatialDynamics:
                 k = j + self.advecting_indices.data.as_uints[p]
                 self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_adv.data.as_floats[i + p]
 
-        
+
+    cpdef evolveCells(self, float timestep):
+        """Evolves all the cells in the grid using the method defined in self.cell"""
+
+        # active cell index
+        cdef unsigned ind
+        # population index
+        cdef unsigned p
+        # utility index
+        cdef unsigned i
+
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_quantities_at_cell
+            # copy into the c_cell_params_and_props local array
+            for p in range(self.num_quantities_at_cell):
+                self.c_cell_params_and_props[p] = self.all_quantities.data.as_floats[i + p]
+            # evolve
+            self.cell.evolve(timestep, self.c_cell_params_and_props)
+            # copy back
+            for p in range(self.num_quantities_at_cell):
+                self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
+
     cpdef outputCSV(self, str filename, unsigned pop_or_param):
         """Outputs cell information for given population or parameter number to filename in CSV format"""
         if pop_or_param >= self.num_quantities_at_cell:
