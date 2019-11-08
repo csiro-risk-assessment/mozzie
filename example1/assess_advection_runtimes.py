@@ -1,4 +1,4 @@
-# Processes wind vectors given by Nick into a single file, wind.csv, and changing to m/day
+# Allows assessment of runtime for advection only
 import os
 import sys
 import array
@@ -21,7 +21,7 @@ from populationsAndParameters import PopulationsAndParameters
 # setup the grid and the active/inactive information
 sys.stdout.write("Initialising grid (without building adjacency list)...")
 start = timeit.default_timer()
-g1 = Grid(-4614384.0, -3967418.0, 5000.0, 1517, 1667, False)
+g1 = Grid(-4614.0, -3967.0, 5.0, 1517, 1667, False)
 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 
 sys.stdout.write("Setting active and inactive...")
