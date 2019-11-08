@@ -9,5 +9,7 @@ python ${DIR}/TestPopulationsAndParameters.py
 python ${DIR}/TestWind.py
 python ${DIR}/TestDiffusion_1.py
 python ${DIR}/TestDiffusion_2.py
+python ${DIR}/TestAdvection_1.py
+python ${DIR}/TestAdvection_2.py
 
 
