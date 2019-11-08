@@ -7,9 +7,9 @@ findbin = os.path.dirname(os.path.realpath(sys.argv[0]))
 sys.path.append(findbin + "/../code")
 
 from grid import Grid
-from cell import Cell
-from spatial import Spatial
-from populations import Populations
+from cellDynamics import CellDynamicsStatic15_9_3_2
+from spatialDynamics import SpatialDynamics
+from populationsAndParameters import PopulationsAndParameters
 
 def arrayfuzzyequal(a, b, eps):
    return all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(0, len(a))])
@@ -21,15 +21,17 @@ class TestDiffusion_1(unittest.TestCase):
       nx = 8
       self.grid = Grid(-0.25 * nx, -0.25 * nx, 0.5, nx, nx)
 
-      # all the populations
-      self.all_pops = Populations(self.grid)
-      # centre cell starts with nonzero population
-      pop = list(range(Cell().getNumberOfPopulations()))
-      self.all_pops.setPopulation((nx * (nx + 1)) // 2, pop)
+      self.cell = CellDynamicsStatic15_9_3_2()
 
-      # initialise the spatial structure with timestep = 0.5 and diffusion coefficient = 0.075
+      # all the population and parameters
+      self.all_quantities = PopulationsAndParameters(self.grid, self.cell)
+      # centre cell starts with nonzero population
+      pop = list(range(self.cell.getNumberOfPopulations() + self.cell.getNumberOfParameters()))
+      self.all_quantities.setPopulationAndParameters((nx * (nx + 1)) // 2, pop)
+
+      # initialise the spatial dynamics with timestep = 0.5 and diffusion coefficient = 0.075
       # hence diffusion_d = 0.6
-      self.spatial = Spatial(0.5, 0.075, self.grid, self.all_pops)
+      self.spatial = SpatialDynamics(0.5, 0.075, self.grid, self.all_quantities)
 
 
    def testDiffuse1(self):

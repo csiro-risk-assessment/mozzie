@@ -1,4 +1,4 @@
-#Processed wind advection written at: Thu Nov  7 22:46:32 2019
+#Processed wind advection written at: Fri Nov  8 12:11:06 2019
 #Active cells defined by file inactive_active.csv
 #xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3
 #raw_vel_filename=wind1.csv

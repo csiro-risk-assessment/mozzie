@@ -1,12 +1,11 @@
 import array
 cimport cpython.array as array
-from cell cimport Cell
 from wind cimport Wind
 from grid cimport Grid
-from populations cimport Populations
+from populationsAndParameters cimport PopulationsAndParameters
 
-cdef class Spatial:
-    """Holds and manipulates information at all cells"""
+cdef class SpatialDynamics:
+    """Performs the diffusion and advection over the grid"""
 
     # time step size
     cpdef float dt
@@ -17,14 +16,14 @@ cdef class Spatial:
     # the grid
     cdef Grid grid
 
-    # all the populations (of all active cells)
-    cpdef array.array all_pops
+    # all the quantities (populations and parameters) of all active cells
+    cpdef array.array all_quantities
 
     # number of active cells
     cdef unsigned num_active_cells
 
-    # Number of populations at a single Cell
-    cpdef unsigned num_populations_at_cell
+    # Number of quantities (populations and parameters) at a single Cell
+    cpdef unsigned num_quantities_at_cell
 
     # size-length of the cells
     cdef float cell_size
@@ -62,25 +61,25 @@ cdef class Spatial:
     # number of connections
     cdef unsigned num_connections
 
-    def __init__(self, float dt, float diffusion_coeff, Grid grid, Populations all_pops):
+    def __init__(self, float dt, float diffusion_coeff, Grid grid, PopulationsAndParameters pap):
 
         self.dt = dt
         self.diffusion_coeff = diffusion_coeff
         self.grid = grid
-        self.all_pops = all_pops.pop
+        self.all_quantities = pap.quantities
 
         self.num_active_cells = self.grid.getNumActiveCells()
-        self.num_populations_at_cell = Cell().getNumberOfPopulations()
-        if len(self.all_pops) != self.num_active_cells * self.num_populations_at_cell:
-            raise ValueError("Incorrect size of all_pops: " + str(len(self.all_pops)) + " which should be the product of " + str(self.num_active_cells) + " and " + str(self.num_populations_at_cell))
+        self.num_quantities_at_cell = pap.getCell().getNumberOfPopulations() + pap.getCell().getNumberOfParameters()
+        if len(self.all_quantities) != self.num_active_cells * self.num_quantities_at_cell:
+            raise ValueError("Incorrect size of all_quantities: " + str(len(self.all_quantities)) + " which should be the product of " + str(self.num_active_cells) + " and " + str(self.num_quantities_at_cell))
         
         self.cell_size = self.grid.getCellSize()
         cdef int num_nearest_neighbours = 4
         self.diffusion_d = self.diffusion_coeff * num_nearest_neighbours * self.dt / (self.cell_size * self.cell_size)
         self.diff_d = self.diffusion_d / num_nearest_neighbours
         
-        self.num_diffusing_populations_at_cell = Cell().getNumberOfDiffusingPopulations()
-        self.diffusing_indices = Cell().getDiffusingIndices()
+        self.num_diffusing_populations_at_cell = pap.getCell().getNumberOfDiffusingPopulations()
+        self.diffusing_indices = pap.getCell().getDiffusingIndices()
         self.num_diffusing_populations_total = self.num_active_cells * self.num_diffusing_populations_at_cell
         # initialize change_diff
         cdef array.array float_template = array.array('f', [])
@@ -112,15 +111,15 @@ cdef class Spatial:
         # grab all the diffusing populations
         for ind in range(self.num_active_cells):
             i = ind * self.num_diffusing_populations_at_cell
-            j = ind * self.num_populations_at_cell
+            j = ind * self.num_quantities_at_cell
             for p in range(self.num_diffusing_populations_at_cell):
-                self.all_diffusing_populations.data.as_floats[i + p] = self.all_pops.data.as_floats[j + self.diffusing_indices.data.as_uints[p]]
+                self.all_diffusing_populations.data.as_floats[i + p] = self.all_quantities.data.as_floats[j + self.diffusing_indices.data.as_uints[p]]
 
         # initialise the self.change_diff in populations, which is just the amount that comes out of the cells
         for i in range(self.num_diffusing_populations_total):
             self.change_diff.data.as_floats[i] = - self.diffusion_d * self.all_diffusing_populations.data.as_floats[i]
 
-        # do the Brownian motion
+        # disperse diff_d * population to neighbours
         cdef unsigned from_index
         cdef unsigned to_index
         for i in range(self.num_connections):
@@ -135,15 +134,15 @@ cdef class Spatial:
         # add the result to the populations
         for ind in range(self.num_active_cells):
             i = ind * self.num_diffusing_populations_at_cell
-            j = ind * self.num_populations_at_cell
+            j = ind * self.num_quantities_at_cell
             for p in range(self.num_diffusing_populations_at_cell):
                 k = j + self.diffusing_indices.data.as_uints[p]
-                self.all_pops.data.as_floats[k] = self.all_pops.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
+                self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
                 
-    cpdef outputCSV(self, str filename, unsigned population):
-        """Outputs cell information for given population number to filename in CSV format"""
-        if population >= self.num_populations_at_cell:
-            raise ValueError("You requested population number " + str(population) + " but there are only " + str(self.num_populations_at_cell) + " at each cell")
+    cpdef outputCSV(self, str filename, unsigned pop_or_param):
+        """Outputs cell information for given population or parameter number to filename in CSV format"""
+        if pop_or_param >= self.num_quantities_at_cell:
+            raise ValueError("You requested pop_or_param number " + str(pop_or_param) + " but there are only " + str(self.num_quantities_at_cell) + " at each cell")
         # x index, y index
         cdef unsigned x_ind, y_ind
         # max of x
@@ -165,7 +164,7 @@ cdef class Spatial:
                     # inactive cell
                     f.write("0,")
                 else:
-                    f.write(str(self.all_pops[active_ind * self.num_populations_at_cell + population]) + ",")
+                    f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + ",")
             x_ind = x_max - 1
             ind = self.grid.internal_global_index(x_ind, y_ind)
             active_ind = active[ind]
@@ -173,7 +172,7 @@ cdef class Spatial:
                 # inactive cell
                 f.write("0\n")
             else:
-                f.write(str(self.all_pops[active_ind * self.num_populations_at_cell + population]) + "\n")
+                f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + "\n")
         f.close()
 
         

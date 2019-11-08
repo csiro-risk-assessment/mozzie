@@ -1,0 +1,46 @@
+import array
+cimport cpython.array as array
+from grid cimport Grid
+from cellDynamics cimport CellDynamicsBase
+
+cdef class PopulationsAndParameters:
+
+    def __init__(self, Grid grid, CellDynamicsBase cell):
+        self.grid = grid
+        self.cell = cell
+
+        self.num_active_cells = self.grid.getNumActiveCells()
+
+        self.num_pop_per_cell = self.cell.getNumberOfPopulations()
+
+        self.num_param_per_cell = self.cell.getNumberOfParameters()
+
+        self.num_quantities_per_cell = self.num_pop_per_cell + self.num_param_per_cell
+
+        self.num_quantities = self.num_active_cells * self.num_quantities_per_cell
+        
+        self.quantities = array.clone(array.array('f', []), self.num_active_cells * self.num_quantities_per_cell, zero = True)
+
+
+    cpdef array.array getQuantities(self):
+        return self.quantities
+
+    cpdef CellDynamicsBase getCell(self):
+        return self.cell
+
+    cdef unsigned getIndexOfCell(self, unsigned active_cell_index):
+        """returns the index in self.quantities that corresponds to the 0th population at the given active_cell_index"""
+        return active_cell_index * self.num_quantities_per_cell
+
+    cpdef setPopulationAndParameters(self, unsigned active_cell_index, list pop_and_params):
+        """Sets the populations and parameters at active_cell_index to the numbers given in the list 'pop_and_params'
+        This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
+        if len(pop_and_params) != self.num_quantities_per_cell:
+            raise ValueError("Length of pop_and_params in setPopulationAndParameters is " + str(len(pop_and_params)) + " which should be " + str(self.num_quantities_per_cell))
+        if active_cell_index >= self.num_active_cells:
+            raise ValueError("Active cell index is " + str(active_cell_index) + " which should be less than " + str(self.num_active_cells))
+        cdef unsigned start_index = self.getIndexOfCell(active_cell_index)
+        cdef unsigned i
+        for i in range(self.num_quantities_per_cell):
+            self.quantities.data.as_floats[start_index + i] = pop_and_params[i]
+

@@ -6,7 +6,6 @@ gcc_flags="-shared -fno-strict-aliasing -Wsign-compare -Wunreachable-code -DNDEB
 mpicc $gcc_flags cellDynamics.c -o cellDynamics.so
 mpicc $gcc_flags grid.c -o grid.so
 mpicc $gcc_flags wind.c -o wind.so
-mpicc $gcc_flags cell.c -o cell.so
-mpicc $gcc_flags spatial.c -o spatial.so
-mpicc $gcc_flags populations.c -o populations.so
+mpicc $gcc_flags spatialDynamics.c -o spatialDynamics.so
+mpicc $gcc_flags populationsAndParameters.c -o populationsAndParameters.so
 mpicc $gcc_flags spatialDependence.c -o spatialDependence.so
