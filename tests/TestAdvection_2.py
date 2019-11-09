@@ -37,11 +37,11 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities.setPopulationAndParameters(1, pop)
       spatial = SpatialDynamics(self.g2, all_quantities)
       spatial.advect(1.0, self.w2)
-      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_4_1.csv"), 4)
+      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_4_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_4_1.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[0].strip().split(",")], [4.0, 0, 0.0, 0], 1E-5))
-      for row in [1, 2]:
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [4.0, 0, 0.0, 0], 1E-5))
+      for row in [3, 4]:
          self.assertTrue(arrayfuzzyequal([float(d) for d in data[row].strip().split(",")], [0.0] * 4, 1E-5))
 
    def testAdvect5(self):
@@ -52,10 +52,10 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities.setPopulationAndParameters(2, pop)
       spatial = SpatialDynamics(self.g2, all_quantities)
       spatial.advect(1.0, self.w2)
-      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_5_1.csv"), 4)
+      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_5_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_5_1.csv")) as f:
          data = f.readlines()
-      for row in [0, 1, 2]:
+      for row in [2, 3, 4]:
          self.assertTrue(arrayfuzzyequal([float(d) for d in data[row].strip().split(",")], [0.0] * 4, 1E-5))
 
    def testAdvect6(self):
@@ -68,12 +68,12 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities.setPopulationAndParameters(6, pop6)
       spatial = SpatialDynamics(self.g2, all_quantities)
       spatial.advect(0.6, self.w2)
-      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_6_1.csv"), 4)
+      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_6_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_6_1.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[0].strip().split(",")], [0, 0, 0, 0], 1E-5))
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[1].strip().split(",")], [0, 0, 0, 0], 1E-5))
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [0, 0, 3.46, 1.54], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [0, 0, 0, 0], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[3].strip().split(",")], [0, 0, 0, 0], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[4].strip().split(",")], [0, 0, 3.46, 1.54], 1E-5))
 
 if __name__ == '__main__':
    unittest.main()

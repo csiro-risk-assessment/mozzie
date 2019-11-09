@@ -52,8 +52,8 @@ sys.stdout.write("Diffusing\n")
 start = timeit.default_timer()
 for i in range(1, 11):
    sys.stdout.write("Time step " + str(i) + "\n")
-   # diffuse with timestep = 1 day and diffusion coefficient = 1E4 m^2/day
-   spatial.diffuse(1.0, 1E4)
+   # diffuse with timestep = 1 day and diffusion coefficient = 1E4 m^2/day = 0.01 km^2/day
+   spatial.diffuse(1.0, 0.01)
 sys.stdout.write("Time for 1 diffusion step = " + str((timeit.default_timer() - start) / 10.0) + "s\n")
 
 

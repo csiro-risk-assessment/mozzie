@@ -43,6 +43,19 @@ class TestDiffusion_1(unittest.TestCase):
       with self.assertRaises(ValueError) as the_err:
          self.pap.setPopulationAndParameters(1234567, list(range(17)))
       self.assertEqual(str(the_err.exception), "Active cell index is 1234567 which should be less than " + str(8 * 8))
+      with self.assertRaises(ValueError) as the_err:
+         self.pap.setPopulationAndParametersFromXY(-3.0, 1.0, list(range(17)))
+      self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+      with self.assertRaises(ValueError) as the_err:
+         self.pap.setPopulationAndParametersFromXY(3.0, 1.0, list(range(17)))
+      self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+      with self.assertRaises(ValueError) as the_err:
+         self.pap.setPopulationAndParametersFromXY(1.0, -3.0, list(range(17)))
+      self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+      with self.assertRaises(ValueError) as the_err:
+         self.pap.setPopulationAndParametersFromXY(1.0, 3.0, list(range(17)))
+      self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+
 
    def testSetPopulationAndParameters(self):
       result = [0.0] * 8 * 8 * 17
@@ -53,6 +66,19 @@ class TestDiffusion_1(unittest.TestCase):
 
       pp = [1.0, -3.0, -33.0, 9.0, 17.0, 1.0, -3.0, -33.0, 9.0, 17.0, 11.0, -19.0, 13.0, -55.0, 15.0, 0.0, 1.0]
       self.pap.setPopulationAndParameters(2, pp)
+      for i in range(17):
+         result[17 * 2 + i] = pp
+      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result))
+
+   def testSetPopulationAndParametersFromXY(self):
+      result = [0.0] * 8 * 8 * 17
+      self.pap.setPopulationAndParametersFromXY(-2.0, -2.0, list(range(17)))
+      for i in range(17):
+         result[i] = 1.0 * i
+      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result))
+
+      pp = [1.0, -3.0, -33.0, 9.0, 17.0, 1.0, -3.0, -33.0, 9.0, 17.0, 11.0, -19.0, 13.0, -55.0, 15.0, 0.0, 1.0]
+      self.pap.setPopulationAndParametersFromXY(-1.5, -2.0, pp)
       for i in range(17):
          result[17 * 2 + i] = pp
       self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result))

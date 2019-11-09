@@ -47,11 +47,13 @@ cell = CellDynamicsLogistic1_1()
 all_pops = PopulationsAndParameters(g1, cell)
 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 
-# introduce carrying capacity (which, for CellDynamicsLogistic1_1, is second slot in the populations and params array)
+# introduce carrying capacity (which, for CellDynamicsLogistic1_1, is second slot in the populations and params array), which is max(1.0, cc)
+# and a population of 1 mosquito everywhere that's active
 sys.stdout.write("Populating the initial (zero) populations and parameters array...")
 start = timeit.default_timer()
 pop_and_param_array = all_pops.getQuantities()
 for i in range(g1.getNumActiveCells()):
+   pop_and_param_array[2 * i] = 1.0
    pop_and_param_array[2 * i + 1] = max(1.0, cc[i]) # cannot have zero carrying capacity
 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 
@@ -65,7 +67,7 @@ sys.stdout.write("Doing logistic growth\n")
 start = timeit.default_timer()
 for i in range(1, 11):
    sys.stdout.write("Time step " + str(i) + "\n")
-   # diffuse with timestep = 10 day and diffusion coefficient = 1E4 m^2/day
+   # diffuse with timestep = 100 day
    spatial.evolveCells(100)
 sys.stdout.write("Time for 1 diffusion step = " + str((timeit.default_timer() - start) / 10.0) + "s\n")
 

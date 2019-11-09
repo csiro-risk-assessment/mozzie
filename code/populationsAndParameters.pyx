@@ -44,3 +44,14 @@ cdef class PopulationsAndParameters:
         for i in range(self.num_quantities_per_cell):
             self.quantities.data.as_floats[start_index + i] = pop_and_params[i]
 
+    cpdef setPopulationAndParametersFromXY(self, float x, float y, list pop_and_params):
+        """Sets the populations and parameters at given (x, y) to the numbers given in the list 'pop_and_params'
+        This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
+        if x < self.grid.getXmin() or x > self.grid.getXmin() + self.grid.getCellSize() * self.grid.getNx() or y < self.grid.getYmin() or y > self.grid.getYmin() + self.grid.getCellSize() * self.grid.getNy():
+            raise ValueError("x or y in setPopulationAndParametersFromXY is not inside the grid")
+        cdef unsigned x_ind = int((x - self.grid.xmin) / self.grid.cell_size + 0.5)
+        cdef unsigned y_ind = int((y - self.grid.ymin) / self.grid.cell_size + 0.5)
+        cdef unsigned global_ind = self.grid.internal_global_index(x_ind, y_ind)
+        cdef unsigned active_ind = self.grid.active_index[global_ind]
+        self.setPopulationAndParameters(active_ind, pop_and_params)
+

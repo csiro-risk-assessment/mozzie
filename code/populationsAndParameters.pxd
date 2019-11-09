@@ -43,3 +43,6 @@ cdef class PopulationsAndParameters:
     """Sets the populations and parameters at active_cell_index to the numbers given in the list 'pop_and_params'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
+    cpdef setPopulationAndParametersFromXY(self, float x, float y, list pop_and_params)
+    """Sets the populations and parameters at given (x, y) to the numbers given in the list 'pop_and_params'
+    This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""

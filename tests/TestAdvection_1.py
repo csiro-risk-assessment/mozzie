@@ -47,11 +47,11 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities.setPopulationAndParameters(0, pop)
       spatial = SpatialDynamics(self.g1, all_quantities)
       spatial.advect(1.0, self.w1)
-      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_0_1.csv"), 4)
+      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_0_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_0_1.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[0].strip().split(",")], [4.0, 0, 0, 0], 1E-5))
-      for row in [1, 2]:
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [4.0, 0, 0, 0], 1E-5))
+      for row in [3, 4]:
          self.assertTrue(arrayfuzzyequal([float(d) for d in data[row].strip().split(",")], [0.0] * 4, 1E-5))
 
    def testAdvect1(self):
@@ -62,11 +62,11 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities.setPopulationAndParameters(1, pop)
       spatial = SpatialDynamics(self.g1, all_quantities)
       spatial.advect(1.0, self.w1)
-      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_1_1.csv"), 4)
+      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_1_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_1_1.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[1].strip().split(",")], [0, 4.0, 0, 0], 1E-5))
-      for row in [0, 2]:
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[3].strip().split(",")], [0, 4.0, 0, 0], 1E-5))
+      for row in [2, 4]:
          self.assertTrue(arrayfuzzyequal([float(d) for d in data[row].strip().split(",")], [0.0] * 4, 1E-5))
 
    def testAdvect2(self):
@@ -78,12 +78,12 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities.setPopulationAndParameters(6, pop)
       spatial = SpatialDynamics(self.g1, all_quantities)
       spatial.advect(5.0, self.w1)
-      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_2_1.csv"), 4)
+      spatial.outputCSV(os.path.join(findbin, "2D_advection_out_2_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_2_1.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[0].strip().split(",")], [14, 0, 6.0, 0], 1E-5))
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[1].strip().split(",")], [0, 0, -16, 0], 1E-5))
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [0] * 4, 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [14, 0, 6.0, 0], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[3].strip().split(",")], [0, 0, -16, 0], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[4].strip().split(",")], [0] * 4, 1E-5))
 
 if __name__ == '__main__':
    unittest.main()

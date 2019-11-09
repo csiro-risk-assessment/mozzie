@@ -19,7 +19,7 @@ cdef class SpatialDependence:
 
 
     cpdef parse(self, str filename, str filetype, list required_additional_headers):
-        if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed"):
+        if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed" or filetype == "generic_float"):
             raise ValueError("filetype not recognized")
         self.filetype = filetype
 
@@ -48,10 +48,13 @@ cdef class SpatialDependence:
             self.data0 = array.clone(self.uint_template, lendata, zero=False)
             self.data1 = array.clone(self.uint_template, lendata, zero=False)
             self.data2 = array.clone(self.float_template, lendata, zero=False)
+        elif filetype == "generic_float":
+            self.data0 = array.clone(self.float_template, self.num_cells, zero=False)
 
         # Read the data
         cdef unsigned ind = 0
         cdef unsigned i, j
+        cdef float fl
         for line in data:
             if not line.strip():
                 continue
@@ -87,10 +90,19 @@ cdef class SpatialDependence:
                     self.data1.data.as_uints[ind] = int(line[1])
                     self.data2.data.as_floats[ind] = float(line[2])
                     ind += 1
+                if filetype == "generic_float":
+                    if ind >= self.num_cells:
+                        raise ValueError("There must be " + str(self.ny) + " data lines in " + filename)
+                    if len(line) != self.nx:
+                        raise ValueError("There must be " + str(self.nx) + " entries per line in " + filename)
+                    for i in range(self.nx):
+                        fl = float(line[i])
+                        self.data0.data.as_floats[ind] = fl
+                        ind += 1
             except:
                 raise 
 
-        if filetype == "active_inactive" or filetype == "wind_raw":
+        if filetype == "active_inactive" or filetype == "wind_raw" or filetype == "generic_float":
             if ind != self.num_cells:
                 raise ValueError("There must be " + str(self.ny) + " data lines in " + filename)
         elif filetype == "wind_processed":
@@ -129,12 +141,12 @@ cdef class SpatialDependence:
         cdef array.array c1
         cdef unsigned num_active = len(global_index)
         cdef unsigned i
-        if self.filename == "active_inactive":
+        if self.filetype == "active_inactive":
             c0 = array.clone(self.uint_template, num_active, zero = False)
             for i in range(num_active):
                 c0.data.as_uints[i] = self.data0.data.as_uints[global_index.data.as_uints[i]]
             self.data0 = c0
-        elif self.filename == "wind_raw":
+        elif self.filetype == "wind_raw":
             c0 = array.clone(self.float_template, num_active, zero = False)
             c1 = array.clone(self.float_template, num_active, zero = False)
             for i in range(num_active):
@@ -142,6 +154,12 @@ cdef class SpatialDependence:
                 c1.data.as_floats[i] = self.data1.data.as_floats[global_index.data.as_uints[i]]
             self.data0 = c0
             self.data1 = c1
+        elif self.filetype == "generic_float":
+            c0 = array.clone(self.float_template, num_active, zero = False)
+            for i in range(num_active):
+                c0.data.as_floats[i] = self.data0.data.as_floats[global_index.data.as_uints[i]]
+            self.data0 = c0
+        
 
     cpdef outputCSV(self, str filename, array.array active, str inactive_value, str additional_header_lines):
         f = open(filename, 'w')

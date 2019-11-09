@@ -1,3 +1,4 @@
+import time
 import array
 cimport cpython.array as array
 from wind cimport Wind
@@ -237,8 +238,13 @@ cdef class SpatialDynamics:
             for p in range(self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
 
-    cpdef outputCSV(self, str filename, unsigned pop_or_param):
-        """Outputs cell information for given population or parameter number to filename in CSV format"""
+    cpdef outputCSV(self, str filename, unsigned pop_or_param, str inactive_value, str additional_header_lines):
+        """Outputs cell information for given population or parameter number to filename in CSV format.
+        the value inactive_value (as a string) is used in the CSV file for inactive cells.
+        A header line containing the current time will be written to the file
+        A header line of the form #xmin... will be written to the file
+        additional_header_lines will be written verbatim (including any \n, etc) into the file"""
+
         if pop_or_param >= self.num_quantities_at_cell:
             raise ValueError("You requested pop_or_param number " + str(pop_or_param) + " but there are only " + str(self.num_quantities_at_cell) + " at each cell")
         # x index, y index
@@ -254,6 +260,9 @@ cdef class SpatialDynamics:
         # active cell index, given global cell index
         cdef array.array active = self.grid.getActiveIndex()
         f = open(filename, "w")
+        f.write("#File written at: " + time.asctime() + "\n")
+        f.write("#xmin=" + str(self.grid.getXmin()) + ",ymin=" + str(self.grid.getYmin()) + ",cell_size=" + str(self.grid.getCellSize()) + ",nx=" + str(x_max) + ",ny=" + str(y_max) + "\n")
+        f.write(additional_header_lines)
         for y_ind in range(y_max):
             for x_ind in range(x_max - 1):
                 ind = self.grid.internal_global_index(x_ind, y_ind)

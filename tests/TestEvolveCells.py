@@ -37,27 +37,27 @@ class TestEvolveCells(unittest.TestCase):
    def testEvolveCells1(self):
       # evolve with timestep = 12
       self.spatial.evolveCells(12)
-      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_1.csv"), 0)
+      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_1.csv"), 0, "0", "")
       with open(os.path.join(findbin, "2D_evolution_out_1.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[0].strip().split(",")], [0.12, 1.06, 0.12, 1.24, 2.0, 3.64], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [0.0, 1.06, 0.0, 1.24, 2.0, 2.56], 1E-5))
 
-      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_2.csv"), 1)
+      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_2.csv"), 1, "0", "")
       with open(os.path.join(findbin, "2D_evolution_out_2.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[0].strip().split(",")], [1.0, 2.0, 2.0, -1.0, 2.0, 1.0], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [1.0, 2.0, 2.0, -1.0, 2.0, 1.0], 1E-5))
 
       # evolve with timestep = 3
       self.spatial.evolveCells(3)
-      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_3.csv"), 0)
+      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_3.csv"), 0, "0", "")
       with open(os.path.join(findbin, "2D_evolution_out_3.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[0].strip().split(",")], [0.1464, 1.0741, 0.1482, 1.3072, 2.0, 3.5608], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [0.0, 1.0749459, 0.0, 1.323328, 2.0, 2.44019198], 1E-5))
 
-      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_4.csv"), 1)
+      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_4.csv"), 1, "0", "")
       with open(os.path.join(findbin, "2D_evolution_out_4.csv")) as f:
          data = f.readlines()
-      self.assertTrue(arrayfuzzyequal([float(d) for d in data[0].strip().split(",")], [1.0, 2.0, 2.0, -1.0, 2.0, 1.0], 1E-5))
+      self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [1.0, 2.0, 2.0, -1.0, 2.0, 1.0], 1E-5))
 
 
 if __name__ == '__main__':
