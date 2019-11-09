@@ -81,7 +81,7 @@ This is a cython class that may be imported or cimported into other classes.  It
 
 - `parse`, which parses a CSV file, which typically has format described in the "Spatial structure" section above.
 
-- `restrictToActive` which restricts the data read by `parse` to active cells only.  After this, the data may be used
+- `restrictToActive` which restricts the data read by `parse` to active cells only.  After this, the data may be used.
 
 - `getData0` provides a pointer to the data (in certain cases `getData1` and `getData2` provide pointers to additional data).
 
@@ -98,11 +98,10 @@ A `Wind` object is instantiated with:
   - the file contains `ny` lines of data.  Each line contains CSV entries defining the wind velocities in the x and y direction.  The line has the format `vx0,vy0,vx1,vy1,vx2,vy2,...`, where `vx0` is the x-component of velocity at the first cell, etc.  So, each line contains `2*nx` pieces of data.  The first line corresponds to the velocities at `ymin`, the second to velocities at `ymin + cell_size`, etc.
   - the units for velocity must be consistent with the remainder of the simulation (for instance km/day)
 - `processed_wind_fn`: a filename describing the processed wind data.  Each data line contains three numbers: `from_index,to_index,probability`.  The method `outputProcessedCSV()` writes this file for later (or immediate) use.  Examples of files are in the test suite, and some more details are mentioned below (see `getAdvectionFrom()`, etc).
-- `pdf`: a probability distribution of times an advecting mosquito will stay in the air and be advected by the wind.  This is specified as a list of the form `[[time0, prob0], [time1, prob1], [time2, prob2], ...]`.  The times must be in the same time unit as the wind data (for instance, days).  The probabilities should sum to 1 (prob0 + prob1 + ... = 1).  Some examples are:
+- `pdf`: a probability distribution of times an advecting mosquito will stay in the air and be advected by the wind.  This is specified as a list of the form `[[time0, prob0], [time1, prob1], [time2, prob2], ...]`.  The times must be in the same time unit as the wind data (for instance, days).  It is important to make the times commensurate with the time-step size used in `SpatialDynamics.diffuse` and `SpatialDynamics.evolveCells` described below.  The probabilities should sum to 1 (prob0 + prob1 + ... = 1).  Some examples are:
   - If all mosquitoes that are being advected by the wind stay in the wind for 0.5 days, then pdf = [[0.5, 1.0]]
   - If 30% of mosquitoes stay in the wind for 0.1 days, and 70% stay in the wind for 0.4 days, then pdf = [[0.1, 0.3], [0.4, 0.7]]
   - If all mosquitoes stay in the wind for 0.5 days, BUT an internal timestep of 0.1 days is required to accurately track advective movements, then pdf = [[0.1, 0], [0.2, 0], [0.3, 0], [0.4, 0], [0.5, 1.0]].  See the discussion in `parseRawFile()` to understand this better.
-It is important to make the `pdf` commensurate with the time-step size used in `SpatialDynamics.diffuse` and `SpatialDynamics.evolveCells` described below.
 - `grid`: a `Grid` instance.  This is to facilitate error checking (eg, that the wind is defined on the same grid) and to retrieve active cells
 
 A `Wind` object is only of use if `getProcessedDataComputed()==1`.  Upon construction, this is not true.  To make this true, one (or both) of the following methods must be called.
@@ -127,15 +126,15 @@ Note that `f` may not contain all active cell indices.  For instance, for a cell
 
 ### `CellDynamicsX`
 
-This is a cython class that may be imported or cimported into other classes.  Its purpose is to define the mosquito lifecycle dynamics at the grid-cell level.  Different dynamics may be easily defined by inheriting from the base class (the `X` is replaced by something like `Logistic`).  The following methods are important
+This is a cython class that may be imported or cimported into other classes.  Its purpose is to define the mosquito lifecycle dynamics (ODEs) at the grid-cell level.  Different dynamics may be easily defined by inheriting from the base class (the `X` is replaced by something like `Logistic`).  The following methods are important
 
-- `getNumberOfPopulations` and `getNumberOfParameters` define the number of populations (maleGG, femaleGW, etc) and parameters (carrying capacity, mortality rate, etc) in the ODEs describing the lifecycle dynamics
+- `getNumberOfPopulations` and `getNumberOfParameters` define the number of populations (maleGG, femaleGW, etc) and parameters (carrying capacity, mortality rate, etc) in the ODEs describing the lifecycle dynamics.
 
 - `getNumberOfDiffusingPopulations` and `getDiffusingIndices` define which of the populations diffuse over the spatial grid (eg, mosquito eggs do not diffuse, but adults do).
 
 - `getNumberOfAdvectingPopulations` and `getAdvectingIndices` define which of the populations advect over the spatial grid (eg, mosquito eggs do not advect, but adults do).
 
-- `evolve(dt, pp)` is the most important method, for it solves the ODEs.  Here `dt` is the time-step size, and `pp` is an array holding the populations and parameters.  When another class (eg the "runner" of the simulation) calls this method, it will have placed the current populations and parameters into `pp`, and will expect `evolve` to modify the populations so they're correct for the next time-step.
+- `evolve(dt, pp)` is the most important method, for it solves the ODEs.  Here `dt` is the time-step size, and `pp` is an array holding the populations and parameters.  When another class (eg `SpatialDynamics.evolveCells`, below) calls this method, it will have placed the current populations and parameters into `pp`, and will expect `evolve` to modify the populations so they're correct for the next time-step.
 
 ### `PopulationsAndParameters`
 
@@ -147,7 +146,7 @@ This is a cython class that may be imported into other classes.  It provides met
 
 - `diffuse(dt, diffusion_coeff)`.  This performs one time-step of diffusion, updating the grid-cell populations contained in `PopulationsAndParameters`.  Only the populations labelled as "diffusing" by the `CellDynamicsX` object are updated.  `diffuse` uses the nearest-neighbour finite-difference approximation to the Laplacian.  Hence, with time-step size `dt` the fraction of mosquitoes removed from one cell is `diffusion_coeff * 4 * dt / (dx)^2`, where `dx` is the cell-size.  One quarter of this amount is added to each of the 4 neighbours.  If the neighbours happen to be inactive, the mosquitoes are assumed to die instantly.
 
-- `advect(frac, wind)`.  This performs one time-step of advection using the given `wind` object.  The grid-cell populations contained in `PopulationsAndParameters` are updated.  Only the populations labelled as "advecting" by the `CellDynamicsX` object are updated.  The `wind` object will have processed the raw-wind data using its `pdf`, and mosquitoes are advected as described in the `Wind` section above.  For instance, if the `pdf` contains times up to `timeN`, then `advect` will advect mosquitoes up to that time, which is completely independent of the time-step size in `diffuse` or `evolveCells`.
+- `advect(frac, wind)`.  This performs one time-step of advection using the given `wind` object.  The grid-cell populations contained in `PopulationsAndParameters` are updated.  Only the populations labelled as "advecting" by the `CellDynamicsX` object are updated.  The `Wind` object will have processed the raw-wind data using its `pdf`, and mosquitoes are advected as described in the `Wind` section above.  For instance, if the `pdf` contains times up to `timeN`, then `advect` will advect mosquitoes up to that time, which is completely independent of the time-step size in `diffuse` or `evolveCells`.  This is why the `time` quantities in the `pdf` must be commensurate with `dt`, as mentioned above in the section on the `Wind` class.
 
 - `evolveCells(dt)`.  This calls `CellDynamics.evolve(dt)` for all cells in the grid.  Thus it performs one lifecycle time-step over the entire grid
 
