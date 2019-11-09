@@ -113,10 +113,4 @@ for i in range(501):
 
 sys.stdout.write("CPU time taken = " + str(timeit.default_timer() - start) + "s\n")
 
-######################################################
-# output populations
-   
-
-
-
 sys.exit(0)
