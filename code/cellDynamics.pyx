@@ -70,7 +70,7 @@ cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
         # as defined in the doco for "evolve",
         # pops_and_params[0] is the current population
         # pops_and_params[1] is the carrying capacity
-        pops_and_params[0] = pops_and_params[0] + timestep * self.growth_rate * (1.0 - pops_and_params[0] / pops_and_params[1])
+        pops_and_params[0] = pops_and_params[0] + timestep * self.growth_rate * pops_and_params[0] * (1.0 - pops_and_params[0] / pops_and_params[1])
 
     
 
