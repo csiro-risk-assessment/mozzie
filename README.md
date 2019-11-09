@@ -3,40 +3,59 @@ Mosquito lifecycle, diffusion and advection
 
 ## Use
 
+### Building the code
+
 The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  To our knowledge, all python distributions come 
 with `cythonize` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory 
 we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, etc).
+
+### Simulating
+
+The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  An example is `example1/example.py`.  Generally, each "runner" python script contains:
+
+- an `import` block in which you import all the core libraries and any other python libraries you need
+- a block in which you set up the grid and active cells, defining the spatial extents and discretisation of the model.  You will use `Grid` and `Grid.setActiveAndInactive`.
+- a block that defines `Wind`.  This is different from the spatially-varying parameters (next item) because it usually requires some sort of pre-processing, or is reading from specially-preprocessed files.
+- a block in which you read files corresponding to spatially-varying parameters in your model, such as carrying capacities.  You'll typically have to read multiple of these per parameter, as the parameters will also vary with time.  You will use `SpatialDependence` and `SpatialDependence.restrictToActive`
+- a definition of your cell dynamics (the ODE model), such as `CellDynamicsLogistic1_1`
+- a block that defines the populations and parameters, and sets initial conditions.  You'll use `PopulationsAndParameters`.
+- a block that gathers the grid structure, the populations and the cell dynamics together into a `SpatialDynamics` objects
+- a block that controls the time-stepping of the simulation, involving `diffuse`, `evolveCells`, and `advect`.  There can be multiple of these, depending on the complexity of your model, as different carrying capacities, wind vectors, etc, are used at different times.
+
+Because of this "block" structure, you can run partial simulations, for instance, just processing wind files, or not even using any wind.
+
+### Directory layout
+
+- `tests` directory contains tests (.py files) and associated files (all other files).  Run the tests by using, for example, `python TestGrid.py`
+- `code` directory contains the core code that numerically simulates mosquito population dynamics
+- `code/auxillary` directory contains python scripts that perform auxillary functions, such as plotting results.  These scripts depend on lots of python libraries, and, while useful, are not necessary for the numerical simulation of mosquitoes.
+
 
 ## Units
 
 The units used should be consistent throughout.  For instance, if the spatial grid is defined using km, and the time-step is measured in days, then the diffusivity should have units km*km/day, and the wind velocity should be in km/day.
 
-## Spatial structure
+## Spatial structure and spatially-varying quantities
 
 Mosquitoes are assumed to advect and diffuse over a grid of square cells, defined by:
 - (xmin, ymin): the lower left-hand corner
 - the cell side-length
 - (nx, ny): the number of cells in the x and y directions
 
-The cells can be "active" or "inactive".  This is specified through a CSV file.  The CSV file must contain a header (that begins with `#xmin`, etc) that specifies the quantities mentioned 
-above (this facilitates error-checking) and data arranged in rows.  Here is an example file:
+The cells can be "active" or "inactive".  This is specified through a CSV file.  Indeed, all parameters that vary spatially, such as wind vectors or carrying capacities or outputted populations numbers, are held in similarly-formatted CSV files.  All such CSV files must contain a header that begins with `#xmin=...` that specifies the quantities mentioned 
+above.  This facilitates error checking.  Some files must contain other headers (defined below) and the code will complain if they don't.  Data is arranged in rows.
+
+Here is an example "active/inactive" file:
 ```
 #xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3
 1,0,1,1
 1,0,1,0
 0,0,1,1
 ```
-The lines following the header correspond to rows of cells.  The rows appear in *upside-down order*, viz, in the above example:
+The lines following the header always correspond to rows of cells.  The rows always appear in *upside-down order*, viz, in the above example:
 - the first line, `1,0,1,1`, corresponds to the cells at `y=ymin=2.0`.  The cell at `xmin=1.0` is active; the cell at `xmin=4.0` is inactive; the cell at `xmin=7.0` is active; the cell at `xmin=10.0` is active.
 - the second line, `1,0,1,0`, corresponds to the cells at `y=ymin+cell_size=5.0`.  The cell at `xmin=1.0` is active; the cell at `xmin=4.0` is inactive; the cell at `xmin=7.0` is active; the cell at `xmin=10.0` is inactive.
 - the third line, `0,0,1,1`, corresponds to the cells at `y=ymin+2*cell_size=8.0`.  The cell at `xmin=1.0` is inactive; the cell at `xmin=4.0` is inactive; the cell at `xmin=7.0` is active; the cell at `xmin=10.0` is active.
-
-
-## Directory layout
-
-- `tests` directory contains tests (.py files) and associated files (all other files).  Run the tests by using, for example, `python TestGrid.py`
-- `code` directory contains the core code that numerically simulates mosquito population dynamics
-- `code/auxillary` directory contains python scripts that perform auxillary functions, such as plotting results.  These scripts depend on lots of python libraries, and, while useful, are not necessary for the numerical simulation of mosquitoes.
 
 
 ## Core code descriptions
@@ -89,4 +108,12 @@ After this, the `Wind` object is fully operational, and the useful methods are:
 For any `i`, `f[i]` is the active cell index from which a mosquito is advecting, `t[i]` is the active cell index to which it is advecting, and `p[i]` is the probability of this occuring.  This is stored in the processed data file and may be outputted using `outputProcessedCSV()`.
 
 Note that `f` may not contain all active cell indices.  For instance, for a cell on the grid boundary, wind may instantly advect all mosquitoes out of the domain.  Hence, `p` is the probability of moving from `f` to `t`, given that the mosquito is indeed advecting.  It is not simply the probability of advecting away from `f`.  This latter probability is specified elsewhere in the code.
+
+### `SpatialDependence`
+
+### `CellDynamicsX`
+
+### `PopulationsAndParameters`
+
+### `SpatialDynamics`
 
