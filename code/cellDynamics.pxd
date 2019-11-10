@@ -62,3 +62,59 @@ cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
     
     # growth rate
     cdef float growth_rate
+
+cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
+    """Dynamics of a hybridising 2-subspecies model described in
+    Beeton, Hosack, Wilkins, Forbes, Ickowicz and Hayes, Journal of Theoretical Biology 2019.
+    There are 2 parameters, which are the carrying capacities Kx and Ky.
+    The dynamics is defined in Eqns(4.1) and (4.2) in Beeton et al."""
+    cpdef float mux # mu_x
+    cpdef float muy # mu_y
+    cpdef float gax # gamma_x
+    cpdef float gay # gamma_y
+    cpdef float axy # alpha_{xy}
+    cpdef float ayx # alpha_{yx}
+    cpdef float w   # w
+
+    cpdef void setMuX(self, float mux)
+    """Sets mu_x"""
+
+    cpdef void setMuY(self, float muy)
+    """Sets mu_y"""
+
+    cpdef void setGaX(self, float gax)
+    """Sets gamma_x"""
+
+    cpdef void setGaY(self, float gay)
+    """Sets gamma_y"""
+
+    cpdef void setAxy(self, float axy)
+    """Sets alpha_{xy}"""
+
+    cpdef void setAyx(self, float ayx)
+    """Sets alpha_{yx}"""
+
+    cpdef void setW(self, float w)
+    """Sets w"""
+
+    cpdef float getMuX(self)
+    """Gets mu_x"""
+
+    cpdef float getMuY(self)
+    """Gets mu_y"""
+
+    cpdef float getGaX(self)
+    """Gets gamma_x"""
+
+    cpdef float getGaY(self)
+    """Gets gamma_y"""
+
+    cpdef float getAxy(self)
+    """Gets alpha_{xy}"""
+
+    cpdef float getAyx(self)
+    """Gets alpha_{yx}"""
+
+    cpdef float getW(self)
+    """Gets w"""
+
