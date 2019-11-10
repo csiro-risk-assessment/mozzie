@@ -46,3 +46,7 @@ cdef class PopulationsAndParameters:
     cpdef setPopulationAndParametersFromXY(self, float x, float y, list pop_and_params)
     """Sets the populations and parameters at given (x, y) to the numbers given in the list 'pop_and_params'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
+
+    cpdef setOverActiveGrid(self, unsigned pop_and_param_number, array.array pop_or_param_array)
+    """pop_or_param_array is a float array defined over the entire active grid.
+    The population or parameter with number pop_and_param_number is set to this array"""

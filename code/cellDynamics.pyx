@@ -141,7 +141,7 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         # pops_and_params[0] is the current x
         # pops_and_params[1] is the current y
         # pops_and_params[2] is the carrying capacity Kx
-        # pops_and_params[2] is the carrying capacity Ky
+        # pops_and_params[3] is the carrying capacity Ky
         cpdef float x = pops_and_params[0]
         cpdef float y = pops_and_params[1]
         cpdef float kx = pops_and_params[2]

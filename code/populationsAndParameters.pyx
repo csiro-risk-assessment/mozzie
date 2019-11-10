@@ -55,3 +55,14 @@ cdef class PopulationsAndParameters:
         cdef unsigned active_ind = self.grid.active_index[global_ind]
         self.setPopulationAndParameters(active_ind, pop_and_params)
 
+    cpdef setOverActiveGrid(self, unsigned pop_and_param_number, array.array pop_or_param_array):
+        """pop_or_param_array is a float array defined over the entire active grid.
+        The population or parameter with number pop_and_param_number is set to this array"""
+        if pop_and_param_number >= self.num_quantities_per_cell:
+            raise ValueError("pop_and_param_number is " + str(pop_and_param_number) + " but this must be less than the number of quantities per cell, which is " + str(self.num_quantities_per_cell))
+        if len(pop_or_param_array) != self.num_active_cells:
+            raise ValueError("length of pop_or_param_array is " + str(len(pop_or_param_array)) + " which must be equal to the number of active cells, which is " + str(self.num_active_cells))
+        cdef unsigned i
+        for i in range(self.num_active_cells):
+            self.quantities.data.as_floats[i * self.num_quantities_per_cell + pop_and_param_number] = pop_or_param_array.data.as_floats[i]
+

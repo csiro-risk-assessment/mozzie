@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+import array
 
 # so we can find our ../code no matter how we are called
 findbin = os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -16,7 +17,7 @@ def arrayequal(a, b):
 def arrayfuzzyequal(a, b, eps):
    return all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(0, len(a))])
 
-class TestDiffusion_1(unittest.TestCase):
+class TestPopulationsAndParameters(unittest.TestCase):
 
    def setUp(self):
       # grid that is 2kmx2km long with 8x8 active cells
@@ -55,6 +56,14 @@ class TestDiffusion_1(unittest.TestCase):
       with self.assertRaises(ValueError) as the_err:
          self.pap.setPopulationAndParametersFromXY(1.0, 3.0, list(range(17)))
       self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+      pop_or_param_array = array.array('f', list(range(64)))
+      with self.assertRaises(ValueError) as the_err:
+         self.pap.setOverActiveGrid(17, pop_or_param_array)
+      self.assertEqual(str(the_err.exception), "pop_and_param_number is 17 but this must be less than the number of quantities per cell, which is 17")
+      pop_or_param_array = array.array('f', list(range(640)))
+      with self.assertRaises(ValueError) as the_err:
+         self.pap.setOverActiveGrid(16, pop_or_param_array)
+      self.assertEqual(str(the_err.exception), "length of pop_or_param_array is 640 which must be equal to the number of active cells, which is 64")
 
 
    def testSetPopulationAndParameters(self):
@@ -82,6 +91,19 @@ class TestDiffusion_1(unittest.TestCase):
       for i in range(17):
          result[17 * 2 + i] = pp
       self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result))
+
+   def testSetOverActiveGrid(self):
+      sixtyfour = self.grid.getNumActiveCells()
+      # set population number 3 to [0, 1, ..., 64] over the grid
+      param = array.array('f', list(range(sixtyfour)))
+      self.pap.setOverActiveGrid(3, param)
+
+      # extract population number 3
+      pop3 = [self.pap.getQuantities()[i * 17 + 3] for i in list(range(sixtyfour))]
+
+      self.assertTrue(arrayequal(pop3, param))
+
+      
 
 
 if __name__ == '__main__':
