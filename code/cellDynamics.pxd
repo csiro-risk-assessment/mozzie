@@ -1,8 +1,8 @@
 import array
 cimport cpython.array as array
 ### Following doesn't work with python2.7, yet
-###cimport numpy as np
-###import numpy as np
+cimport numpy as np
+import numpy as np
 
 cdef class CellDynamicsBase:
     """Manipulates information at a single cell, in particular this class solves lifecycle ODEs"""
@@ -132,7 +132,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     # iheritance_cube[x,y,z] = probability of mother genotype x, father genotype y producing offspring genotype z
     # where index 0, 1, 2 = ww, Gw, GG respectively
-    ###cpdef np.ndarray inheritance_cube
+    cpdef np.ndarray inheritance_cube
 
     # doco
     cdef float mu_larvae
@@ -156,16 +156,16 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef float accuracy
 
     # doco
-    ###cdef np.ndarray fecundity_proportion
+    cdef np.ndarray fecundity_proportion
 
     # doco
-    ###cdef np.ndarray ipm
+    cdef np.ndarray ipm
 
     # doco
-    ###cdef np.ndarray ipf
+    cdef np.ndarray ipf
 
     # the population numbers, as a numpy array
-    ###cdef np.ndarray xx
+    cdef np.ndarray xx
 
     # the carrying capacity
     cdef float kk

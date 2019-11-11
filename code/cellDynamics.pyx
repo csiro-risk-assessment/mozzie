@@ -1,3 +1,4 @@
+import sys
 import array
 cimport cpython.array as array
 import numpy as np
@@ -189,6 +190,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         
         self.num_populations = self.num_ages * self.num_sexes * self.num_genotypes * self.num_species
 
+        # TODO: modify this for num_species > 1
         self.num_diffusing = 6 # only age = num_ages - 1 (that is, adults) diffuses
         cdef unsigned offset = (self.num_ages - 1) * self.num_sexes * self.num_genotypes * self.num_species
         moving_indices = [offset + i for i in range(6)]
@@ -254,6 +256,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         return self.num_ages
     
     cpdef void setNumSpecies(self, unsigned num_species):
+        sys.stdout.write("Warning: diffusing and advecting only the adults of the final species\n")
         self.setInternalParameters(self.num_ages, num_species, self.accuracy)
 
     cpdef unsigned getNumSpecies(self):
@@ -275,10 +278,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # for each father's genotype and species, add the relevant proportion of fecundity for 
         # mothers of each genotype and that species, producing proportions of offspring 
         # of the relevant genotype (and the same species)
-        for i in range(self.genotypes): # fathers' genotypes
+        for i in range(self.num_genotypes): # fathers' genotypes
             for j in range(self.num_species): # species
                 mat[j:(self.num_genotypes * self.num_species):self.num_species, (self.num_genotypes * self.num_genotypes * (self.num_ages - 1) * self.num_species + j):self.num_populations:self.num_species] += self.ipm[i,:,:] * ratio[i,j]
-                mat[(self.num_genotypes * self.num_species + j):(self.num_genotypes * self.num_sexes * self.nu_species):self.num_species, (self.genotypes * self.num_genotypes * (self.num_ages - 1) * self.num_species + j): self.num_populations: self.num_species] += self.ipf[i,:,:] * ratio[i,j]
+                mat[(self.num_genotypes * self.num_species + j):(self.num_genotypes * self.num_sexes * self.num_species):self.num_species, (self.num_genotypes * self.num_genotypes * (self.num_ages - 1) * self.num_species + j): self.num_populations: self.num_species] += self.ipf[i,:,:] * ratio[i,j]
         mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
         # mortality
         mat[range(self.num_genotypes * self.num_sexes * (self.num_ages - 1) * self.num_species), range(self.num_genotypes * self.num_sexes * (self.num_ages - 1) * self.num_species)] = - self.mu_larvae - self.aging_rate
