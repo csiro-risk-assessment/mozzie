@@ -68,7 +68,7 @@ class TestCellDynamicsBeeton2_2(unittest.TestCase):
       self.c.setAxy(axy)
       self.c.setAyx(ayx)
       self.c.setW(w)
-      dt = 0.3
+      dt = 0.02
       self.c.evolve(dt, pap)
 
       # this should be the solution:
@@ -79,7 +79,7 @@ class TestCellDynamicsBeeton2_2(unittest.TestCase):
       xnew = x + dt * rhsx
       ynew = y + dt * rhsy
 
-      self.assertTrue(arrayfuzzyequal(pap, [xnew, ynew, kx, ky], 1E-5))
+      self.assertTrue(arrayfuzzyequal(pap, [xnew, ynew, kx, ky], 1E-6))
 
       
 

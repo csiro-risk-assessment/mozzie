@@ -83,11 +83,10 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         self.advecting_indices = array.array('I', [0, 1])
         self.num_parameters = 2 # carrying capacity Kx, and carrying capacity Ky
         # Default parameters in Equations (4.1) and (4.2) of Beeton et al, are as set in Fig5c
-        cdef float time_scale = 0.1
-        self.mux = 0.7 * time_scale
-        self.muy = 0.8 * time_scale
-        self.gax = 1.0 * time_scale
-        self.gay = 1.0 * time_scale
+        self.mux = 0.7
+        self.muy = 0.8
+        self.gax = 1.0
+        self.gay = 1.0
         self.axy = 0.4
         self.ayx = 0.4
         self.w = 0.05
@@ -148,5 +147,6 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         cpdef float ky = pops_and_params[3]
         cpdef float f = - self.mux + (1.0 - (x + self.axy * y) / kx) * (x / (x + self.w * y)) * self.gax
         cpdef float g = - self.muy + (1.0 - (self.ayx * x + y) / ky) * (self.gay + self.w * x / (x + self.w * y) * self.gax)
-        pops_and_params[0] = x + timestep * f * x
-        pops_and_params[1] = y + timestep * g * y
+        # max means (x,y) doesn't stray outside physical quadrant, even if timestep is too large
+        pops_and_params[0] = max(0.0, x + timestep * f * x)
+        pops_and_params[1] = max(0.0, y + timestep * g * y)

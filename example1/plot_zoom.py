@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# plots the active cells as dark-grey areas and the inactive cells as light-grey areas
+# plots stuff in the region around the release site
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
