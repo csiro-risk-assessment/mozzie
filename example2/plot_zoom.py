@@ -30,8 +30,6 @@ y = np.arange(ymin, ymin + ny * cell_size, cell_size)
 
 plt.figure()
 # for carrying_zoom: plt.contourf(x, y, z, levels = [3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25, 5.5], vmin=3, vmax=5.5, cmap='coolwarm')
-# for runner_y_highcc_200_days
-#plt.contourf(x, y, z, levels = [0, 1000, 5000, 10000, 15000], vmin=0, vmax=15000, cmap='coolwarm')
 plt.contourf(x, y, z, cmap='coolwarm')
 plt.axis('equal')
 plt.colorbar()
