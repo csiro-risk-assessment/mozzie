@@ -1,5 +1,8 @@
 import array
 cimport cpython.array as array
+### Following doesn't work with python2.7, yet
+###cimport numpy as np
+###import numpy as np
 
 cdef class CellDynamicsBase:
     """Manipulates information at a single cell, in particular this class solves lifecycle ODEs"""
@@ -118,3 +121,97 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
     cpdef float getW(self)
     """Gets w"""
 
+cdef class CellDynamicsMosquito23(CellDynamicsBase):
+    """Solves Mosquito ODE with 2 sexes and 3 genotypes"""
+
+    # male, female, always
+    cdef unsigned num_sexes
+
+    # ww, Gw, GG, always
+    cdef unsigned num_genotypes
+
+    # iheritance_cube[x,y,z] = probability of mother genotype x, father genotype y producing offspring genotype z
+    # where index 0, 1, 2 = ww, Gw, GG respectively
+    ###cpdef np.ndarray inheritance_cube
+
+    # doco
+    cdef float mu_larvae
+
+    # codo
+    cdef float mu_adult
+
+    # doco
+    cdef float fecundity
+
+    # doco
+    cdef float aging_rate
+
+    # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
+    cdef unsigned num_ages
+
+    # number of species
+    cdef unsigned num_species
+
+    # accuracy of PMB
+    cdef float accuracy
+
+    # doco
+    ###cdef np.ndarray fecundity_proportion
+
+    # doco
+    ###cdef np.ndarray ipm
+
+    # doco
+    ###cdef np.ndarray ipf
+
+    # the population numbers, as a numpy array
+    ###cdef np.ndarray xx
+
+    # the carrying capacity
+    cdef float kk
+
+    cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy)
+    """Given num_ages, num_species and accuracy, set all internal parameters (num_populations, diffusing_indices, fecundity_proportion, etc) that depend on these"""
+
+    cpdef void setMuLarvae(self, float mu_larvae)
+    """Set mu_larvae"""
+
+    cpdef float getMuLarvae(self)
+    """Get mu_larvae"""
+    
+    cpdef void setMuAdult(self, float mu_adult)
+    """Set mu_adult"""
+
+    cpdef float getMuAdult(self)
+    """Get mu_adult"""
+    
+    cpdef void setFecundity(self, float fecundity)
+    """Set fecundity"""
+
+    cpdef float getFecundity(self)
+    """Get fecundity"""
+    
+    cpdef void setAgingRate(self, float aging_rate)
+    """Set aging_rate"""
+
+    cpdef float getAgingRate(self)
+    """Get aging_rate"""
+    
+    cpdef void setNumAges(self, unsigned num_ages)
+    """Set number of ages (larvae0, larvae1, ...., adults.  This calls setInternalParameters to appropriately set other parameters, given num_ages"""
+
+    cpdef unsigned getNumAges(self)
+    """Get number of ages"""
+    
+    cpdef void setNumSpecies(self, unsigned num_species)
+    """Set number of species.  This calls setInternalParameters to appropriately set other parameters, given num_species"""
+
+    cpdef unsigned getNumSpecies(self)
+    """Get number of species"""
+    
+    cpdef void setAccuracy(self, float accuracy)
+    """Set accuracy of PMB.  This calls setInternalParameters to appropriately set other parameters, given accuracy"""
+
+    cpdef float getAccuracy(self)
+    """Get accuracy"""
+    
