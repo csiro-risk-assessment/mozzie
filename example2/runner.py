@@ -5,7 +5,7 @@
 # - diffusing and advecting timestep of 0.5days, then lifecycle timestep of 0.5days, repeated cyclically.  This means that mosquito population evolution via the ODE only occurs for 0.5 days out of each day, diffusion only occurs for 0.5 days out of each day, etc
 # - diffusion (diffusion coefficient = 0.1 km^2/day)
 # - advection by wind that is defined by 1 wind file only, and has exponentially-distributed 'drop off' timesx (1% of the population of each cell is advected) (read from ../example1)
-# - mosquito lifecycle defined by the ODEs defined in Eqns(4.1) and (4.2) of Beeton, Hosack, Wilkins, Forbes, Ickowicz and Hayes, Journal of Theoretical Biology 2019, parameters defined in Fig5(c) of that article, with carrying capacity defined as above.
+# - mosquito lifecycle defined by the ODEs defined in Eqns(4.1) and (4.2) of Beeton, Hosack, Wilkins, Forbes, Ickowicz and Hayes, Journal of Theoretical Biology 2019, parameters defined in Fig5(c) of that article, with carrying capacity defined as above, and cycling between that value and 0.2*above
 
 
 
@@ -66,7 +66,7 @@ sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 sys.stdout.write("Populating the initial (zero) populations and parameters array...")
 start = timeit.default_timer()
 initial_y = array.array('f', [c * 0.1 for c in cc_high])
-all_pops.setPopulationAndParametersFromXY(-2000.0, 700.0, [100000, 0, 0, 0]) # introduce 10000 type X at (-2000,700) (the population of Y and carrying capacities get overwritten by the following lines)
+all_pops.setPopulationAndParametersFromXY(-2000.0, 700.0, [10000, 0, 0, 0]) # introduce 10000 type X at (-2000,700) (the population of Y and carrying capacities get overwritten by the following lines)
 all_pops.setOverActiveGrid(1, initial_y)
 all_pops.setOverActiveGrid(2, cc_high)
 all_pops.setOverActiveGrid(3, cc_high)
@@ -99,7 +99,6 @@ start = timeit.default_timer()
 wind.parseRawFile()
 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 
-
 ######################################################
 # Simulate
 sys.stdout.write("Doing ODE evolution, diffusion and advection\n")
@@ -108,7 +107,7 @@ timestep_size = 0.5
 the_time = 0.0
 end_time = 200.0
 for bigP in [20, 1]:
-   all_pops.setPopulationAndParametersFromXY(-2000.0, 700.0, [100000, 0, 0, 0]) # introduce 10000 type X at (-2000,700) (the population of Y and carrying capacities get overwritten by the following lines)
+   all_pops.setPopulationAndParametersFromXY(-2000.0, 700.0, [10000, 0, 0, 0]) # introduce 10000 type X at (-2000,700) (the population of Y and carrying capacities get overwritten by the following lines)
    num_cycles = int(end_time / bigP + 0.5)
    all_pops.setOverActiveGrid(1, initial_y)
    for cycle_num in range(num_cycles + 1):
@@ -137,14 +136,14 @@ for bigP in [20, 1]:
 sys.stdout.write("CPU time taken = " + str(timeit.default_timer() - start) + "s\n")
 
 ######################################################
-# Simulate again
+# Simulate again, but with just diffusion and advection
 sys.stdout.write("Doing only diffusion and advection\n")
 start = timeit.default_timer()
 timestep_size = 0.5
 the_time = 0.0
 end_time = 200.0
 for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparison with the previous block
-   all_pops.setPopulationAndParametersFromXY(-2000.0, 700.0, [100000, 0, 0, 0]) # introduce 10000 type X at (-2000,700) (the population of Y and carrying capacities get overwritten by the following lines)
+   all_pops.setPopulationAndParametersFromXY(-2000.0, 700.0, [10000, 0, 0, 0]) # introduce 10000 type X at (-2000,700) (the population of Y and carrying capacities get overwritten by the following lines)
    num_cycles = int(end_time / bigP + 0.5)
    all_pops.setOverActiveGrid(1, initial_y)
    for cycle_num in range(num_cycles + 1):
@@ -169,6 +168,43 @@ for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparis
    sys.stdout.write("Outputting population result...\n")
    spatial.outputCSV("runner_x_no_cell_evolve_" + str(cycle_num * bigP) + "_days.csv", 0, "0", "")
    spatial.outputCSV("runner_y_no_cell_evolve_" + str(cycle_num * bigP) + "_days.csv", 1, "0", "")
+
+sys.stdout.write("CPU time taken = " + str(timeit.default_timer() - start) + "s\n")
+
+
+######################################################
+# Simulate again, but with "x" always having cc_high and "y" always having cc_low
+sys.stdout.write("Doing ODE evolution, diffusion and advection\n")
+start = timeit.default_timer()
+timestep_size = 0.5
+the_time = 0.0
+end_time = 200.0
+for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparison with the previous block
+   all_pops.setPopulationAndParametersFromXY(-2000.0, 700.0, [10000, 0, 0, 0]) # introduce 10000 type X at (-2000,700) (the population of Y and carrying capacities get overwritten by the following lines)
+   num_cycles = int(end_time / bigP + 0.5)
+   all_pops.setOverActiveGrid(1, initial_y)
+   for cycle_num in range(num_cycles + 1):
+      sys.stdout.write("  Cycle " + str(cycle_num) + "\n")
+      all_pops.setOverActiveGrid(2, cc_high)
+      all_pops.setOverActiveGrid(3, cc_low)
+      for sub_cycle in range(bigP):
+         sys.stdout.write("    K_high subcycle " + str(sub_cycle) + "\n")
+         spatial.evolveCells(timestep_size)
+         spatial.diffuse(timestep_size, 0.1)
+         spatial.advect(0.01, wind)
+         the_time += timestep_size
+      all_pops.setOverActiveGrid(2, cc_high)
+      all_pops.setOverActiveGrid(3, cc_low)
+      for sub_cycle in range(bigP):
+         sys.stdout.write("    K_low subcycle " + str(sub_cycle) + "\n")
+         spatial.evolveCells(timestep_size)
+         spatial.diffuse(timestep_size, 0.1)
+         spatial.advect(0.01, wind)
+         the_time += timestep_size
+
+   sys.stdout.write("Outputting population result...\n")
+   spatial.outputCSV("runner_x_highcc_" + str(cycle_num * bigP) + "_days.csv", 0, "0", "")
+   spatial.outputCSV("runner_y_highcc_" + str(cycle_num * bigP) + "_days.csv", 1, "0", "")
 
 sys.stdout.write("CPU time taken = " + str(timeit.default_timer() - start) + "s\n")
 
