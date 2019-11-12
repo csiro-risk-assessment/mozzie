@@ -119,7 +119,16 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
     """Gets w"""
 
 cdef class CellDynamicsMosquito23(CellDynamicsBase):
-    """Solves Mosquito ODE with 2 sexes and 3 genotypes"""
+    """Solves Mosquito ODE with 2 sexes and 3 genotypes.
+    The number of populations is
+    num_ages * num_sexes * num_genotypes * num_species = 6 * num_ages * num_species.
+    For species M, genotype G, sex S and age A, the index into pops_and_params is
+    index = M + G * num_species + S * num_species * num_genotypes + A * num_species * num_genotypes * num_sexes
+    Ages 0, 1, ..., num_ages - 2 are all larval stages.  Age = num_ages - 1 is the adult stage.
+    Sex 0 is male.  Sex 1 is female.
+    Genotype 0 is ww, Genotype 1 is Gw, Genotype 2 is GG.
+    There is one spatially-varying parameter, that is the carrying capacity
+    """
 
     # male, female, always.  So num_sexes = 2
     cdef unsigned num_sexes
@@ -130,19 +139,19 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # square of num_genotypes, viz 9
     cdef unsigned num_genotypes2
 
-    # doco
+    # death rate of larvae
     cdef float mu_larvae
 
-    # codo
+    # death rate of adults
     cdef float mu_adult
 
     # doco
     cdef float fecundity
 
-    # doco
+    # rate of transferral from one age bracket to the next-eldest age bracket
     cdef float aging_rate
 
-    # the carrying capacity
+    # the carrying capacity.  This is spatially-varying and is set upon entry to evolve()
     cdef float kk
 
     # inheritance_cube[i, j, k] = probability of mother genotype i, father genotype j producing offspring genotype k
@@ -203,24 +212,29 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef float getAccuracy(self)
     """Get accuracy"""
 
-    # ipm as a cython array
+    # ipm as a cython array, to avoid having to cimport numpy here
     cdef array.array ipm_array
-    
+
     cdef inline float IPM(self, unsigned gt0, unsigned gt1, unsigned gt2):
+        """Inlined.  Get components of ipm"""
         return self.ipm_array.data.as_floats[gt0 * self.num_genotypes2 + gt1 * self.num_genotypes + gt2]
 
     cdef inline void setIPM(self, unsigned gt0, unsigned gt1, unsigned gt2, float entry):
+        """Inlined.  Set components of ipm"""
         self.ipm_array.data.as_floats[gt0 * self.num_genotypes2 + gt1 * self.num_genotypes + gt2] = entry
     
-    # ipf as a cython array
+    # ipf as a cython array, to avoid having to cimport numpy here
     cdef array.array ipf_array
     
     cdef inline float IPF(self, unsigned gt0, unsigned gt1, unsigned gt2):
+        """Inlined.  Get components of ipf"""
         return self.ipf_array.data.as_floats[gt0 * self.num_genotypes2 + gt1 * self.num_genotypes + gt2]
 
     cdef inline void setIPF(self, unsigned gt0, unsigned gt1, unsigned gt2, float entry):
+        """Inlined.  Set components of ipf"""
         self.ipf_array.data.as_floats[gt0 * self.num_genotypes2 + gt1 * self.num_genotypes + gt2] = entry
 
-    cpdef float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt)
-    """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
+    cdef inline float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
+        """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
+        return 0.5 if (offspring_sex == 0 or mother_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0)
     

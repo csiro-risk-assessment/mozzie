@@ -32,22 +32,26 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
    def testGetNumberOfDiffusingPopulations(self):
       self.assertEqual(self.c.getNumberOfDiffusingPopulations(), 6)
       self.c.setNumAges(4)
-      self.assertEqual(self.c.getNumberOfDiffusingPopulations(), 6)
+      self.c.setNumSpecies(3)
+      self.assertEqual(self.c.getNumberOfDiffusingPopulations(), 6 * 3)
 
    def testGetDiffusingIndices(self):
       self.assertTrue(arrayequal(self.c.getDiffusingIndices(), [6, 7, 8, 9, 10, 11]))
       self.c.setNumAges(4)
-      self.assertTrue(arrayequal(self.c.getDiffusingIndices(), [18, 19, 20, 21, 22, 23]))
+      self.c.setNumSpecies(2)
+      self.assertTrue(arrayequal(self.c.getDiffusingIndices(), list(range(36, 48))))
 
    def testGetNumberOfAdvectingPopulations(self):
       self.assertEqual(self.c.getNumberOfAdvectingPopulations(), 6)
       self.c.setNumAges(4)
-      self.assertEqual(self.c.getNumberOfAdvectingPopulations(), 6)
+      self.c.setNumSpecies(5)
+      self.assertEqual(self.c.getNumberOfAdvectingPopulations(), 6 * 5)
 
    def testGetAdvectingIndices(self):
       self.assertTrue(arrayequal(self.c.getAdvectingIndices(), [6, 7, 8, 9, 10, 11]))
       self.c.setNumAges(5)
-      self.assertTrue(arrayequal(self.c.getAdvectingIndices(), [24, 25, 26, 27, 28, 29]))
+      self.c.setNumSpecies(2)
+      self.assertTrue(arrayequal(self.c.getAdvectingIndices(), list(range(48, 60))))
 
    def testSetGetMuLarvae(self):
       self.c.setMuLarvae(1234.0)
@@ -77,11 +81,17 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setAccuracy(0.125)
       self.assertEqual(self.c.getAccuracy(), 0.125)
 
-   def testEvolve(self):
-      # THIS TEST CURRENTLY ONLY TESTS THAT evolve CAN BE CALLED WITHOUT RAISING AN ERROR
-      dt = 0.1
-      pap = array.array('f', list(range(13)))
-      self.c.evolve(0.1, pap)
+   def testEvolveZeroFecundityZeroAging(self):
+      dt = 0.01
+      self.c.setFecundity(0.0)
+      self.c.setAgingRate(0.0)
+      self.c.setMuLarvae(0.5)
+      self.c.setMuAdult(0.7)
+      initial_condition = list(range(13))
+      pap = array.array('f', initial_condition)
+      expected_answer = [x * (1 - 0.5 * dt) for x in initial_condition[:6]] + [x * (1 - 0.7 * dt) for x in initial_condition[6:12]] + [12]
+      self.c.evolve(dt, pap)
+      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 3E-4))
 
 if __name__ == '__main__':
    unittest.main()

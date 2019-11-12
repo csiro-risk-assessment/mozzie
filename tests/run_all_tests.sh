@@ -6,6 +6,7 @@ python ${DIR}/TestGrid.py
 python ${DIR}/TestCellDynamicsStatic15_9_3_2.py
 python ${DIR}/TestCellDynamicsLogistic1_1.py
 python ${DIR}/TestCellDynamicsBeeton2_2.py
+python ${DIR}/TestCellDynamicsMosquito23.py
 python ${DIR}/TestPopulationsAndParameters.py
 python ${DIR}/TestWind.py
 python ${DIR}/TestDiffusion_1.py
