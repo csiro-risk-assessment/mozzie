@@ -93,6 +93,21 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 3E-4))
 
+   def testEvolveAgingOnly(self):
+      dt = 0.01
+      aging_rate = 0.25
+      self.c.setFecundity(0.0)
+      self.c.setAgingRate(aging_rate)
+      self.c.setMuLarvae(0.0)
+      self.c.setMuAdult(0.0)
+      initial_condition = list(range(13))
+      pap = array.array('f', initial_condition)
+      expected_answer = [x * (1 - aging_rate * dt) for x in initial_condition[:6]] + [initial_condition[i] + initial_condition[i - 6] * aging_rate * dt for i in range(6, 12)] + [12]
+      self.c.evolve(dt, pap)
+      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 3E-5))
+      conserved = [pap[i] + pap[i + 6] - initial_condition[i] - initial_condition[i + 6] for i in range(6)]
+      self.assertTrue(arrayfuzzyequal(conserved, [0.0] * 6, 6E-7))
+
 if __name__ == '__main__':
    unittest.main()
 
