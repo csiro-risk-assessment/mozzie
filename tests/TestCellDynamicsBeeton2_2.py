@@ -81,8 +81,6 @@ class TestCellDynamicsBeeton2_2(unittest.TestCase):
 
       self.assertTrue(arrayfuzzyequal(pap, [xnew, ynew, kx, ky], 1E-6))
 
-      
-
 if __name__ == '__main__':
    unittest.main()
 

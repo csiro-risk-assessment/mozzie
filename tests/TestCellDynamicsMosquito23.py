@@ -87,11 +87,18 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setAgingRate(0.0)
       self.c.setMuLarvae(0.5)
       self.c.setMuAdult(0.7)
+
       initial_condition = list(range(13))
       pap = array.array('f', initial_condition)
       expected_answer = [x * (1 - 0.5 * dt) for x in initial_condition[:6]] + [x * (1 - 0.7 * dt) for x in initial_condition[6:12]] + [12]
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 3E-4))
+
+      self.c.setNumSpecies(2)
+      self.c.setNumAges(5)
+      initial_condition = list(range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters()))
+      pap = array.array('f', initial_condition)
+      ### THIS CURRENTLY CRASHES DUE TO INDEXING ERROR: self.c.evolve(dt, pap)
 
    def testEvolveAgingOnly(self):
       dt = 0.01
