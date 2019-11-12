@@ -163,17 +163,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.num_sexes = 2 # male, female, always
         self.num_genotypes = 3 # ww, Gw, GG, always
         self.num_parameters = 1 # the only spatially-varying quantity is the carrying capacity, K
-        # iheritance_cube[x,y,z] = probability of mother genotype x, father genotype y producing offspring genotype z
-        # where index 0, 1, 2 = ww, Gw, GG respectively
-        self.inheritance_cube = np.array([[[1., 0., 0.],# ww x ww
-                                           [ .5, .5, 0. ],
-                                           [ 0., 1., 0. ]],
-                                          [[ .5, .5, 0. ],
-                                           [ .25, .5, .25 ], # Gw x Gw
-                                           [ 0., .25, .25 ]],
-                                          [[ 0., 1., 0. ],
-                                           [ 0., .5, .5 ],
-                                           [ 0., 0., 1. ]]]) # GG x GG
 
         # Following parameters may be set by user.
         self.mu_larvae = 0.1
@@ -181,6 +170,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.fecundity = 0.9
         self.aging_rate = 0.1
 
+        # Set default carrying capacity
+        self.kk = 1.0
+        
         self.setInternalParameters(2, 1, 0.95) # default to num_ages = 2, num_species = 1, accuracy = 0.95
 
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy):
@@ -198,32 +190,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.num_advecting = 6 # only age = num_ages - 1 (that is, adults) diffuses
         self.advecting_indices = array.array('I', moving_indices) # the age = num_ages = 1 mosquitoes
 
-        # calculate fecundity allocated to male and female larvae
-        # fecundity_proportion[z,x,y] = proportion of total fecundity of mother genotype x, father genotype y to producing offspring sex z
-        # where index of z: 0, 1 = male, female
-        # note - proportions will not add to 1 for male bias
-        cdef float fprop = 1.0 / self.accuracy - 1.0
-        prow = np.array([0.5] * self.num_genotypes)
-        self.fecundity_proportion = np.array([[prow, prow, prow], [prow, fprop * prow, fprop * prow]]) # has length self.num_sexes
-
-        # pre-calculate inheritance_cube * fecundity_proportion for males and females
-        self.ipm = np.zeros((self.num_genotypes, self.num_genotypes, self.num_genotypes))
-        self.ipf = np.zeros((self.num_genotypes, self.num_genotypes, self.num_genotypes))
-
-        for j in range(self.num_genotypes):
-            self.ipm[:,:,j] = self.inheritance_cube[:,:,j] * self.fecundity_proportion[0,:,:]
-            self.ipf[:,:,j] = self.inheritance_cube[:,:,j] * self.fecundity_proportion[1,:,:]
-
-        # transpose these for use in later matrix multiplication
-        # (useful form to have in case of implicit)
-        for j in range(self.num_genotypes):
-            self.ipm[j,:,:] = np.transpose(self.ipm[j,:,:])
-            self.ipf[j,:,:] = np.transpose(self.ipf[j,:,:])
-
-        # Following parameters are for use in evolve: most efficient to allocate them now
-        self.xx = np.ones(self.num_populations)
-        self.kk = 1.0
-        
 
     cpdef void setMuLarvae(self, float mu_larvae):
         self.mu_larvae = mu_larvae
@@ -270,6 +236,40 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     def fun(self, t, y):
         """Evaluates d(populations)/dt"""
+
+        # iheritance_cube[x,y,z] = probability of mother genotype x, father genotype y producing offspring genotype z
+        # where index 0, 1, 2 = ww, Gw, GG respectively
+        inheritance_cube = np.array([[[1., 0., 0.],# ww x ww
+                                      [ .5, .5, 0. ],
+                                      [ 0., 1., 0. ]],
+                                     [[ .5, .5, 0. ],
+                                      [ .25, .5, .25 ], # Gw x Gw
+                                      [ 0., .25, .25 ]],
+                                     [[ 0., 1., 0. ],
+                                      [ 0., .5, .5 ],
+                                      [ 0., 0., 1. ]]]) # GG x GG
+        # calculate fecundity allocated to male and female larvae
+        # fecundity_proportion[z,x,y] = proportion of total fecundity of mother genotype x, father genotype y to producing offspring sex z
+        # where index of z: 0, 1 = male, female
+        # note - proportions will not add to 1 for male bias
+        cdef float fprop = 1.0 / self.accuracy - 1.0
+        prow = np.array([0.5] * self.num_genotypes)
+        fecundity_proportion = np.array([[prow, prow, prow], [prow, fprop * prow, fprop * prow]]) # has length self.num_sexes
+
+        # pre-calculate inheritance_cube * fecundity_proportion for males and females
+        ipm = np.zeros((self.num_genotypes, self.num_genotypes, self.num_genotypes))
+        ipf = np.zeros((self.num_genotypes, self.num_genotypes, self.num_genotypes))
+
+        for j in range(self.num_genotypes):
+            ipm[:,:,j] = inheritance_cube[:,:,j] * fecundity_proportion[0,:,:]
+            ipf[:,:,j] = inheritance_cube[:,:,j] * fecundity_proportion[1,:,:]
+
+        # transpose these for use in later matrix multiplication
+        # (useful form to have in case of implicit)
+        for j in range(self.num_genotypes):
+            ipm[j,:,:] = np.transpose(ipm[j,:,:])
+            ipf[j,:,:] = np.transpose(ipf[j,:,:])
+
         Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
         n = Y[:-1,:,:,:].sum() # total number of larvae (all but the last age class)
         ratio = Y[-1,0,:,:] # ratio of adult males (last age class) of given genotype and species
@@ -280,8 +280,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # of the relevant genotype (and the same species)
         for i in range(self.num_genotypes): # fathers' genotypes
             for j in range(self.num_species): # species
-                mat[j:(self.num_genotypes * self.num_species):self.num_species, (self.num_genotypes * self.num_genotypes * (self.num_ages - 1) * self.num_species + j):self.num_populations:self.num_species] += self.ipm[i,:,:] * ratio[i,j]
-                mat[(self.num_genotypes * self.num_species + j):(self.num_genotypes * self.num_sexes * self.num_species):self.num_species, (self.num_genotypes * self.num_genotypes * (self.num_ages - 1) * self.num_species + j): self.num_populations: self.num_species] += self.ipf[i,:,:] * ratio[i,j]
+                mat[j:(self.num_genotypes * self.num_species):self.num_species, (self.num_genotypes * self.num_genotypes * (self.num_ages - 1) * self.num_species + j):self.num_populations:self.num_species] += ipm[i,:,:] * ratio[i,j]
+                mat[(self.num_genotypes * self.num_species + j):(self.num_genotypes * self.num_sexes * self.num_species):self.num_species, (self.num_genotypes * self.num_genotypes * (self.num_ages - 1) * self.num_species + j): self.num_populations: self.num_species] += ipf[i,:,:] * ratio[i,j]
         mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
         # mortality
         mat[range(self.num_genotypes * self.num_sexes * (self.num_ages - 1) * self.num_species), range(self.num_genotypes * self.num_sexes * (self.num_ages - 1) * self.num_species)] = - self.mu_larvae - self.aging_rate
@@ -293,14 +293,15 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         return dXdt
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
-        # copy into self.xx for use in self.fun
+        # copy into numpy array xx for use in self.fun
+        xx = np.ones(self.num_populations)
         cdef unsigned ind
         for ind in range(self.num_populations):
-            self.xx[ind] = pops_and_params[ind]
-        self.kk = pops_and_params[self.num_populations]
+            xx[ind] = pops_and_params.data.as_floats[ind]
+        self.kk = pops_and_params.data.as_floats[self.num_populations]
         # solve
-        sol = solve_ivp(self.fun, [0.0, timestep], self.xx)
-        # copoy back
+        sol = solve_ivp(self.fun, [0.0, timestep], xx)
+        # copy back
         for ind in range(self.num_populations):
             pops_and_params[ind] = sol.y[ind, -1]
         

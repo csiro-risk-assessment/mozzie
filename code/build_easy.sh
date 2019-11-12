@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cythonize -i -a *.pyx
+cythonize -3 -i -a *.pyx
