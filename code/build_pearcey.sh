@@ -1,4 +1,5 @@
 #!/bin/bash
+module load python/3.7.2
 
 cythonize -3 -a *.pyx
 
