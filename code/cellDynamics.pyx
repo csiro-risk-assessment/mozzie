@@ -328,12 +328,19 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         return dXdt
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
+        cdef unsigned ind
+        self.kk = pops_and_params[self.num_populations]
+
+        if self.kk <= 0.0:
+            # instantly kill all populations
+            for ind in range(self.num_populations):
+                pops_and_params[ind] = 0.0
+            return
+
         # copy into numpy array xx for use in self.fun
         xx = np.ones(self.num_populations)
-        cdef unsigned ind
         for ind in range(self.num_populations):
             xx[ind] = pops_and_params[ind]
-        self.kk = pops_and_params[self.num_populations]
         # solve
         sol = solve_ivp(self.fun, [0.0, timestep], xx)
         # copy back
