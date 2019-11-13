@@ -304,13 +304,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     ind0 = sp + gt0 * self.num_species  # newborn (age=0) male (sex=0) of genotype gt0 and species sp
                     ind1 = sp + gt0 * self.num_species + self.num_species * self.num_genotypes # newborn (age=0) female (sex=1) of genotype gt0 and species sp
                     for gt1 in range(self.num_genotypes):
-                        ind2 = offset_to_adult + sp + self.num_species * gt1 # adult (age=num_ages-1) male (sex=0) of genotype gt1 and species sp
+                        ind2 = offset_to_adult + sp + gt1 * self.num_species # adult (age=num_ages-1) male (sex=0) of genotype gt1 and species sp
                         mat[ind0, ind2] += self.IPM(i, gt0, gt1) * ratio[i, sp]
                         mat[ind1, ind2] += self.IPF(i, gt0, gt1) * ratio[i, sp]
         mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
 
         # mortality and aging into another class
-        cdef unsigned last_larvae = self.num_species * self.num_genotypes * self.num_sexes * (self.num_ages - 1)
+        cdef unsigned last_larvae =  (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
         for i in range(last_larvae):
             mat[i][i] = - self.mu_larvae - self.aging_rate
         for i in range(last_larvae, self.num_populations):
