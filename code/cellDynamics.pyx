@@ -283,7 +283,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         """Evaluates d(populations)/dt"""
 
         # useful indices
-        cdef unsigned i, j, gt0, gt1, ind0, ind1
+        cdef unsigned i, j, sp, gt0, gt1, ind0, ind1
 
         # Following lines can probably be optimised: currently lots of big copy-constructors
         Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
@@ -297,16 +297,16 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # for each father's genotype and species, add the relevant proportion of fecundity for 
         # mothers of each genotype and that species, producing proportions of offspring 
         # of the relevant genotype (and the same species)
-        cdef unsigned offset1 = self.num_genotypes2 * (self.num_ages - 1) * self.num_species
+        cdef unsigned offset_to_adult = (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
         for i in range(self.num_genotypes): # fathers' genotypes
-            for j in range(self.num_species): # species
+            for sp in range(self.num_species): # species
                 for gt0 in range(self.num_genotypes):
                     for gt1 in range(self.num_genotypes):
-                        ind0 = j + self.num_species * gt0
-                        ind1 = offset1 + j + self.num_species * gt1
-                        mat[ind0, ind1] += self.IPM(i, gt0, gt1) * ratio[i, j]
-                        ind0 += self.num_genotypes * self.num_species
-                        mat[ind0, ind1] += self.IPF(i, gt0, gt1) * ratio[i, j]
+                        ind0 = sp + self.num_species * gt0 # newborn (age=0) male (sex=0) of genotype gt0 and species sp
+                        ind1 = offset_to_adult + sp + self.num_species * gt1 # adult (age=num_ages-1) male (sex=0) of genotype gt1 and species sp
+                        mat[ind0, ind1] += self.IPM(i, gt0, gt1) * ratio[i, sp]
+                        ind0 += self.num_genotypes * self.num_species # newborn (age=0) female (sex=1) of genotype gt0 and species sp
+                        mat[ind0, ind1] += self.IPF(i, gt0, gt1) * ratio[i, sp]
         mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
 
         # mortality and aging into another class
