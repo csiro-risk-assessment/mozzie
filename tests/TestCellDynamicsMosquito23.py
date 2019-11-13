@@ -2,6 +2,7 @@ import os
 import sys
 import unittest
 import array
+import random
 
 # so we can find our ../code no matter how we are called
 findbin = os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -87,18 +88,25 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setAgingRate(0.0)
       self.c.setMuLarvae(0.5)
       self.c.setMuAdult(0.7)
+      random.seed(1)
 
-      initial_condition = list(range(13))
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
       pap = array.array('f', initial_condition)
-      expected_answer = [x * (1 - 0.5 * dt) for x in initial_condition[:6]] + [x * (1 - 0.7 * dt) for x in initial_condition[6:12]] + [12]
+      expected_answer = [x * (1 - 0.5 * dt) for x in initial_condition[:6]] + [x * (1 - 0.7 * dt) for x in initial_condition[6:12]] + [initial_condition[-1]]
       self.c.evolve(dt, pap)
-      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 3E-4))
+      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 4E-5))
 
-      self.c.setNumSpecies(2)
+      num_ages = 5
+      num_gt = 3
+      num_species = 4
+      num_sexes = 2
+      self.c.setNumSpecies(4)
       self.c.setNumAges(5)
-      initial_condition = list(range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters()))
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
+      expected_answer = [x * (1 - 0.5 * dt) for x in initial_condition[:(num_ages - 1) * num_species * num_gt * num_sexes]] + [x * (1 - 0.7 * dt) for x in initial_condition[(num_ages - 1) * num_species * num_gt * num_sexes : num_ages * num_species * num_gt * num_sexes]] + [initial_condition[-1]]
       pap = array.array('f', initial_condition)
-      ### THIS CURRENTLY CRASHES DUE TO INDEXING ERROR: self.c.evolve(dt, pap)
+      self.c.evolve(dt, pap)
+      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 4E-5))
 
    def testEvolveAgingOnly(self):
       dt = 0.01
@@ -107,13 +115,37 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setAgingRate(aging_rate)
       self.c.setMuLarvae(0.0)
       self.c.setMuAdult(0.0)
-      initial_condition = list(range(13))
+      random.seed(1)
+
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
       pap = array.array('f', initial_condition)
-      expected_answer = [x * (1 - aging_rate * dt) for x in initial_condition[:6]] + [initial_condition[i] + initial_condition[i - 6] * aging_rate * dt for i in range(6, 12)] + [12]
+      expected_answer = [x * (1 - aging_rate * dt) for x in initial_condition[:6]] + [initial_condition[i] + initial_condition[i - 6] * aging_rate * dt for i in range(6, 12)] + [initial_condition[-1]]
       self.c.evolve(dt, pap)
-      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 3E-5))
+      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 5E-6))
       conserved = [pap[i] + pap[i + 6] - initial_condition[i] - initial_condition[i + 6] for i in range(6)]
-      self.assertTrue(arrayfuzzyequal(conserved, [0.0] * 6, 6E-7))
+      self.assertTrue(arrayfuzzyequal(conserved, [0.0] * 6, 6E-8))
+
+      num_ages = 5
+      num_gt = 3
+      num_species = 4
+      num_sexes = 2
+      self.c.setNumSpecies(num_species)
+      self.c.setNumAges(num_ages)
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
+      expected_answer = [x * (1 - aging_rate * dt) for x in initial_condition[:1 * num_species * num_gt * num_sexes]] + [initial_condition[i] + initial_condition[i - num_species * num_gt * num_sexes] * aging_rate * dt for i in range(1 * num_species * num_gt * num_sexes, num_ages * num_species * num_gt * num_sexes)] + [initial_condition[-1]]
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 4E-3))
+      for sp in range(num_species):
+         for sex in range(num_sexes):
+            for gt in range(num_gt):
+               conserved = 0
+               for age in range(num_ages):
+                  ind = sp + gt * num_species + sex * num_species * num_gt + age * num_species * num_gt * num_sexes
+                  conserved += pap[ind] - initial_condition[ind]
+               self.assertTrue((conserved < 3E-7 and conserved > -3E-7))
+
+
 
 if __name__ == '__main__':
    unittest.main()

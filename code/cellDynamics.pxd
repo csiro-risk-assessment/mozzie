@@ -121,7 +121,7 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
 cdef class CellDynamicsMosquito23(CellDynamicsBase):
     """Solves Mosquito ODE with 2 sexes and 3 genotypes.
     The number of populations is
-    num_ages * num_sexes * num_genotypes * num_species = 6 * num_ages * num_species.
+    num_ages * num_species * num_genotypes * num_sexes = num_ages * num_species * 6.
     For species M, genotype G, sex S and age A, the index into pops_and_params is
     index = M + G * num_species + S * num_species * num_genotypes + A * num_species * num_genotypes * num_sexes
     Ages 0, 1, ..., num_ages - 2 are all larval stages.  Age = num_ages - 1 is the adult stage.
