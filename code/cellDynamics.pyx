@@ -288,9 +288,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # Following lines can probably be optimised: currently lots of big copy-constructors
         Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
         if self.num_ages > 1:
-			n = Y[:-1,:,:,:].sum() # total number of larvae (all but the last age class)
-		else:
-			n = Y.sum() # total number of mosquitoes (all assumed to be "adults")
+            n = Y[:-1,:,:,:].sum() # total number of larvae (all but the last age class)
+        else:
+            n = Y.sum() # total number of mosquitoes (all assumed to be "adults")
         ratio = Y[-1,0,:,:] # ratio of adult males (last age class) of given genotype and species
         ratio = ratio / ratio.sum()
 
@@ -315,19 +315,19 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # mortality, and aging into next age bracket
         cdef unsigned last_larvae =  (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
         if self.num_ages > 1:
-			for i in range(last_larvae):
-				mat[i][i] -= (self.mu_larvae + self.aging_rate)
+            for i in range(last_larvae):
+                mat[i][i] -= (self.mu_larvae + self.aging_rate)
         for i in range(last_larvae, self.num_populations):
             mat[i][i] -= self.mu_adult
 
         # aging from previous age bracket
+        cdef unsigned num_per_age =  self.num_species * self.num_genotypes * self.num_sexes
+        cdef unsigned from_population
         if self.num_ages > 1:
-			cdef unsigned num_per_age =  self.num_species * self.num_genotypes * self.num_sexes
-			cdef unsigned from_population
-			for i in range(self.num_ages - 1):
-				for j in range(num_per_age):
-					from_population = num_per_age * i + j
-					mat[from_population + num_per_age][from_population] = self.aging_rate
+            for i in range(self.num_ages - 1):
+                for j in range(num_per_age):
+                    from_population = num_per_age * i + j
+                    mat[from_population + num_per_age][from_population] = self.aging_rate
 
         dXdt = mat.dot(y)
         return dXdt
