@@ -218,8 +218,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     ind = ind + 1
 
         # pre-calculate inheritance_cube * fecundity_proportion for males and females
-        ipm = [[[0.0] * self.num_genotypes] * self.num_genotypes] * self.num_genotypes
-        ipf = [[[0.0] * self.num_genotypes] * self.num_genotypes] * self.num_genotypes
+        ipm = [[[0.0] * self.num_genotypes for i in range(self.num_genotypes)] for i in range(self.num_genotypes)]
+        ipf = [[[0.0] * self.num_genotypes for i in range(self.num_genotypes)] for i in range(self.num_genotypes)]
 
         for gt2 in range(self.num_genotypes):
             for gt0 in range(self.num_genotypes):

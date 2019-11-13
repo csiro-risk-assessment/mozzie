@@ -51,11 +51,13 @@ for j in range(3):
     ipm[:,:,j] = i[:,:,j] * p[0,:,:]
     ipf[:,:,j] = i[:,:,j] * p[1,:,:]
 
+
 # transpose y and z for use in later matrix multiplication
 # (useful form to have in case of implicit)
 for j in range(3):
     ipm[j,:,:] = np.transpose(ipm[j,:,:])
     ipf[j,:,:] = np.transpose(ipf[j,:,:])
+
 
 #X = np.ones(n_classes)
 X = np.ones(n_classes)*0.1
@@ -79,10 +81,10 @@ def f(t, y):
             mat[j:(3*n_species):n_species, (3*(2*n_ages-1)*n_species + j):n_classes:n_species] += ipm[i,:,:] * ratio[i,j]
             mat[(3*n_species + j):(6*n_species):n_species, (3*(2*n_ages-1)*n_species + j):n_classes:n_species] += ipf[i,:,:] * ratio[i,j]
     # j:(3*n_species):n_species represents all baby males of each genotype in species j (offspring)
-    # (9*(n_ages-1)*n_species + j):n_classes:n_species represents 
+    # (3*(2*n_ages-1)*n_species + j):n_classes:n_species represents 
     # (n_ages - 1)*6*n_species (skip all juveniles) + 
-    # 3 * n_species (skip all adult males) +  [ subtotal 3*n_species*(2*(n_ages -1) + 1) = 3*n_species*(2*n_ages - 1)
-    # j:(3*n_species):n_species all adult females of each genotype in species j
+    # 3 * n_species (skip all adult males) = 3*n_species*(2*(n_ages -1) + 1) = 3*n_species*(2*n_ages - 1)
+    # (3*n_species + j):(6*n_species):n_species represents all baby females of each genotype in species j (offspring)
     mat *= (1 - n/kk)*fecundity # scaling by fecundity and density dependence
     # mortality
     if n_ages > 1:
