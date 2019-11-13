@@ -1,4 +1,7 @@
 #!/bin/bash
+
+module load openmpi/3.1.4-ofed45-gcc
+module load git
 module load python/3.7.2
 
 cythonize -3 -a *.pyx
