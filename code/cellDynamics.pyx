@@ -218,8 +218,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     ind = ind + 1
 
         # pre-calculate inheritance_cube * fecundity_proportion for males and females
-        ipm = [[[0.0] * self.num_genotypes] * self.num_genotypes] * self.num_genotypes
-        ipf = [[[0.0] * self.num_genotypes] * self.num_genotypes] * self.num_genotypes
+        ipm = [[[0.0] * self.num_genotypes for i in range(self.num_genotypes)] for i in range(self.num_genotypes)]
+        ipf = [[[0.0] * self.num_genotypes for i in range(self.num_genotypes)] for i in range(self.num_genotypes)]
 
         for gt2 in range(self.num_genotypes):
             for gt0 in range(self.num_genotypes):
@@ -287,6 +287,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
         # Following lines can probably be optimised: currently lots of big copy-constructors
         Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
+
         n = np.zeros(self.n_species)
 		# TODO: define self.alpha - example (always 1 on diagonal):
 		# alpha = [[1, 0.1], [0.2, 1]]
@@ -308,7 +309,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 			for i in range(n_species): # fathers' species
 				ratio[i,j,:] = self.w[i,j] * Y[-1,0,:,i] # weight adult male nums by relative prob of mating with mother of given species
 			ratio[:,j,:] = ratio[:,j,:] / np.sum(ratio[:,j,:]) # normalise to get overall prob for each female
-	 
+
         # Nick wrote the following code blocks in vectorised form.  Andy has taken out vectorisation with a view to making "mat" and "ratio" cython arrays instead of a numpy objects
         
         mat = np.zeros((self.num_populations, self.num_populations))
@@ -345,19 +346,19 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # mortality, and aging into next age bracket
         cdef unsigned last_larvae =  (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
         if self.num_ages > 1:
-			for i in range(last_larvae):
-				mat[i][i] -= (self.mu_larvae + self.aging_rate)
+            for i in range(last_larvae):
+                mat[i][i] -= (self.mu_larvae + self.aging_rate)
         for i in range(last_larvae, self.num_populations):
             mat[i][i] -= self.mu_adult
 
         # aging from previous age bracket
+        cdef unsigned num_per_age =  self.num_species * self.num_genotypes * self.num_sexes
+        cdef unsigned from_population
         if self.num_ages > 1:
-			cdef unsigned num_per_age =  self.num_species * self.num_genotypes * self.num_sexes
-			cdef unsigned from_population
-			for i in range(self.num_ages - 1):
-				for j in range(num_per_age):
-					from_population = num_per_age * i + j
-					mat[from_population + num_per_age][from_population] = self.aging_rate
+            for i in range(self.num_ages - 1):
+                for j in range(num_per_age):
+                    from_population = num_per_age * i + j
+                    mat[from_population + num_per_age][from_population] = self.aging_rate
 
         dXdt = mat.dot(y)
         return dXdt

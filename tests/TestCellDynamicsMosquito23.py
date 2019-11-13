@@ -146,6 +146,21 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
                self.assertTrue((conserved < 3E-7 and conserved > -3E-7))
 
 
+   def testEvolveSingleAge(self):
+      dt = 50.0
+      self.c.setMuLarvae(0.1)
+      self.c.setMuAdult(0.1)
+      self.c.setFecundity(0.9)
+      self.c.setAgingRate(0.1)
+      self.c.setNumAges(1)
+      self.c.setAccuracy(0.95)
+
+      initial_condition = [0.1] * self.c.getNumberOfPopulations() + [9.0 / 7.0]
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+      expected_result_from_nick = [0.32054381, 0.14635508, 0.01695156, 0.24774694, 0.03637915, 0.00153114] + [9.0 / 7.0]
+      self.assertTrue(arrayfuzzyequal(pap, expected_result_from_nick, 1E-4))
+
 
 if __name__ == '__main__':
    unittest.main()
