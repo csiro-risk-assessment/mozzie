@@ -287,7 +287,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
         # Following lines can probably be optimised: currently lots of big copy-constructors
         Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
-        n = Y[:-1,:,:,:].sum() # total number of larvae (all but the last age class)
+        if self.num_ages > 1:
+			n = Y[:-1,:,:,:].sum() # total number of larvae (all but the last age class)
+		else:
+			n = Y.sum() # total number of mosquitoes (all assumed to be "adults")
         ratio = Y[-1,0,:,:] # ratio of adult males (last age class) of given genotype and species
         ratio = ratio / ratio.sum()
 
@@ -304,25 +307,27 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     ind0 = sp + gt0 * self.num_species  # newborn (age=0) male (sex=0) of genotype gt0 and species sp
                     ind1 = sp + gt0 * self.num_species + self.num_species * self.num_genotypes # newborn (age=0) female (sex=1) of genotype gt0 and species sp
                     for gt1 in range(self.num_genotypes):
-                        ind2 = offset_to_adult + sp + gt1 * self.num_species # adult (age=num_ages-1) male (sex=0) of genotype gt1 and species sp
+                        ind2 = offset_to_adult + sp + gt1 * self.num_species + self.num_species * self.num_genotypes # adult (age=num_ages-1) female (sex=0) of genotype gt1 and species sp
                         mat[ind0, ind2] += self.IPM(i, gt0, gt1) * ratio[i, sp]
                         mat[ind1, ind2] += self.IPF(i, gt0, gt1) * ratio[i, sp]
         mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
 
         # mortality, and aging into next age bracket
         cdef unsigned last_larvae =  (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
-        for i in range(last_larvae):
-            mat[i][i] = - self.mu_larvae - self.aging_rate
+        if self.num_ages > 1:
+			for i in range(last_larvae):
+				mat[i][i] -= (self.mu_larvae + self.aging_rate)
         for i in range(last_larvae, self.num_populations):
-            mat[i][i] = - self.mu_adult
+            mat[i][i] -= self.mu_adult
 
         # aging from previous age bracket
-        cdef unsigned num_per_age =  self.num_species * self.num_genotypes * self.num_sexes
-        cdef unsigned from_population
-        for i in range(self.num_ages - 1):
-            for j in range(num_per_age):
-                from_population = num_per_age * i + j
-                mat[from_population + num_per_age][from_population] = self.aging_rate
+        if self.num_ages > 1:
+			cdef unsigned num_per_age =  self.num_species * self.num_genotypes * self.num_sexes
+			cdef unsigned from_population
+			for i in range(self.num_ages - 1):
+				for j in range(num_per_age):
+					from_population = num_per_age * i + j
+					mat[from_population + num_per_age][from_population] = self.aging_rate
 
         dXdt = mat.dot(y)
         return dXdt

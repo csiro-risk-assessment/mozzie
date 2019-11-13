@@ -13,7 +13,7 @@ d = 0.1 # ageing rate
 # start with 2 ages (could vary)
 # 2 sexes, 3 genotypes (static, I hope!)
 # 1 species (could vary)
-n_ages = 2
+n_ages = 1
 n_species = 1
 n_classes = 6 * n_ages * n_species
 
@@ -27,7 +27,7 @@ i = np.array([[[1., 0., 0.],# ww x ww
 [ 0., 1., 0. ]],
 [[ .5, .5, 0. ],
 [ .25, .5, .25 ], # Gw x Gw
-[ 0., .25, .25 ]],
+[ 0., .5, .5 ]],
 [[ 0., 1., 0. ],
 [ 0., .5, .5 ],
 [ 0., 0., 1. ]]]) # GG x GG
@@ -58,13 +58,16 @@ for j in range(3):
     ipf[j,:,:] = np.transpose(ipf[j,:,:])
 
 #X = np.ones(n_classes)
-X = np.ones(n_classes)*0.01
-X[0:2] = 0.1
+X = np.ones(n_classes)*0.1
+#X[0:2] = 0.1
 
 
 def f(t, y):
-    Y = np.reshape(y, (2,2,3,1)) # example
-    n = Y[:-1,:,:,:].sum() # total number of larvae (all but the last age class)
+    Y = np.reshape(y, (n_ages,2,3,n_species)) # example
+    if n_ages > 1:
+        n = Y[:-1,:,:,:].sum() # total number of larvae (all but the last age class)
+    else:
+        n = Y.sum() # total number of mosquitoes (all assumed to be "adults")
     ratio = Y[-1,0,:,:] # ratio of adult males (last age class) of given genotype and species
     ratio = ratio / ratio.sum()
     mat = np.zeros((n_classes, n_classes))
@@ -73,20 +76,27 @@ def f(t, y):
     # of the relevant genotype (and the same species)
     for i in range(3): # fathers' genotypes
         for j in range(n_species): # species
-            mat[j:(3*n_species):n_species, (9*(n_ages-1)*n_species + j):n_classes:n_species] += ipm[i,:,:] * ratio[i,j]
-            mat[(3*n_species + j):(6*n_species):n_species, (9*(n_ages-1)*n_species + j):n_classes:n_species] += ipf[i,:,:] * ratio[i,j]
+            mat[j:(3*n_species):n_species, (3*(2*n_ages-1)*n_species + j):n_classes:n_species] += ipm[i,:,:] * ratio[i,j]
+            mat[(3*n_species + j):(6*n_species):n_species, (3*(2*n_ages-1)*n_species + j):n_classes:n_species] += ipf[i,:,:] * ratio[i,j]
+    # j:(3*n_species):n_species represents all baby males of each genotype in species j (offspring)
+    # (9*(n_ages-1)*n_species + j):n_classes:n_species represents 
+    # (n_ages - 1)*6*n_species (skip all juveniles) + 
+    # 3 * n_species (skip all adult males) +  [ subtotal 3*n_species*(2*(n_ages -1) + 1) = 3*n_species*(2*n_ages - 1)
+    # j:(3*n_species):n_species all adult females of each genotype in species j
     mat *= (1 - n/kk)*fecundity # scaling by fecundity and density dependence
     # mortality
-    mat[range(6 * (n_ages-1) * n_species), range(6 * (n_ages-1) * n_species)] = -mu_larvae - d
-    mat[range(6 * (n_ages-1) * n_species, n_classes), range(6 * (n_ages-1) * n_species, n_classes)] = -mu_adult
+    if n_ages > 1:
+        mat[range(6 * (n_ages-1) * n_species), range(6 * (n_ages-1) * n_species)] -= (mu_larvae + d)
+    mat[range(6 * (n_ages-1) * n_species, n_classes), range(6 * (n_ages-1) * n_species, n_classes)] -= mu_adult
     # ageing
-    for i in range(n_ages - 1):
-        mat[range(6*(i+1)*n_species, 6*(i+2)*n_species), range(6*i*n_species, 6*(i+1)*n_species)] = d
+    if n_ages > 1:
+        for i in range(n_ages - 1):
+            mat[range(6*(i+1)*n_species, 6*(i+2)*n_species), range(6*i*n_species, 6*(i+1)*n_species)] = d
     dXdt = mat.dot(y)
     return dXdt
 
 # ODE solver
-sol = solve_ivp(f, [0, 10], X, t_eval = np.arange(0, 10.00001, 0.1))
+sol = solve_ivp(f, [0, 100], X, t_eval = np.arange(0, 100.00001, 0.1))
 
 # plot output for each class
 # order is (currently one species)
