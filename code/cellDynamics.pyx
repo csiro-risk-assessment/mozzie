@@ -180,7 +180,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                   [ 0., 1., 0. ]], # ww x GG
                                  [[ .5, .5, 0. ], # Gw x ww
                                   [ .25, .5, .25 ], # Gw x Gw
-                                  [ 0., .25, .25 ]], # Gw x GG
+                                  [ 0., .5, .5 ]], # Gw x GG
                                  [[ 0., 1., 0. ], # GG x ww
                                   [ 0., .5, .5 ], # GG x Gw
                                   [ 0., 0., 1. ]]] # GG x GG
