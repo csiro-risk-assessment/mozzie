@@ -164,6 +164,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # hybridisation rate "matrix".  Default value is 1 if species_father==species_mother==species_offspring, and 0 otherwise"""
     cdef array.array hyb
 
+    # relative-mating "matrix".  Default value is 1 if species_father==species_mother, and 0 otherwise
+    cdef array.array mating
+
     # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
     cdef unsigned num_ages
 
@@ -179,12 +182,19 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy)
     """Given num_ages, num_species and accuracy, set all internal parameters (num_populations, diffusing_indices, fecundity_proportion, etc) that depend on these"""
 
-    cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float comp)
-    """Sets alpha[sp0][sp1] = comp (for inter-specific competition).  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""
+    cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value)
+    """Sets alpha[sp0][sp1] = value (for inter-specific competition).  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""
 
     cdef inline float getAlphaComponent(self, unsigned sp0, unsigned sp1):
         """Gets alpha[sp0][sp1]: the inter-specific competition"""
         return self.alpha.data.as_floats[sp0 + sp1 * self.num_species]
+
+    cpdef setMatingComponent(self, unsigned species_father, unsigned species_mother, float value)
+    """Sets mating[species_father][species_father] = value (for relative probability of inter-specific mating).  Note, if you setNumSpecies, mating will be re-initialised to the identity"""
+
+    cdef inline float getMatingComponent(self, unsigned species_father, unsigned species_mother):
+        """Gets mating[species_father][species_mother]: the inter-specific mating relative probability"""
+        return self.mating.data.as_floats[species_father + species_mother * self.num_species]
 
     cpdef void setMuLarvae(self, float mu_larvae)
     """Set mu_larvae"""
@@ -217,7 +227,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     """Get number of ages"""
     
     cpdef void setNumSpecies(self, unsigned num_species)
-    """Set number of species.  This calls setInternalParameters to appropriately set other parameters, given num_species.  It also reinitialises the alpha and hybridisation matrices"""
+    """Set number of species.  This calls setInternalParameters to appropriately set other parameters, given num_species.  It also reinitialises the alpha, hybridisation and mating matrices"""
 
     cpdef unsigned getNumSpecies(self)
     """Get number of species"""

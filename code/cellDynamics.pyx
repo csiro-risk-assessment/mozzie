@@ -201,7 +201,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # allocate hyb array correctly, and set it to the identity
         self.hyb = array.clone(array.array('f', []), 1, zero = True)
         self.setHybridisationRate(0, 0, 0, 1.0)
-        
+
+        # allocate the mating array correctly, and set it to the identiy
+        # allocate hyb array correctly, and set it to the identity
+        self.mating = array.clone(array.array('f', []), 1, zero = True)
+        self.setMatingComponent(0, 0, 1.0)
+
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy):
@@ -252,10 +257,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
 
 
-    cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float comp):
+    cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value):
         if sp0 >= self.num_species or sp1 >= self.num_species:
             raise ValueError("sp0 " + str(sp0) + " and sp1 " + str(sp1) + " must be less than the number of species, " + str(self.num_species))
-        self.alpha.data.as_floats[sp0 + sp1 * self.num_species] = comp
+        self.alpha.data.as_floats[sp0 + sp1 * self.num_species] = value
 
     cpdef setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value):
         if species_father >= self.num_species or species_mother >= self.num_species or species_offspring >= self.num_species:
@@ -266,6 +271,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         if species_father >= self.num_species or species_mother >= self.num_species or species_offspring >= self.num_species:
             raise ValueError("All species numbers, " + str(species_father) + ", " + str(species_mother) + ", " + str(species_offspring) + " must be less than the number of species, " + str(self.num_species))
         return self.hyb.data.as_floats[species_father + species_mother * self.num_species + species_offspring * self.num_species2]
+
+    cpdef setMatingComponent(self, unsigned species_father, unsigned species_mother, float value):
+        if species_father >= self.num_species or species_mother >= self.num_species:
+            raise ValueError("species_father " + str(species_father) + " and species_mother " + str(species_mother) + " must be less than the number of species, " + str(self.num_species))
+        self.mating.data.as_floats[species_father + species_mother * self.num_species] = value
 
 
     cpdef void setMuLarvae(self, float mu_larvae):
@@ -307,10 +317,17 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.hyb = array.clone(array.array('f', []), num_species * num_species * num_species, zero = True)
         for species in range(num_species):
             self.setHybridisationRate(species, species, species, 1.0)
+        self.mating = array.clone(array.array('f', []), num_species * num_species, zero = True)
+        for species in range(num_species):
+            self.setMatingComponent(species, species, 1.0)
 
     def getAlphaComponentFromPython(self, unsigned sp0, unsigned sp1):
         """Python interface for getting a component of the alpha matrix (inter-specific competition).  This is a slow interface: use getAlphaComponent from all cython code"""
         return self.getAlphaComponent(sp0, sp1)
+
+    def getMatingComponentFromPython(self, unsigned species_father, unsigned species_mother):
+        """Python interface for getting a component of the mating matrix (relative probability of male mating with female).  This is a slow interface: use getMatingComponent from all cython code"""
+        return self.getMatingComponent(species_father, species_mother)
 
 
 
@@ -349,7 +366,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         ratio = np.zeros((self.num_species, self.num_species, self.num_genotypes)) # each parents' species and father's genotype
         for j in range(self.num_species): # mothers' species
             for i in range(self.num_species): # fathers' species
-                ratio[i,j,:] = self.w[i,j] * Y[-1,0,:,i] # weight adult male nums by relative prob of mating with mother of given species
+                ratio[i,j,:] = self.getMatingComponent(i, j) * Y[-1,0,:,i] # weight adult male nums by relative prob of mating with mother of given species
                 ratio[:,j,:] = ratio[:,j,:] / np.sum(ratio[:,j,:]) # normalise to get overall prob for each female
 
         # Nick wrote the following code blocks in vectorised form.  Andy has taken out vectorisation with a view to making "mat" and "ratio" cython arrays instead of a numpy objects

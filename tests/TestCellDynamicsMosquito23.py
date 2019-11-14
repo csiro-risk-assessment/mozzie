@@ -107,7 +107,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
          self.c.setAlphaComponent(3, 1, 0)
       self.assertEqual(str(the_err.exception), "sp0 3 and sp1 1 must be less than the number of species, 3")
 
-   def testSetGetAlpha(self):
+   def testSetGetHybridisationRate(self):
       self.assertEqual(self.c.getHybridisationRate(0, 0, 0), 1.0)
       self.c.setNumSpecies(3)
       for i in range(3):
@@ -137,6 +137,31 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       with self.assertRaises(ValueError) as the_err:
          self.c.setHybridisationRate(1, 1, 3, 0)
       self.assertEqual(str(the_err.exception), "All species numbers, 1, 1, 3 must be less than the number of species, 3")
+
+   def testSetGetMating(self):
+      self.assertEqual(self.c.getMatingComponentFromPython(0, 0), 1.0)
+      self.c.setNumSpecies(3)
+      self.c.setMatingComponent(0, 0, 1.23)
+      self.c.setMatingComponent(0, 1, -1.23)
+      self.c.setMatingComponent(0, 2, 3.33)
+      self.c.setMatingComponent(1, 0, 1.4)
+      self.c.setMatingComponent(1, 2, -0.5)
+      self.c.setMatingComponent(2, 0, 0.8)
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(0, 0)], [1.23], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(0, 1)], [-1.23], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(0, 2)], [3.33], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(1, 0)], [1.4], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(1, 1)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(1, 2)], [-0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(2, 0)], [0.8], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(2, 1)], [0.0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(2, 2)], [1.0], 1E-6))
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setMatingComponent(0, 3, 0)
+      self.assertEqual(str(the_err.exception), "species_father 0 and species_mother 3 must be less than the number of species, 3")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setMatingComponent(3, 1, 0)
+      self.assertEqual(str(the_err.exception), "species_father 3 and species_mother 1 must be less than the number of species, 3")
 
    def testEvolveZeroFecundityZeroAging(self):
       sys.stderr.write("SKIPPING")
