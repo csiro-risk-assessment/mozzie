@@ -17,7 +17,7 @@ The core code consists of python objects that you must instantiate in a "runner"
 - A block in which you set up the grid and active cells, defining the spatial extents and discretisation of the model.  You will use `Grid` and `Grid.setActiveAndInactive`.
 - A block that defines `Wind` (multiple input files corresponding to different times).  This is different from the spatially-varying parameters (next item) because it usually requires some sort of pre-processing, or is read from specially-preprocessed files.
 - A block in which you read files corresponding to spatially-varying parameters in your model, such as carrying capacities.  You'll typically have to read multiple of these per parameter, as the parameters will also vary with time.  You will use `SpatialDependence` and `SpatialDependence.restrictToActive`
-- A definition of your cell dynamics (the ODE model), such as `CellDynamicsLogistic1_1`
+- A definition of your cell dynamics (the ODE model), such as `CellDynamicsMosquito23`
 - A block that defines the populations and parameters, and sets initial conditions.  You'll use `PopulationsAndParameters`.
 - A block that gathers the grid structure, the populations and the cell dynamics together into a `SpatialDynamics` object.
 - A block that controls the time-stepping of the simulation, involving `diffuse`, `evolveCells`, and `advect`.  There can be multiple of these, depending on the complexity of your model, as different carrying capacities, wind vectors, etc, are used at different times.
@@ -126,7 +126,9 @@ Note that `f` may not contain all active cell indices.  For instance, for a cell
 
 ### `CellDynamicsX`
 
-This is a cython class that may be imported or cimported into other classes.  Its purpose is to define the mosquito lifecycle dynamics (ODEs) at the grid-cell level.  Different dynamics may be easily defined by inheriting from the base class (the `X` is replaced by something like `Logistic`).  The following methods are important
+This is a cython class that may be imported or cimported into other classes.  Its purpose is to define the mosquito lifecycle dynamics (ODEs) at the grid-cell level.  Different dynamics may be easily defined by inheriting from the base class (the `X` is replaced by something like `Logistic`).  Look at `doc/mosquito23.pdf` for a description of the `CellDynamicsMosquito23` class.
+
+The following methods are important
 
 - `getNumberOfPopulations` and `getNumberOfParameters` define the number of populations (maleGG, femaleGW, etc) and parameters (carrying capacity, mortality rate, etc) in the ODEs describing the lifecycle dynamics.
 
