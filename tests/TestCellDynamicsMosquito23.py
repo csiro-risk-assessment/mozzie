@@ -163,6 +163,44 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
          self.c.setMatingComponent(3, 1, 0)
       self.assertEqual(str(the_err.exception), "species_father 3 and species_mother 1 must be less than the number of species, 3")
 
+   def testInheritance(self):
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 0)], [1], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 1)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 2)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 0)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 1)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 2)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 0)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 1)], [1], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 2)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 0, 0)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 0, 1)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 0, 2)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 0)], [0.25], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 1)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 2)], [0.25], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 0)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 1)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 2)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 0, 0)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 0, 1)], [1], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 0, 2)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 1, 0)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 1, 1)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 1, 2)], [0.5], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 0)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 1)], [0], 1E-8))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 2)], [1], 1E-8))
+      with self.assertRaises(ValueError) as the_err:
+         self.c.getInheritanceFromPython(3, 0, 0)
+      self.assertEqual(str(the_err.exception), "All genotypes, 3, 0, 0 must be less than the number of genotypes, 3")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.getInheritanceFromPython(0, 3, 0)
+      self.assertEqual(str(the_err.exception), "All genotypes, 0, 3, 0 must be less than the number of genotypes, 3")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.getInheritanceFromPython(0, 0, 3)
+      self.assertEqual(str(the_err.exception), "All genotypes, 0, 0, 3 must be less than the number of genotypes, 3")
+
    def testEvolveZeroFecundityZeroAging(self):
       sys.stderr.write("SKIPPING")
       return

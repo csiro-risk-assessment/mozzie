@@ -180,15 +180,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # Set default carrying capacity
         self.kk = 1.0
 
-        self.inheritance_cube = [[[1., 0., 0.],# ww x ww
-                                  [ .5, .5, 0. ], # ww x Gw
-                                  [ 0., 1., 0. ]], # ww x GG
-                                 [[ .5, .5, 0. ], # Gw x ww
-                                  [ .25, .5, .25 ], # Gw x Gw
-                                  [ 0., .5, .5 ]], # Gw x GG
-                                 [[ 0., 1., 0. ], # GG x ww
-                                  [ 0., .5, .5 ], # GG x Gw
-                                  [ 0., 0., 1. ]]] # GG x GG
+        # size inheritance correctly
+        self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+        self.setInheritance()
 
         # size ipm_array and ipf_array correctly
         self.ipm_array = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
@@ -209,6 +203,22 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
+    cdef void setInheritance(self):
+        inheritance_list = [[[1., 0., 0.],# ww x ww
+                             [ .5, .5, 0. ], # ww x Gw
+                             [ 0., 1., 0. ]], # ww x GG
+                            [[ .5, .5, 0. ], # Gw x ww
+                             [ .25, .5, .25 ], # Gw x Gw
+                             [ 0., .5, .5 ]], # Gw x GG
+                            [[ 0., 1., 0. ], # GG x ww
+                             [ 0., .5, .5 ], # GG x Gw
+                             [ 0., 0., 1. ]]] # GG x GG
+        cdef unsigned gt_father, gt_mother, gt_offspring
+        for gt_father in range(self.num_genotypes):
+            for gt_mother in range(self.num_genotypes):
+                for gt_offspring in range(self.num_genotypes):
+                    self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + gt_offspring * self.num_genotypes2] = inheritance_list[gt_father][gt_mother][gt_offspring]
+
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy):
         self.num_ages = num_ages # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
         self.num_species = num_species
@@ -216,9 +226,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.accuracy = accuracy
         
         self.num_populations = self.num_ages * self.num_sexes * self.num_genotypes * self.num_species
-
-        # loop counters
-        cdef unsigned gt0, gt1, gt2
 
         # set diffusing and advecting information
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species # only adults diffuse
@@ -235,26 +242,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     self.diffusing_indices.data.as_uints[ind] = offset
                     self.advecting_indices.data.as_uints[ind] = offset
                     ind = ind + 1
-
-        # pre-calculate inheritance_cube * fecundity_proportion for males and females
-        ipm = [[[0.0] * self.num_genotypes for i in range(self.num_genotypes)] for i in range(self.num_genotypes)]
-        ipf = [[[0.0] * self.num_genotypes for i in range(self.num_genotypes)] for i in range(self.num_genotypes)]
-
-        for gt2 in range(self.num_genotypes):
-            for gt0 in range(self.num_genotypes):
-                for gt1 in range(self.num_genotypes):
-                    ipm[gt0][gt1][gt2] = self.inheritance_cube[gt0][gt1][gt2] * self.fecundity_proportion(0, gt0, gt1)
-                    ipf[gt0][gt1][gt2] = self.inheritance_cube[gt0][gt1][gt2] * self.fecundity_proportion(1, gt0, gt1)
-
-        # transpose these for use in later matrix multiplication
-        # (useful form to have in case of implicit)
-        # and put into cython array form
-        for gt0 in range(self.num_genotypes):
-            for gt1 in range(self.num_genotypes):
-                for gt2 in range(self.num_genotypes):
-                    self.setIPM(gt0, gt1, gt2, ipm[gt0][gt2][gt1])
-                    self.setIPF(gt0, gt1, gt2, ipf[gt0][gt2][gt1])
-
 
 
     cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value):
@@ -329,7 +316,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         """Python interface for getting a component of the mating matrix (relative probability of male mating with female).  This is a slow interface: use getMatingComponent from all cython code"""
         return self.getMatingComponent(species_father, species_mother)
 
-
+    def getInheritanceFromPython(self, unsigned gt_father, unsigned gt_mother, unsigned gt_offspring):
+        """Python interface for getting a component of the inheritance cube.  This is a slow interface: use getInheritance from all cython code"""
+        if gt_father >= self.num_genotypes or gt_mother >= self.num_genotypes or gt_offspring >= self.num_genotypes:
+            raise ValueError("All genotypes, " + str(gt_father) + ", " + str(gt_mother) + ", " + str(gt_offspring) + " must be less than the number of genotypes, " + str(self.num_genotypes))
+        return self.getInheritance(gt_father, gt_mother, gt_offspring)
 
     cpdef unsigned getNumSpecies(self):
         return self.num_species

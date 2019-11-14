@@ -156,7 +156,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     # inheritance_cube[i, j, k] = probability of mother genotype i, father genotype j producing offspring genotype k
     # where index 0, 1, 2 = ww, Gw, GG respectively
-    cdef list inheritance_cube
+    cdef array.array inheritance_cube
 
     # inter-specific competition "matrix"
     cdef array.array alpha
@@ -178,6 +178,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     # accuracy of PMB
     cdef float accuracy
+
+    cdef void setInheritance(self)
+    """Sets the inheritance cube"""
+
+    cdef inline float getInheritance(self, unsigned gt_father, unsigned gt_mother, unsigned gt_offspring):
+        """Gets inhericance_cube[gt_father][gt_mother][gt_offpring]"""
+        return self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + gt_offspring * self.num_genotypes2]
 
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy)
     """Given num_ages, num_species and accuracy, set all internal parameters (num_populations, diffusing_indices, fecundity_proportion, etc) that depend on these"""
