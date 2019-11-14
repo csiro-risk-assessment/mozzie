@@ -364,6 +364,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                 ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                 for sp in range(self.num_species): # sp = female species
                     denom.data.as_floats[sp] = denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * y[ind_d]
+        # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
+        for sp in range(self.num_species):
+            if denom.data.as_floats[sp] <= 0.0:
+                # there must be zero adult males.  I presume this means there will be zero eggs layed, so setting denom=0 achieves this
+                denom.data.as_floats[sp] = 0.0
+            else:
+                denom.data.as_floats[sp] = 1.0 / denom.data.as_floats[sp]
 
 
         # now work out the contributions to the newborn ODEs
@@ -373,7 +380,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         #  - given a comonent, M_ij, the index in mat is i + j * self.num_populations
         cdef array.array mat = array.clone(array.array('f', []), self.num_populations * self.num_populations, zero = True)
         # TODO: doco these loops
-        # TODO: optimise these loops, eg, don't need to multiply by comp, fecundity, all the time
         age = 0
         for sex in range(self.num_sexes):
             for gt in range(self.num_genotypes):
@@ -386,7 +392,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                             for gtm in range(self.num_genotypes): # male genotype
                                 for spm in range(self.num_species): # male species
                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                    mat.data.as_floats[ind_mat] = mat.data.as_floats[ind_mat] + comp[sp] * self.getHybridisationRate(spm, spf, sp) * self.fecundity * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * y[ind] * self.fecundity_proportion(sex, gtm, gtf) / denom[spf]
+                                    mat.data.as_floats[ind_mat] = mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * y[ind] * self.fecundity_proportion(sex, gtm, gtf)
+                            # multiply mat by comp (it only depends on sp) and fecundity (constant), and divide by denom (only dependent on spf)
+                            mat.data.as_floats[ind_mat] = mat.data.as_floats[ind_mat] * comp[sp] * self.fecundity * denom[spf]
 
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
