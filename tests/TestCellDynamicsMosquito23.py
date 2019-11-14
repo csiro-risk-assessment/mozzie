@@ -202,8 +202,6 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.assertEqual(str(the_err.exception), "All genotypes, 0, 0, 3 must be less than the number of genotypes, 3")
 
    def testEvolveZeroFecundityZeroAging(self):
-      sys.stderr.write("SKIPPING")
-      return
       dt = 0.01
       self.c.setFecundity(0.0)
       self.c.setAgingRate(0.0)
@@ -230,8 +228,6 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 4E-5))
 
    def testEvolveAgingOnly(self):
-      sys.stderr.write("SKIPPING")
-      return
       dt = 0.01
       aging_rate = 0.25
       self.c.setFecundity(0.0)

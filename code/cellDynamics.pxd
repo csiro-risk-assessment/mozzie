@@ -245,28 +245,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef float getAccuracy(self)
     """Get accuracy"""
 
-    # ipm as a cython array, to avoid having to cimport numpy here
-    cdef array.array ipm_array
-
-    cdef inline float IPM(self, unsigned gt0, unsigned gt1, unsigned gt2):
-        """Inlined.  Get components of ipm"""
-        return self.ipm_array.data.as_floats[gt0 * self.num_genotypes2 + gt1 * self.num_genotypes + gt2]
-
-    cdef inline void setIPM(self, unsigned gt0, unsigned gt1, unsigned gt2, float entry):
-        """Inlined.  Set components of ipm"""
-        self.ipm_array.data.as_floats[gt0 * self.num_genotypes2 + gt1 * self.num_genotypes + gt2] = entry
-    
-    # ipf as a cython array, to avoid having to cimport numpy here
-    cdef array.array ipf_array
-    
-    cdef inline float IPF(self, unsigned gt0, unsigned gt1, unsigned gt2):
-        """Inlined.  Get components of ipf"""
-        return self.ipf_array.data.as_floats[gt0 * self.num_genotypes2 + gt1 * self.num_genotypes + gt2]
-
-    cdef inline void setIPF(self, unsigned gt0, unsigned gt1, unsigned gt2, float entry):
-        """Inlined.  Set components of ipf"""
-        self.ipf_array.data.as_floats[gt0 * self.num_genotypes2 + gt1 * self.num_genotypes + gt2] = entry
-
     cdef inline float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
         """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
         return 0.5 if (offspring_sex == 0 or mother_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0)

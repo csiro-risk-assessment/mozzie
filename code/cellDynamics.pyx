@@ -184,10 +184,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
         self.setInheritance()
 
-        # size ipm_array and ipf_array correctly
-        self.ipm_array = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
-        self.ipf_array = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
-        
         # allocate alpha array correctly, and set to the identity
         self.alpha = array.clone(array.array('f', []), 1, zero = True)
         self.setAlphaComponent(0, 0, 1.0)
@@ -335,64 +331,97 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         """Evaluates d(populations)/dt"""
 
         # useful indices
-        cdef unsigned i, j, sp, gt0, gt1, ind0, ind1, ind2
+        cdef unsigned i, j, gt0, gt1, ind0, ind1, ind2
 
-        # Following lines can probably be optimised: currently lots of big copy-constructors
-        Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
+        # these indices are dummy indices (that are looped over) hence the subscript _d
+        cdef unsigned age_d, sex_d, gt_d, sp_d
 
-        n = np.zeros(self.num_species)
-        for i in range(self.num_species):
-            for j in range(self.num_species):
-                if self.num_ages > 1:
-                    n[i] += Y[:-1,:,:,i].sum() * self.getAlphaComponent(i, j) # total number of larvae (all but the last age class)
-                else:
-                    n[i] += Y[:,:,:,i].sum() * self.getAlphaComponent(i, j) # total number of mosquitoes (all assumed to add to competition
-        
-        # TODO: delete this when later stuff working
-        # ratio = Y[-1,0,:,:] # ratio of adult males (last age class) of given genotype and species
-        # ratio = ratio / ratio.sum()
+        # these indices are left-hand-side indices
+        cdef unsigned age, sex, gt, sp
+        # utility indices
+        cdef unsigned ind, ind_c
 
-        # TODO: define self.w, remove numpy sum and zeros
-        # TODO: self.w example: self.w = np.array([[1, 0.001], [0.001, 1]])
-        ratio = np.zeros((self.num_species, self.num_species, self.num_genotypes)) # each parents' species and father's genotype
-        for j in range(self.num_species): # mothers' species
-            for i in range(self.num_species): # fathers' species
-                ratio[i,j,:] = self.getMatingComponent(i, j) * Y[-1,0,:,i] # weight adult male nums by relative prob of mating with mother of given species
-                ratio[:,j,:] = ratio[:,j,:] / np.sum(ratio[:,j,:]) # normalise to get overall prob for each female
+        # define competition
+        cdef array.array comp = array.clone(array.array('f', []), self.num_species, zero = True)
+        cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
+        for age_d in range(end_index_for_competition):
+            for sex_d in range(self.num_sexes):
+                for gt_d in range(self.num_genotypes):
+                    for sp_d in range(self.num_species):
+                        ind_d = sp_d + gt_d * self.num_species + sex_d * self.num_species * self.num_genotypes + age_d * self.num_species * self.num_genotypes * self.num_sexes
+                        for sp in range(self.num_species):
+                            comp.data.as_floats[sp] = comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * y[ind_d]
+        for sp in range(self.num_species):
+            comp.data.as_floats[sp] = (1.0 - comp.data.as_floats[sp] / self.kk)
 
-        # Nick wrote the following code blocks in vectorised form.  Andy has taken out vectorisation with a view to making "mat" and "ratio" cython arrays instead of a numpy objects
-        
-        mat = np.zeros((self.num_populations, self.num_populations))
-        # for each father's genotype and species, add the relevant proportion of fecundity for 
-        # mothers of each genotype and that species, producing proportions of offspring 
-        # of the relevant genotype (and the same species)
-        # TODO: rename sp to spf
-        # TODO: define self.h - example:
-        # h = np.zeros((self.num_species,self.num_species,self.num_species)) 
-        # h[x,y,z] = proportion of matings between mother of species x
-        # and father of species y 
-        # producing offspring of species z
-        # h[0,0,:] = [1,0] # parents same species = all species0
-        # h[0,1,:] = [0,1] # hybrids all species1 (so like our paper)
-        # h[1,0,:] = [0,1] # ditto
-        # h[1,1,:] = [0,1] # parents same species = all species1
+        # define the denominator term
+        cdef array.array denom = array.clone(array.array('f', []), self.num_species, zero = True)
+        age_d = self.num_ages - 1 # adult
+        sex_d = 0 # male
+        for gt_d in range(self.num_genotypes):
+            for sp_d in range(self.num_species):
+                ind_d = sp_d + gt_d * self.num_species + sex_d * self.num_species * self.num_genotypes + age_d * self.num_species * self.num_genotypes * self.num_sexes
+                for sp in range(self.num_species): # sp = father species
+                    denom.data.as_floats[sp] = denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * y[ind_d]
+
 
         cdef unsigned offset_to_adult = (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
-        for i in range(self.num_genotypes): # fathers' genotypes
-            for sp in range(self.num_species): # fathers' species
-                for gt0 in range(self.num_genotypes): # offspring genotype
-                    for spo in range(self.num_species): # offspring species
-                        ind0 = spo + gt0 * self.num_species  # newborn (age=0) male (sex=0) of genotype gt0 and species spo
-                        ind1 = spo + gt0 * self.num_species + self.num_species * self.num_genotypes # newborn (age=0) female (sex=1) of genotype gt0 and species spo
-                        for spm in range(self.num_species): # mothers' species
-                            for gt1 in range(self.num_genotypes): # mothers' genotypes
-                                ind2 = offset_to_adult + spm + gt1 * self.num_species + self.num_species * self.num_genotypes # adult (age=num_ages-1) female (sex=1) of genotype gt1 and species spm
-                                spf = spm # NOTE NOTE: Andy included this to get the code compiling.  It is probably wrong!
-                                mat[ind0, ind2] += self.IPM(i, gt0, gt1) * ratio[sp, spm, i] * self.getHybridisationRate(sp, spf, spo) * (1 - n[spo] / self.kk) * self.fecundity
-                                mat[ind1, ind2] += self.IPF(i, gt0, gt1) * ratio[sp, spm, i] * self.getHybridisationRate(sp, spf, spo) * (1 - n[spo] / self.kk) * self.fecundity
+        mat = np.zeros((self.num_populations, self.num_populations))
+        if False:
+            # Following lines can probably be optimised: currently lots of big copy-constructors
+            Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
+            
+            n = np.zeros(self.num_species)
+            for i in range(self.num_species):
+                for j in range(self.num_species):
+                    if self.num_ages > 1:
+                        n[i] += Y[:-1,:,:,i].sum() * self.getAlphaComponent(i, j) # total number of larvae (all but the last age class)
+                    else:
+                        n[i] += Y[:,:,:,i].sum() * self.getAlphaComponent(i, j) # total number of mosquitoes (all assumed to add to competition
+        
+            # TODO: delete this when later stuff working
+            # ratio = Y[-1,0,:,:] # ratio of adult males (last age class) of given genotype and species
+            # ratio = ratio / ratio.sum()
+            
+            # TODO: define self.w, remove numpy sum and zeros
+            # TODO: self.w example: self.w = np.array([[1, 0.001], [0.001, 1]])
+            ratio = np.zeros((self.num_species, self.num_species, self.num_genotypes)) # each parents' species and father's genotype
+            for j in range(self.num_species): # mothers' species
+                for i in range(self.num_species): # fathers' species
+                    ratio[i,j,:] = self.getMatingComponent(i, j) * Y[-1,0,:,i] # weight adult male nums by relative prob of mating with mother of given species
+                    ratio[:,j,:] = ratio[:,j,:] / np.sum(ratio[:,j,:]) # normalise to get overall prob for each female
+
+            # Nick wrote the following code blocks in vectorised form.  Andy has taken out vectorisation with a view to making "mat" and "ratio" cython arrays instead of a numpy objects
+        
+            # for each father's genotype and species, add the relevant proportion of fecundity for 
+            # mothers of each genotype and that species, producing proportions of offspring 
+            # of the relevant genotype (and the same species)
+            # TODO: rename sp to spf
+            # TODO: define self.h - example:
+            # h = np.zeros((self.num_species,self.num_species,self.num_species)) 
+            # h[x,y,z] = proportion of matings between mother of species x
+            # and father of species y 
+            # producing offspring of species z
+            # h[0,0,:] = [1,0] # parents same species = all species0
+            # h[0,1,:] = [0,1] # hybrids all species1 (so like our paper)
+            # h[1,0,:] = [0,1] # ditto
+            # h[1,1,:] = [0,1] # parents same species = all species1
+        
+            for i in range(self.num_genotypes): # fathers' genotypes
+                for sp in range(self.num_species): # fathers' species
+                    for gt0 in range(self.num_genotypes): # offspring genotype
+                        for spo in range(self.num_species): # offspring species
+                            ind0 = spo + gt0 * self.num_species  # newborn (age=0) male (sex=0) of genotype gt0 and species spo
+                            ind1 = spo + gt0 * self.num_species + self.num_species * self.num_genotypes # newborn (age=0) female (sex=1) of genotype gt0 and species spo
+                            for spm in range(self.num_species): # mothers' species
+                                for gt1 in range(self.num_genotypes): # mothers' genotypes
+                                    ind2 = offset_to_adult + spm + gt1 * self.num_species + self.num_species * self.num_genotypes # adult (age=num_ages-1) female (sex=1) of genotype gt1 and species spm
+                                    spf = spm # NOTE NOTE: Andy included this to get the code compiling.  It is probably wrong!
+                                    mat[ind0, ind2] += ratio[sp, spm, i] * self.getHybridisationRate(sp, spf, spo) * (1 - n[spo] / self.kk) * self.fecundity
+                                    mat[ind1, ind2] += ratio[sp, spm, i] * self.getHybridisationRate(sp, spf, spo) * (1 - n[spo] / self.kk) * self.fecundity
                 
-                # TODO: delete line when sure that line inside loop is working
-                # mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
+            # TODO: delete line when sure that line inside loop is working
+            # mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
 
         # mortality, and aging into next age bracket
         cdef unsigned last_larvae =  (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
