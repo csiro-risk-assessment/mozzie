@@ -250,10 +250,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             raise ValueError("All species numbers, " + str(species_father) + ", " + str(species_mother) + ", " + str(species_offspring) + " must be less than the number of species, " + str(self.num_species))
         self.hyb.data.as_floats[species_father + species_mother * self.num_species + species_offspring * self.num_species2] = value
 
-    cpdef float getHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring):
+    def getHybridisationRateFromPython(self, unsigned species_father, unsigned species_mother, unsigned species_offspring):
+        """Returns the hybridisation rate for given father, mother and offspring.  This is a slow interface: use getAlphaComponent from all cython code"""
         if species_father >= self.num_species or species_mother >= self.num_species or species_offspring >= self.num_species:
             raise ValueError("All species numbers, " + str(species_father) + ", " + str(species_mother) + ", " + str(species_offspring) + " must be less than the number of species, " + str(self.num_species))
-        return self.hyb.data.as_floats[species_father + species_mother * self.num_species + species_offspring * self.num_species2]
+        return self.getHybridisationRate(species_father, species_mother, species_offspring)
 
     cpdef setMatingComponent(self, unsigned species_father, unsigned species_mother, float value):
         if species_father >= self.num_species or species_mother >= self.num_species:
@@ -340,7 +341,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # these indices are typically left-hand-side indices
         cdef unsigned age, sex, gt, sp
         # utility indices
-        cdef unsigned ind, ind_c, ind0, ind1, col, row, ind_mat
+        cdef unsigned ind, ind_c, ind0, ind1
+        # indices into matrix M
+        cdef unsigned col, row
+        # index into mat
+        cdef unsigned ind_mat
 
         # define competition
         cdef array.array comp = array.clone(array.array('f', []), self.num_species, zero = True)
@@ -376,52 +381,58 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # now work out the contributions to the newborn ODEs
         # In the following, mat is a 1D array (for efficiency)
         # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
-        #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (which is inline)
-        #  - given a comonent, M_ij, the index in mat is i + j * self.num_populations
+        #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
+        #  - given a component, M_ij, the index in mat is i + j * self.num_populations
         cdef array.array mat = array.clone(array.array('f', []), self.num_populations * self.num_populations, zero = True)
-        # TODO: doco these loops
-        age = 0
-        for sex in range(self.num_sexes):
-            for gt in range(self.num_genotypes):
-                for sp in range(self.num_species):
+        age = 0 # only newborn row in M
+        for sex in range(self.num_sexes): # row in M
+            for gt in range(self.num_genotypes): # row in M
+                for sp in range(self.num_species): # row in M
                     row = self.getIndex(sp, gt, sex, age)
+                    # now want to set the column in M corresonding to female adults of genotype gtf and species spf
                     for gtf in range(self.num_genotypes): # female genotype
                         for spf in range(self.num_species): # female species
                             col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
-                            ind_mat = col + row * self.num_populations  # index into mat
+                            ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
                             for gtm in range(self.num_genotypes): # male genotype
                                 for spm in range(self.num_species): # male species
                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
                                     mat.data.as_floats[ind_mat] = mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * y[ind] * self.fecundity_proportion(sex, gtm, gtf)
-                            # multiply mat by comp (it only depends on sp) and fecundity (constant), and divide by denom (only dependent on spf)
-                            mat.data.as_floats[ind_mat] = mat.data.as_floats[ind_mat] * comp[sp] * self.fecundity * denom[spf]
+                            # multiply mat by things that don't depend on gtm or spm
+                            mat.data.as_floats[ind_mat] = mat.data.as_floats[ind_mat] * comp.data.as_floats[sp] * self.fecundity * denom.data.as_floats[spf]
 
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
             for gt in range(self.num_genotypes):
                 for sp in range(self.num_species):
                     age = 0
-                    ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
+                    row = self.getIndex(sp, gt, sex, age)
+                    ind = row + self.num_populations * row # diagonal entry
                     mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_larvae # mortality
                     if self.num_ages > 1:
                         mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.aging_rate # aging to older bracket
                     for age in range(1, self.num_ages - 1):
-                        ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
+                        row = self.getIndex(sp, gt, sex, age)
+                        col = self.getIndex(sp, gt, sex, age)
+                        ind = col + self.num_populations * row # diagonal entry
                         mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
-                        ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age - 1)
+                        col = self.getIndex(sp, gt, sex, age - 1)
+                        ind = col + self.num_populations * row # below diagonal
                         mat.data.as_floats[ind] = mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
                     age = self.num_ages - 1
-                    ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
+                    row = self.getIndex(sp, gt, sex, age)
+                    ind = row + self.num_populations * row # diagonal entry
                     mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_adult # mortality
                     if self.num_ages > 1:
-                        ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age - 1)
+                        col = self.getIndex(sp, gt, sex, age - 1)
+                        ind = col + self.num_populations * row # below diagonal
                         mat.data.as_floats[ind] = mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
 
 
         dXdt = np.zeros((self.num_populations))
-        for ind0 in range(self.num_populations):
-            for ind1 in range(self.num_populations):
-                dXdt[ind0] += mat.data.as_floats[ind0 + self.num_populations * ind1] * y[ind1]
+        for row in range(self.num_populations):
+            for col in range(self.num_populations):
+                dXdt[row] += mat.data.as_floats[col + self.num_populations * row] * y[col]
         return dXdt
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):

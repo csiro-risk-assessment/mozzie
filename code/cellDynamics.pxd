@@ -253,8 +253,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
         return 0.5 if (offspring_sex == 0 or mother_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0)
 
-    cpdef float getHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring)
-    """Returns the hybridisation rate for given father, mother and offspring"""
+    cdef inline float getHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring):
+        """Returns the hybridisation rate for given father, mother and offspring"""
+        return self.hyb.data.as_floats[species_father + species_mother * self.num_species + species_offspring * self.num_species2]
 
     cpdef setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value)
     """Sets the hybridisation rate for the given father, mother and offspring.  Note, if you setNumSpecies, this will be reinitialised to its default value of 1 if species_father=species_mother=species_offspring, and 0 otherwise"""
