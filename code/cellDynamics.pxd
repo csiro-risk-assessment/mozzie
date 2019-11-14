@@ -151,8 +151,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # rate of transferral from one age bracket to the next-eldest age bracket
     cdef float aging_rate
 
-    # the carrying capacity.  This is spatially-varying and is set upon entry to evolve()
-    cdef float kk
+    # 1/(carrying capacity).  This is spatially-varying and is set upon entry to evolve()
+    cdef float one_over_kk
 
     # inheritance_cube[i, j, k] = probability of mother genotype i, father genotype j producing offspring genotype k
     # where index 0, 1, 2 = ww, Gw, GG respectively
@@ -178,6 +178,18 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     # accuracy of PMB
     cdef float accuracy
+
+    # competition vector, defined here for efficiency (so don't have to keep allocating memory)
+    cdef array.array comp
+
+    # denominator vector, defined here for efficiency (so don't have to keep allocating memory)
+    cdef array.array denom
+
+    # "matrix" array, defined here for efficiency (so don't have to keep allocating memory)
+    cdef array.array mat
+
+    # X array, defined here for efficiency (so don't have to keep allocating memory).  This holds the value of the populations in the "fun" method
+    cdef array.array Xarray
 
     cdef inline unsigned getIndex(self, unsigned species, unsigned genotype, unsigned sex, unsigned age):
         """gets the index in pops_and_params corresponding to the given age, sex, genotype and species"""
