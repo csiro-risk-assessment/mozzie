@@ -266,8 +266,8 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
 
 
    def testEvolveSingleAge(self):
-      sys.stderr.write("SKIPPING")
-      return
+      #sys.stderr.write("SKIPPING")
+      #return
       dt = 50.0
       self.c.setMuLarvae(0.1)
       self.c.setMuAdult(0.1)

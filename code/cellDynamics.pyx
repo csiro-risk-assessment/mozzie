@@ -335,11 +335,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
         # these indices are dummy indices (that are looped over) hence the subscript _d
         cdef unsigned age_d, sex_d, gt_d, sp_d
-
+        # these indices are summed over in the age=0 contributions
+        cdef unsigned gtf, spf, gtm, spm
         # these indices are typically left-hand-side indices
         cdef unsigned age, sex, gt, sp
         # utility indices
-        cdef unsigned ind, ind_c, ind0, ind1
+        cdef unsigned ind, ind_c, ind0, ind1, col, row, ind_mat
 
         # define competition
         cdef array.array comp = array.clone(array.array('f', []), self.num_species, zero = True)
@@ -348,7 +349,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             for sex_d in range(self.num_sexes):
                 for gt_d in range(self.num_genotypes):
                     for sp_d in range(self.num_species):
-                        ind_d = sp_d + gt_d * self.num_species + sex_d * self.num_species * self.num_genotypes + age_d * self.num_species * self.num_genotypes * self.num_sexes
+                        ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                         for sp in range(self.num_species):
                             comp.data.as_floats[sp] = comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * y[ind_d]
         for sp in range(self.num_species):
@@ -360,8 +361,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         sex_d = 0 # male
         for gt_d in range(self.num_genotypes):
             for sp_d in range(self.num_species):
-                ind_d = sp_d + gt_d * self.num_species + sex_d * self.num_species * self.num_genotypes + age_d * self.num_species * self.num_genotypes * self.num_sexes
-                for sp in range(self.num_species): # sp = father species
+                ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                for sp in range(self.num_species): # sp = female species
                     denom.data.as_floats[sp] = denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * y[ind_d]
 
 
@@ -371,63 +372,21 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (which is inline)
         #  - given a comonent, M_ij, the index in mat is i + j * self.num_populations
         cdef array.array mat = array.clone(array.array('f', []), self.num_populations * self.num_populations, zero = True)
+        # TODO: doco these loops
+        # TODO: optimise these loops, eg, don't need to multiply by comp, fecundity, all the time
         age = 0
-
-        if False:
-            # Following lines can probably be optimised: currently lots of big copy-constructors
-            Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
-            
-            n = np.zeros(self.num_species)
-            for i in range(self.num_species):
-                for j in range(self.num_species):
-                    if self.num_ages > 1:
-                        n[i] += Y[:-1,:,:,i].sum() * self.getAlphaComponent(i, j) # total number of larvae (all but the last age class)
-                    else:
-                        n[i] += Y[:,:,:,i].sum() * self.getAlphaComponent(i, j) # total number of mosquitoes (all assumed to add to competition
-        
-            # TODO: delete this when later stuff working
-            # ratio = Y[-1,0,:,:] # ratio of adult males (last age class) of given genotype and species
-            # ratio = ratio / ratio.sum()
-            
-            # TODO: define self.w, remove numpy sum and zeros
-            # TODO: self.w example: self.w = np.array([[1, 0.001], [0.001, 1]])
-            ratio = np.zeros((self.num_species, self.num_species, self.num_genotypes)) # each parents' species and father's genotype
-            for j in range(self.num_species): # mothers' species
-                for i in range(self.num_species): # fathers' species
-                    ratio[i,j,:] = self.getMatingComponent(i, j) * Y[-1,0,:,i] # weight adult male nums by relative prob of mating with mother of given species
-                    ratio[:,j,:] = ratio[:,j,:] / np.sum(ratio[:,j,:]) # normalise to get overall prob for each female
-
-            # Nick wrote the following code blocks in vectorised form.  Andy has taken out vectorisation with a view to making "mat" and "ratio" cython arrays instead of a numpy objects
-        
-            # for each father's genotype and species, add the relevant proportion of fecundity for 
-            # mothers of each genotype and that species, producing proportions of offspring 
-            # of the relevant genotype (and the same species)
-            # TODO: rename sp to spf
-            # TODO: define self.h - example:
-            # h = np.zeros((self.num_species,self.num_species,self.num_species)) 
-            # h[x,y,z] = proportion of matings between mother of species x
-            # and father of species y 
-            # producing offspring of species z
-            # h[0,0,:] = [1,0] # parents same species = all species0
-            # h[0,1,:] = [0,1] # hybrids all species1 (so like our paper)
-            # h[1,0,:] = [0,1] # ditto
-            # h[1,1,:] = [0,1] # parents same species = all species1
-        
-            for i in range(self.num_genotypes): # fathers' genotypes
-                for sp in range(self.num_species): # fathers' species
-                    for gt0 in range(self.num_genotypes): # offspring genotype
-                        for spo in range(self.num_species): # offspring species
-                            ind0 = spo + gt0 * self.num_species  # newborn (age=0) male (sex=0) of genotype gt0 and species spo
-                            ind1 = spo + gt0 * self.num_species + self.num_species * self.num_genotypes # newborn (age=0) female (sex=1) of genotype gt0 and species spo
-                            for spm in range(self.num_species): # mothers' species
-                                for gt1 in range(self.num_genotypes): # mothers' genotypes
-                                    ind2 = offset_to_adult + spm + gt1 * self.num_species + self.num_species * self.num_genotypes # adult (age=num_ages-1) female (sex=1) of genotype gt1 and species spm
-                                    spf = spm # NOTE NOTE: Andy included this to get the code compiling.  It is probably wrong!
-                                    mat[ind0, ind2] += ratio[sp, spm, i] * self.getHybridisationRate(sp, spf, spo) * (1 - n[spo] / self.kk) * self.fecundity
-                                    mat[ind1, ind2] += ratio[sp, spm, i] * self.getHybridisationRate(sp, spf, spo) * (1 - n[spo] / self.kk) * self.fecundity
-                
-            # TODO: delete line when sure that line inside loop is working
-            # mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
+        for sex in range(self.num_sexes):
+            for gt in range(self.num_genotypes):
+                for sp in range(self.num_species):
+                    row = self.getIndex(sp, gt, sex, age)
+                    for gtf in range(self.num_genotypes): # female genotype
+                        for spf in range(self.num_species): # female species
+                            col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
+                            ind_mat = col + row * self.num_populations  # index into mat
+                            for gtm in range(self.num_genotypes): # male genotype
+                                for spm in range(self.num_species): # male species
+                                    ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
+                                    mat.data.as_floats[ind_mat] = mat.data.as_floats[ind_mat] + comp[sp] * self.getHybridisationRate(spm, spf, sp) * self.fecundity * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * y[ind] * self.fecundity_proportion(sex, gtm, gtf) / denom[spf]
 
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
@@ -435,7 +394,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                 for sp in range(self.num_species):
                     age = 0
                     ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
-                    mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
+                    mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_larvae # mortality
+                    if self.num_ages > 1:
+                        mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.aging_rate # aging to older bracket
                     for age in range(1, self.num_ages - 1):
                         ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
                         mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
@@ -444,8 +405,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     age = self.num_ages - 1
                     ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
                     mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_adult # mortality
-                    ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age - 1)
-                    mat.data.as_floats[ind] = mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
+                    if self.num_ages > 1:
+                        ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age - 1)
+                        mat.data.as_floats[ind] = mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
 
 
         dXdt = np.zeros((self.num_populations))
