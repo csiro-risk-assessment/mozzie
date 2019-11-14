@@ -188,8 +188,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # "matrix" array, defined here for efficiency (so don't have to keep allocating memory)
     cdef array.array mat
 
-    # X array, defined here for efficiency (so don't have to keep allocating memory).  This holds the value of the populations in the "fun" method
+    # X array, defined here for efficiency (so don't have to keep allocating memory).  This holds the value of the populations in the "fun" method.  This is unused in CellDynamicsMosquito23, but used in CellDynamicsMosquito23Scipy.  If we remove the latter then we can remove this array.
     cdef array.array Xarray
+
+    # the RHS arrays in dX/dt = rhs
+    cdef array.array rhs
 
     cdef inline unsigned getIndex(self, unsigned species, unsigned genotype, unsigned sex, unsigned age):
         """gets the index in pops_and_params corresponding to the given age, sex, genotype and species"""
@@ -271,4 +274,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cpdef setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value)
     """Sets the hybridisation rate for the given father, mother and offspring.  Note, if you setNumSpecies, this will be reinitialised to its default value of 1 if species_father=species_mother=species_offspring, and 0 otherwise"""
+
+    cdef void computeRHS(self, float[:] x)
+    """Compute the rhs in dX/dt = rhs.  Here rhs is a funtion of x"""
     
+cdef class CellDynamicsMosquito23Scipy(CellDynamicsMosquito23):
+    """Uses Scipy solve_ivp to solve the equations"""
+
+    cdef float[:] cXarray

@@ -209,6 +209,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # allocate Xarray correctly
         self.Xarray = array.clone(array.array('f', []), self.num_populations, zero = False)
 
+        # allocate rhs correctly
+        self.rhs = array.clone(array.array('f', []), self.num_populations, zero = False)
+
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
     cdef void setInheritance(self):
@@ -237,6 +240,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
         self.mat = array.clone(array.array('f', []), self.num_populations * self.num_populations, zero = False)
         self.Xarray = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rhs = array.clone(array.array('f', []), self.num_populations, zero = False)
 
         # set diffusing and advecting information
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species # only adults diffuse
@@ -345,7 +349,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef float getAccuracy(self):
         return self.accuracy
 
-    def fun(self, t, y):
+    cdef void computeRHS(self, float[:] x):
         """Evaluates d(populations)/dt"""
 
         # these indices are dummy indices (that are looped over) hence the subscript _d
@@ -361,10 +365,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # index into mat
         cdef unsigned ind_mat
 
-        # copy the "y" data into Xarray because it's computationally cheaper
-        for ind in range(self.num_populations):
-            self.Xarray.data.as_floats[ind] = y[ind]
-
         # define competition
         array.zero(self.comp)
         cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
@@ -374,7 +374,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     for sp_d in range(self.num_species):
                         ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                         for sp in range(self.num_species):
-                            self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * self.Xarray.data.as_floats[ind_d]
+                            self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
         for sp in range(self.num_species):
             self.comp.data.as_floats[sp] = 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk
 
@@ -386,7 +386,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             for sp_d in range(self.num_species):
                 ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                 for sp in range(self.num_species): # sp = female species
-                    self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.Xarray.data.as_floats[ind_d]
+                    self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * x[ind_d]
         # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
         for sp in range(self.num_species):
             if self.denom.data.as_floats[sp] <= 0.0:
@@ -415,7 +415,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                             for gtm in range(self.num_genotypes): # male genotype
                                 for spm in range(self.num_species): # male species
                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                    self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * self.Xarray.data.as_floats[ind] * self.fecundity_proportion(sex, gtm, gtf)
+                                    self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtm, gtf)
                             # multiply mat by things that don't depend on gtm or spm
                             self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
 
@@ -447,12 +447,45 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
 
 
-        dXdt = np.zeros((self.num_populations))
+        array.zero(self.rhs)
         for row in range(self.num_populations):
             for col in range(self.num_populations):
-                dXdt[row] += self.mat.data.as_floats[col + self.num_populations * row] * self.Xarray.data.as_floats[col]
-        return dXdt
+                self.rhs.data.as_floats[row] += self.mat.data.as_floats[col + self.num_populations * row] * x[col]
 
+    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+        cdef unsigned ind
+
+        if pops_and_params[self.num_populations] <= 0.0:
+            # instantly kill all populations
+            for ind in range(self.num_populations):
+                pops_and_params[ind] = 0.0
+            return
+        self.one_over_kk = 1.0 / pops_and_params[self.num_populations]
+
+        self.computeRHS(pops_and_params)
+        for ind in range(self.num_populations):
+            pops_and_params[ind] = pops_and_params[ind] + timestep * self.rhs.data.as_floats[ind]
+
+
+cdef class CellDynamicsMosquito23Scipy(CellDynamicsMosquito23):
+    def __init__(self):
+        super().__init__()
+
+    def fun(self, t, y):
+        """Evaluates d(populations)/dt"""
+        # size cXarray correctly
+        self.cXarray = self.Xarray
+        # copy the "y" data into cXarray and then call computeRHS
+        cdef unsigned ind
+        for ind in range(self.num_populations):
+            self.cXarray[ind] = y[ind]
+        self.computeRHS(self.cXarray)
+        dXdt = np.zeros((self.num_populations))
+        for ind in range(self.num_populations):
+            dXdt[ind] = self.rhs.data.as_floats[ind]
+        return dXdt
+        
+        
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
 
@@ -472,4 +505,4 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # copy back
         for ind in range(self.num_populations):
             pops_and_params[ind] = sol.y[ind, -1]
-
+        
