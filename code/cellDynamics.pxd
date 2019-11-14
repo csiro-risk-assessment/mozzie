@@ -179,6 +179,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # accuracy of PMB
     cdef float accuracy
 
+    cdef inline unsigned getIndex(self, unsigned species, unsigned genotype, unsigned sex, unsigned age):
+        """gets the index in pops_and_params corresponding to the given age, sex, genotype and species"""
+        return species + self.num_species * (genotype + self.num_genotypes * (sex + self.num_sexes * age))
+
     cdef void setInheritance(self)
     """Sets the inheritance cube"""
 

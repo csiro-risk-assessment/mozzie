@@ -331,15 +331,15 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         """Evaluates d(populations)/dt"""
 
         # useful indices
-        cdef unsigned i, j, gt0, gt1, ind0, ind1, ind2
+        cdef unsigned i, j, gt0, gt1, ind2
 
         # these indices are dummy indices (that are looped over) hence the subscript _d
         cdef unsigned age_d, sex_d, gt_d, sp_d
 
-        # these indices are left-hand-side indices
+        # these indices are typically left-hand-side indices
         cdef unsigned age, sex, gt, sp
         # utility indices
-        cdef unsigned ind, ind_c
+        cdef unsigned ind, ind_c, ind0, ind1
 
         # define competition
         cdef array.array comp = array.clone(array.array('f', []), self.num_species, zero = True)
@@ -365,8 +365,14 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     denom.data.as_floats[sp] = denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * y[ind_d]
 
 
-        cdef unsigned offset_to_adult = (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
-        mat = np.zeros((self.num_populations, self.num_populations))
+        # now work out the contributions to the newborn ODEs
+        # In the following, mat is a 1D array (for efficiency)
+        # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
+        #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (which is inline)
+        #  - given a comonent, M_ij, the index in mat is i + j * self.num_populations
+        cdef array.array mat = array.clone(array.array('f', []), self.num_populations * self.num_populations, zero = True)
+        age = 0
+
         if False:
             # Following lines can probably be optimised: currently lots of big copy-constructors
             Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
@@ -423,24 +429,29 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             # TODO: delete line when sure that line inside loop is working
             # mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
 
-        # mortality, and aging into next age bracket
-        cdef unsigned last_larvae =  (self.num_ages - 1) * self.num_species * self.num_genotypes * self.num_sexes
-        if self.num_ages > 1:
-            for i in range(last_larvae):
-                mat[i][i] -= (self.mu_larvae + self.aging_rate)
-        for i in range(last_larvae, self.num_populations):
-            mat[i][i] -= self.mu_adult
+        # mortality, and aging into/from neighbouring age brackets
+        for sex in range(self.num_sexes):
+            for gt in range(self.num_genotypes):
+                for sp in range(self.num_species):
+                    age = 0
+                    ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
+                    mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
+                    for age in range(1, self.num_ages - 1):
+                        ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
+                        mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
+                        ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age - 1)
+                        mat.data.as_floats[ind] = mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
+                    age = self.num_ages - 1
+                    ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age)
+                    mat.data.as_floats[ind] = mat.data.as_floats[ind] - self.mu_adult # mortality
+                    ind = self.getIndex(sp, gt, sex, age) + self.num_populations * self.getIndex(sp, gt, sex, age - 1)
+                    mat.data.as_floats[ind] = mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
 
-        # aging from previous age bracket
-        cdef unsigned num_per_age =  self.num_species * self.num_genotypes * self.num_sexes
-        cdef unsigned from_population
-        if self.num_ages > 1:
-            for i in range(self.num_ages - 1):
-                for j in range(num_per_age):
-                    from_population = num_per_age * i + j
-                    mat[from_population + num_per_age][from_population] = self.aging_rate
 
-        dXdt = mat.dot(y)
+        dXdt = np.zeros((self.num_populations))
+        for ind0 in range(self.num_populations):
+            for ind1 in range(self.num_populations):
+                dXdt[ind0] += mat.data.as_floats[ind0 + self.num_populations * ind1] * y[ind1]
         return dXdt
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
