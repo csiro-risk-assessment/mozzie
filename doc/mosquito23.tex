@@ -12,16 +12,16 @@
 
 The equations solved by {\tt Mosquito23} are based on the following
 \begin{eqnarray*}
-\pd{X(a,s,g,m)}{t} &=& -d_{a} X + b_{s,g,m} \left[ \overbrace{X(a-1,s,g,m)}^{a>0} - \overbrace{X}^{a<N} \right] + \overbrace{\nabla \cdot (D_{s,g,m} \nabla X - \mathbf{V}_{s,g,m} X)}^{a=N}
+\pd{X(a,s,g,m)}{t} &=& -d_{a} X + b_{s,g,m} \left[ \overbrace{X(a-1,s,g,m)}^{a>0} - \overbrace{X}^{a<N-1} \right] + \overbrace{\nabla \cdot (D_{s,g,m} \nabla X - \mathbf{V}_{s,g,m} X)}^{a=N-1}
 + \\
 a = 0 & & \begin{cases}
 \displaystyle \left( \frac{K - \sum_{m^*} \alpha_{m, m^*} \sum_{s,g} \sum_{i<\max(N,1)} X(i,s,g,m^*)}{K} \right) \times \\
 \displaystyle \sum_{\substack{g_M, g_F,\\m_M, m_F}}
-h(m_M,m_F,m)\ \lambda(g_F, m_F)\ i(g_M, g_F, g)\ \frac{w(m_M, m_F) X(N,M,g_M,m_M)}{\sum_{g^*,m^*} w(m^*, m_F) X(N,M,g^*,m^*)} \times \\
-\qquad p(g_M, g_F, m_M, m_F, s) X(N,F,g_F,m_F) 
+h(m_M,m_F,m)\ \lambda(g_F, m_F)\ i(g_M, g_F, g)\ \frac{w(m_M, m_F) X(N-1,M,g_M,m_M)}{\sum_{g^*,m^*} w(m^*, m_F) X(N-1,M,g^*,m^*)} \times \\
+\qquad p(g_M, g_F, m_M, m_F, s) X(N-1,F,g_F,m_F) 
 \end{cases}
 \end{eqnarray*}
-where $a$ = age ($0$ = newborn, $N$ = adult, $[1, N-1]$ = intermediate stages), 
+where $a$ = age ($0$ = newborn, $N-1$ = adult, $[1, N-2]$ = intermediate stages), 
 
 $s$ = sex ($M$ or $F$), 
 
@@ -39,8 +39,8 @@ and $X(a,s,g,m)$ is abbreviated to $X$.
  \hline
  $d_{a}$ & Death rate 
  $\begin{cases}
- d_{\textrm{adult}}\textrm{ for }a=N\\
- d_{\textrm{larvae}}\textrm{ for }a<N\\
+ d_{\textrm{adult}}\textrm{ for }a=N-1\\
+ d_{\textrm{larvae}}\textrm{ for }a<N-1\\
  \end{cases}$ & 2\\
    \hline
   $b$ & Larval emergence rate & 1\\
@@ -55,12 +55,10 @@ and $X(a,s,g,m)$ is abbreviated to $X$.
   \hline
   $h(m_M, m_F, m)$ & Hybridisation rate (following Beeton et al. 2019) & 0\\
   & $ = \begin{cases}
-  1 & \textrm{where } m=C \textrm{ and } \{m_M, m_F\}=\{C,C\}  \\
-  1 & \textrm{where } m=G \textrm{ and } \{m_M, m_F\}=\{G,G\} \\
-  1 & \textrm{where } m=G \textrm{ and either } \{m_M, m_F\}=\{C,G\} \textrm{ or } \{G,C\}  \\
-  0 & \textrm{elsewhere}
+  1 & \textrm{if } m=m_{M}=m_{F} \\
+  0 & \textrm{otherwise}
   \end{cases}$
-  & \\
+  & (may be set in code)\\
   \hline
   $\lambda$ & Larvae per female & 1 \\
   \hline
@@ -86,12 +84,16 @@ and $X(a,s,g,m)$ is abbreviated to $X$.
 		\end{cases}$ &  \\
     \hline
 		$w(m_M, m_F)$ & Relative probability of female of species $m_F$ mating & 1 ($w$) \\
-		& with male of species $m_M$ & \\
+		& with male of species $m_M$ & (defaults to $w=0$) \\
 		& $ = \begin{cases}
 		w(C,C) = w(G,G) = 1 \\
 		w(C,G) = w(G,C) = w
 		\end{cases}$ &  \\
 		\hline
+$\alpha(m, m')$ & Lotka-Volterra competition between species & Defaults to $\alpha=I$ \\
+ & & (may be set in code)
+\\
+\hline
 \end{tabular}
 \end{center}
 
@@ -108,7 +110,7 @@ where
 \item $N_{\mathrm{sexes}} = 2$ is the number of sexes (with order male$=0$ and female$=1$)
 \item $N_{\mathrm{ages}}$ (denoted by $N$ in the above sections) is the number of ages (with ordering newborn$=0$ and adult=$N_{\mathrm{ages}}-1$, with intermediate stages in between these).
 \end{itemize}
-
+The next sections write the equations explicitly and add some explanation.
 
 \subsection{Adults}
 
@@ -116,7 +118,7 @@ All adult populations are goverend by
 \begin{equation}
 \frac{\mathrm{d}X(N-1, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{adult}}X(N-1, s, g, m) + b X(N-2, s, g, m) \ .
 \end{equation}
-Here the $N-1$ indicates the adult age bracket, and the $N-2$ is the eldest juvenile age bracket.  If $N=1$ there are no adults, and all populations are governed by the ``Newborn larvae'' equations, below.
+Here $N-1$ indicates the adult age bracket, and the $N-2$ is the eldest juvenile age bracket.  The first term on the right-hand side describes the mortality of adults, while the second term desribes aging from the eldest juveniles.  If $N=1$ there are no adults, and all populations are governed by the ``Newborn larvae'' equations, below.
 
 \subsection{Intermediate juveniles}
 
@@ -124,25 +126,37 @@ For $0<a<N-1$, the populations are governed by
 \begin{equation}
 \frac{\mathrm{d}X(a, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{larvae}}X(a, s, g, m) + b \left(X(a-1, s, g, m) - X(a, s, g, m) \right) \ .
 \end{equation}
-For $N\leq 2$ there are no such intermediate juveniles.
+For $N\leq 2$ there are no such intermediate juveniles.  The first term on the right-hand side describes the mortality of this age-bracket of juveniles, while the term involving $b$ describes aging to/from older/younger age brackets
 
 \subsection{Newborn larvae}
 
 For $a=0$, the populations are govened by
 \begin{equation}
-\frac{\mathrm{d}X(0, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{larvae}}X(0, s, g, m) - b X(a, s, g, m) + B(s, g, m) \ ,
+\frac{\mathrm{d}X(0, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{larvae}}X(0, s, g, m) - b X(a, s, g, m) + B(s, g, m) \ .
 \end{equation}
-where
+The first term describes mortality of newborns, while the second describes aging into the next age-bracket of juveniles.  The final term describes the birth of newborn larvae.  It is
 \begin{equation}
-B(s, g, m) = \left(1 -  \frac{C(m)}{K} \right) \ldots
+B(s, g, m) = \left(1 -  \frac{C(m)}{K} \right) \sum_{g_{M}, g_{F}, m_{M}, m_{F}}P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) P_{\mathrm{mating}}(g_{M}, g_{F}, m_{M}, m_{F})\lambda X(N-1, F, g_{F}, m_{F})
 \end{equation}
-The following terms have been defined in this equation
+This equation deserves explanations.
 \begin{itemize}
 \item $C(m)$ is the competition that a newborn feels from the rest of the larval populations.  It is
 \begin{equation}
 C(m) = \sum_{a=0}^{N - 2}\sum_{s=0}^{N_{\mathrm{sexes}} - 1} \sum_{g=0}^{N_{\mathrm{genotypes}} - 1} \sum_{m'=0}^{N_{\mathrm{species}} - 1}\alpha_{m, m'} X(a, s, g, m')\ .
 \end{equation}
 Notice that this does not include adults $a=N - 1$.  If $N=1$, it is assumed that the carrying-capacity still applies, and the sum over $a$ runs from $0$ to $0$.  The Lotka-Voltera matrix $\alpha$ accounts for inter-specific competition.  It defaults to $a=I$, that is, newborns only feel competition from their own species.
+\item $X(N-1, F, g_{F}, m_{F})$ is the number of adult ($a=N-1$), females of genotype $g_{F}$ and species $m_{F}$.  So $\lambda X(N-1, F, g_{F}, m_{F})$ is the number of newborns produced by these female per timestep.
+\item $P_{\mathrm{mating}}(g_{M}, g_{F}, m_{M}, m_{F})$ is the probability that a male adult of genogype $g_{M}$ and species $m_{M}$ successfully mates with a female adult of genotype $g_{F}$ and species $m_{F}$ to produce newborn.  It is
+\begin{equation}
+P_{\mathrm{mating}}(g_{M}, g_{F}, m_{M}, m_{F}) = \frac{w(m_{M}, m_{F})X(N-1, M, g_{M}, m_{M})}{\sum_{g'=0}^{N_{\mathrm{genotypes}}}\sum_{m'=0}^{N_{\mathrm{species}}}w(m', m_{F})X(N-1, M, g', m')} \ .
+\end{equation}
+The numerator is the number of matings between male of species $m_{M}$ and genotype $g_{M}$ and the female, while the denominator normalises the probability.  The matrix $w$ defaults to the identity.
+\item $P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F})$ is the probability the offspring will have sex $s$, genotype $g$ and species $m$, given the genotypes and species of its parents.  This is
+\begin{equation}
+P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) = h(m_{M}, m_{F}, m)i(g_{M}, g_{F}, g)p(g_{M}, g_{F}, m_{M}, m_{F}, s) \ .
+\end{equation}
+The first term, $h$, determines the hybridisation between species, the second determines the inheritance of genotypes, while the final term describes any sex bias in the offspring.  The hybridisation defaults to $h=1$ if $m_{M}=m_{F}=m$ and zero otherwise.  
+\item Finally, these expressions are summed over all possible parental genotypes and species using $\sum_{g_{M}, g_{F}, m_{M}, m_{F}}$.
 \end{itemize}
 
 
