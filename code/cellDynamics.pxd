@@ -158,6 +158,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # where index 0, 1, 2 = ww, Gw, GG respectively
     cdef list inheritance_cube
 
+    # inter-specific competition "matrix"
+    cdef array.array alpha
+
     # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
     cdef unsigned num_ages
 
@@ -169,6 +172,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy)
     """Given num_ages, num_species and accuracy, set all internal parameters (num_populations, diffusing_indices, fecundity_proportion, etc) that depend on these"""
+
+    cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float comp)
+    """Sets alpha[sp0][sp1] = comp.  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""
+
+    cdef inline float getAlphaComponent(self, unsigned sp0, unsigned sp1):
+        """Gets alpha[sp0][sp1]"""
+        return self.alpha.data.as_floats[sp0 + sp1 * self.num_species]
 
     cpdef void setMuLarvae(self, float mu_larvae)
     """Set mu_larvae"""

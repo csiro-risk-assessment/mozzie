@@ -184,10 +184,14 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                  [[ 0., 1., 0. ], # GG x ww
                                   [ 0., .5, .5 ], # GG x Gw
                                   [ 0., 0., 1. ]]] # GG x GG
-        
+
         # size ipm_array and ipf_array correctly
         self.ipm_array = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
         self.ipf_array = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+        
+        # allocate alpha array correctly, and set to the identity
+        self.alpha = array.clone(array.array('f', []), 1, zero = True)
+        self.setAlphaComponent(0, 0, 1.0)
         
         self.setInternalParameters(2, 1, 0.95) # default to num_ages = 2, num_species = 1, accuracy = 0.95
 
@@ -237,6 +241,14 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     self.setIPF(gt0, gt1, gt2, ipf[gt0][gt2][gt1])
 
 
+
+    cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float comp):
+        if sp0 >= self.num_species or sp1 >= self.num_species:
+            raise ValueError("sp0 " + str(sp0) + " and sp1 " + str(sp1) + " must be less than the number of species, " + str(self.num_species))
+        self.alpha.data.as_floats[sp0 + sp1 * self.num_species] = comp
+
+
+
     cpdef void setMuLarvae(self, float mu_larvae):
         self.mu_larvae = mu_larvae
 
@@ -269,6 +281,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     
     cpdef void setNumSpecies(self, unsigned num_species):
         self.setInternalParameters(self.num_ages, num_species, self.accuracy)
+        self.alpha = array.clone(array.array('f', []), num_species * num_species, zero = True)
+        cdef unsigned species
+        for species in range(num_species):
+            self.setAlphaComponent(species, species, 1.0)
+
+    def getAlphaComponentFromPython(self, unsigned sp0, unsigned sp1):
+        return self.getAlphaComponent(sp0, sp1)
 
     cpdef unsigned getNumSpecies(self):
         return self.num_species
@@ -289,14 +308,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         Y = np.reshape(y, (self.num_ages, self.num_sexes, self.num_genotypes, self.num_species))
 
         n = np.zeros(self.num_species)
-        # TODO: define self.alpha - example (always 1 on diagonal):
-        alpha = [[1, 0.1], [0.2, 1]]  # NOTE NOTE: Andy inserted this in order to get the code compiling.  It is probably wrong
         for i in range(self.num_species):
             for j in range(self.num_species):
                 if self.num_ages > 1:
-                    n[i] += Y[:-1,:,:,i].sum() * alpha[i, j] # total number of larvae (all but the last age class)
+                    n[i] += Y[:-1,:,:,i].sum() * self.getAlphaComponent(i, j) # total number of larvae (all but the last age class)
                 else:
-                    n[i] += Y[:,:,:,i].sum() * alpha[i,j] # total number of mosquitoes (all assumed to be "adults")
+                    n[i] += Y[:,:,:,i].sum() * self.getAlphaComponent(i, j) # total number of mosquitoes (all assumed to add to competition
         
         # TODO: delete this when later stuff working
         # ratio = Y[-1,0,:,:] # ratio of adult males (last age class) of given genotype and species
