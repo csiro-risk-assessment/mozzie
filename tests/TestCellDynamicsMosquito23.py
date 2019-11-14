@@ -107,6 +107,37 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
          self.c.setAlphaComponent(3, 1, 0)
       self.assertEqual(str(the_err.exception), "sp0 3 and sp1 1 must be less than the number of species, 3")
 
+   def testSetGetAlpha(self):
+      self.assertEqual(self.c.getHybridisationRate(0, 0, 0), 1.0)
+      self.c.setNumSpecies(3)
+      for i in range(3):
+         for j in range(3):
+            for k in range(3):
+               self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(i, j, k)], [1 if (i == j and j == k) else 0], 1E-8))
+      self.c.setHybridisationRate(0, 0, 0, 1.23)
+      self.c.setHybridisationRate(0, 1, 1, -1.23)
+      self.c.setHybridisationRate(0, 2, 2, 3.33)
+      self.c.setHybridisationRate(1, 0, 0, 1.4)
+      self.c.setHybridisationRate(1, 2, 1, -0.5)
+      self.c.setHybridisationRate(2, 0, 2, 0.8)
+      self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(0, 0, 0)], [1.23], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(0, 1, 1)], [-1.23], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(0, 2, 2)], [3.33], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(1, 0, 0)], [1.4], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(1, 2, 1)], [-0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(2, 0, 2)], [0.8], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(1, 1, 1)], [1.0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getHybridisationRate(2, 2, 2)], [1.0], 1E-6))
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setHybridisationRate(3, 1, 0, 0)
+      self.assertEqual(str(the_err.exception), "All species numbers, 3, 1, 0 must be less than the number of species, 3")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setHybridisationRate(0, 3, 0, 0)
+      self.assertEqual(str(the_err.exception), "All species numbers, 0, 3, 0 must be less than the number of species, 3")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setHybridisationRate(1, 1, 3, 0)
+      self.assertEqual(str(the_err.exception), "All species numbers, 1, 1, 3 must be less than the number of species, 3")
+
    def testEvolveZeroFecundityZeroAging(self):
       sys.stderr.write("SKIPPING")
       return

@@ -175,6 +175,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.num_species = 1
         self.accuracy = 0.95
 
+        self.num_species2 = 1
+
         # Set default carrying capacity
         self.kk = 1.0
 
@@ -195,12 +197,17 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # allocate alpha array correctly, and set to the identity
         self.alpha = array.clone(array.array('f', []), 1, zero = True)
         self.setAlphaComponent(0, 0, 1.0)
+
+        # allocate hyb array correctly, and set it to the identity
+        self.hyb = array.clone(array.array('f', []), 1, zero = True)
+        self.setHybridisationRate(0, 0, 0, 1.0)
         
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy):
         self.num_ages = num_ages # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
         self.num_species = num_species
+        self.num_species2 = num_species * num_species
         self.accuracy = accuracy
         
         self.num_populations = self.num_ages * self.num_sexes * self.num_genotypes * self.num_species
@@ -250,6 +257,15 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             raise ValueError("sp0 " + str(sp0) + " and sp1 " + str(sp1) + " must be less than the number of species, " + str(self.num_species))
         self.alpha.data.as_floats[sp0 + sp1 * self.num_species] = comp
 
+    cpdef setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value):
+        if species_father >= self.num_species or species_mother >= self.num_species or species_offspring >= self.num_species:
+            raise ValueError("All species numbers, " + str(species_father) + ", " + str(species_mother) + ", " + str(species_offspring) + " must be less than the number of species, " + str(self.num_species))
+        self.hyb.data.as_floats[species_father + species_mother * self.num_species + species_offspring * self.num_species2] = value
+
+    cpdef float getHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring):
+        if species_father >= self.num_species or species_mother >= self.num_species or species_offspring >= self.num_species:
+            raise ValueError("All species numbers, " + str(species_father) + ", " + str(species_mother) + ", " + str(species_offspring) + " must be less than the number of species, " + str(self.num_species))
+        return self.hyb.data.as_floats[species_father + species_mother * self.num_species + species_offspring * self.num_species2]
 
 
     cpdef void setMuLarvae(self, float mu_larvae):
@@ -288,9 +304,15 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         cdef unsigned species
         for species in range(num_species):
             self.setAlphaComponent(species, species, 1.0)
+        self.hyb = array.clone(array.array('f', []), num_species * num_species * num_species, zero = True)
+        for species in range(num_species):
+            self.setHybridisationRate(species, species, species, 1.0)
 
     def getAlphaComponentFromPython(self, unsigned sp0, unsigned sp1):
+        """Python interface for getting a component of the alpha matrix (inter-specific competition).  This is a slow interface: use getAlphaComponent from all cython code"""
         return self.getAlphaComponent(sp0, sp1)
+
+
 
     cpdef unsigned getNumSpecies(self):
         return self.num_species
@@ -358,8 +380,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                             for gt1 in range(self.num_genotypes): # mothers' genotypes
                                 ind2 = offset_to_adult + spm + gt1 * self.num_species + self.num_species * self.num_genotypes # adult (age=num_ages-1) female (sex=1) of genotype gt1 and species spm
                                 spf = spm # NOTE NOTE: Andy included this to get the code compiling.  It is probably wrong!
-                                mat[ind0, ind2] += self.IPM(i, gt0, gt1) * ratio[sp, spm, i] * self.h[sp, spf, spo] * (1 - n[spo] / self.kk) * self.fecundity
-                                mat[ind1, ind2] += self.IPF(i, gt0, gt1) * ratio[sp, spm, i] * self.h[sp, spf, spo] * (1 - n[spo] / self.kk) * self.fecundity
+                                mat[ind0, ind2] += self.IPM(i, gt0, gt1) * ratio[sp, spm, i] * self.getHybridisationRate(sp, spf, spo) * (1 - n[spo] / self.kk) * self.fecundity
+                                mat[ind1, ind2] += self.IPF(i, gt0, gt1) * ratio[sp, spm, i] * self.getHybridisationRate(sp, spf, spo) * (1 - n[spo] / self.kk) * self.fecundity
                 
                 # TODO: delete line when sure that line inside loop is working
                 # mat *= (1 - n / self.kk) * self.fecundity # scaling by fecundity and density dependence
@@ -403,3 +425,4 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # copy back
         for ind in range(self.num_populations):
             pops_and_params[ind] = sol.y[ind, -1]
+

@@ -161,11 +161,17 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # inter-specific competition "matrix"
     cdef array.array alpha
 
+    # hybridisation rate "matrix".  Default value is 1 if species_father==species_mother==species_offspring, and 0 otherwise"""
+    cdef array.array hyb
+
     # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
     cdef unsigned num_ages
 
     # number of species
     cdef unsigned num_species
+
+    # square of num_species
+    cdef unsigned num_species2
 
     # accuracy of PMB
     cdef float accuracy
@@ -174,10 +180,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     """Given num_ages, num_species and accuracy, set all internal parameters (num_populations, diffusing_indices, fecundity_proportion, etc) that depend on these"""
 
     cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float comp)
-    """Sets alpha[sp0][sp1] = comp.  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""
+    """Sets alpha[sp0][sp1] = comp (for inter-specific competition).  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""
 
     cdef inline float getAlphaComponent(self, unsigned sp0, unsigned sp1):
-        """Gets alpha[sp0][sp1]"""
+        """Gets alpha[sp0][sp1]: the inter-specific competition"""
         return self.alpha.data.as_floats[sp0 + sp1 * self.num_species]
 
     cpdef void setMuLarvae(self, float mu_larvae)
@@ -211,7 +217,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     """Get number of ages"""
     
     cpdef void setNumSpecies(self, unsigned num_species)
-    """Set number of species.  This calls setInternalParameters to appropriately set other parameters, given num_species"""
+    """Set number of species.  This calls setInternalParameters to appropriately set other parameters, given num_species.  It also reinitialises the alpha and hybridisation matrices"""
 
     cpdef unsigned getNumSpecies(self)
     """Get number of species"""
@@ -247,4 +253,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef inline float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
         """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
         return 0.5 if (offspring_sex == 0 or mother_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0)
+
+    cpdef float getHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring)
+    """Returns the hybridisation rate for given father, mother and offspring"""
+
+    cpdef setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value)
+    """Sets the hybridisation rate for the given father, mother and offspring.  Note, if you setNumSpecies, this will be reinitialised to its default value of 1 if species_father=species_mother=species_offspring, and 0 otherwise"""
     
