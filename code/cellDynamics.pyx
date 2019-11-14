@@ -171,6 +171,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.mu_adult = 0.1
         self.fecundity = 0.9
         self.aging_rate = 0.1
+        self.num_ages = 2
+        self.num_species = 1
+        self.accuracy = 0.95
 
         # Set default carrying capacity
         self.kk = 1.0
@@ -193,7 +196,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.alpha = array.clone(array.array('f', []), 1, zero = True)
         self.setAlphaComponent(0, 0, 1.0)
         
-        self.setInternalParameters(2, 1, 0.95) # default to num_ages = 2, num_species = 1, accuracy = 0.95
+        self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy):
         self.num_ages = num_ages # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
