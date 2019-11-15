@@ -379,7 +379,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         for sp in range(self.num_species):
                             self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
         for sp in range(self.num_species):
-            self.comp.data.as_floats[sp] = 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk
+            self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
 
         # define the denominator term
         array.zero(self.denom)
