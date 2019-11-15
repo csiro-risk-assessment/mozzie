@@ -400,7 +400,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # In the following, mat is a 1D array (for efficiency)
         # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
         #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
-        #  - given a component, M_ij, the index in mat is i + j * self.num_populations
+        #  - given a component, M_ij, the index in mat is j + i * self.num_populations
         array.zero(self.mat)
         age = 0 # only newborn row in M
         for sex in range(self.num_sexes): # row in M
