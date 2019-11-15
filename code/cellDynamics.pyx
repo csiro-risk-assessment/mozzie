@@ -535,6 +535,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             for ind in range(self.num_populations):
                 pops_and_params[ind] = pops_and_params[ind] + (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
             
+		for ind in range(self.num_populations): # make sure pop never goes below zero
+            if pops_and_params[ind] < 0.0:
+				pops_and_params[ind] = 0.0
 
                 
 
