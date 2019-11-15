@@ -76,10 +76,10 @@ and $X(a,s,g,m)$ is abbreviated to $X$.
 \end{tabular}
 &  \\
   \hline
-    $p(g_M, g_F, m)$ & Proportion of offspring of given sex given genotypes of parents & 1 (accuracy $a$)\\
+    $p(g_M, g_F, s)$ & Proportion of offspring of given sex given genotypes of parents & 1 (accuracy $a$)\\
      & $ = \begin{cases}
-		p(Gw, g_F, F) & = \frac{1}{a} - 1 \\
-		p(GG, g_F, F) & = \frac{1}{a} - 1 \\
+		p(Gw, g_F, F) & = \frac{1}{2}\left(\frac{1}{a} - 1\right) \\
+		p(GG, g_F, F) & = \frac{1}{2}\left(\frac{1}{a} - 1\right) \\
 		0.5 & \textrm{elsewhere}
 		\end{cases}$ &  \\
     \hline
@@ -136,7 +136,7 @@ For $a=0$, the populations are govened by
 \end{equation}
 The first term describes mortality of newborns, while the second describes aging into the next age-bracket of juveniles.  The final term describes the birth of newborn larvae.  It is
 \begin{equation}
-B(s, g, m) = \left(1 -  \frac{C(m)}{K} \right) \sum_{g_{M}, g_{F}, m_{M}, m_{F}}P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) P_{\mathrm{mating}}(g_{M}, g_{F}, m_{M}, m_{F})\lambda X(N-1, F, g_{F}, m_{F})
+B(s, g, m) = \left(1 -  \frac{C(m)}{K} \right) \sum_{g_{M}, g_{F}, m_{M}, m_{F}}P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) P_{\mathrm{mating}}(g_{M}, m_{M}, m_{F})\lambda X(N-1, F, g_{F}, m_{F})
 \end{equation}
 This equation deserves explanations.
 \begin{itemize}
@@ -146,9 +146,9 @@ C(m) = \sum_{a=0}^{N - 2}\sum_{s=0}^{N_{\mathrm{sexes}} - 1} \sum_{g=0}^{N_{\mat
 \end{equation}
 Notice that this does not include adults $a=N - 1$.  If $N=1$, it is assumed that the carrying-capacity still applies, and the sum over $a$ runs from $0$ to $0$.  The Lotka-Voltera matrix $\alpha$ accounts for inter-specific competition.  It defaults to $a=I$, that is, newborns only feel competition from their own species.
 \item $X(N-1, F, g_{F}, m_{F})$ is the number of adult ($a=N-1$), females of genotype $g_{F}$ and species $m_{F}$.  So $\lambda X(N-1, F, g_{F}, m_{F})$ is the number of newborns produced by these female per timestep.
-\item $P_{\mathrm{mating}}(g_{M}, g_{F}, m_{M}, m_{F})$ is the probability that a male adult of genogype $g_{M}$ and species $m_{M}$ successfully mates with a female adult of genotype $g_{F}$ and species $m_{F}$ to produce newborn.  It is
+\item $P_{\mathrm{mating}}(g_{M}, m_{M}, m_{F})$ is the probability that a male adult of genogype $g_{M}$ and species $m_{M}$ successfully mates with a female adult of species $m_{F}$ to produce newborn.  It is
 \begin{equation}
-P_{\mathrm{mating}}(g_{M}, g_{F}, m_{M}, m_{F}) = \frac{w(m_{M}, m_{F})X(N-1, M, g_{M}, m_{M})}{\sum_{g'=0}^{N_{\mathrm{genotypes}}}\sum_{m'=0}^{N_{\mathrm{species}}}w(m', m_{F})X(N-1, M, g', m')} \ .
+P_{\mathrm{mating}}(g_{M}, m_{M}, m_{F}) = \frac{w(m_{M}, m_{F})X(N-1, M, g_{M}, m_{M})}{\sum_{g'=0}^{N_{\mathrm{genotypes}}}\sum_{m'=0}^{N_{\mathrm{species}}}w(m', m_{F})X(N-1, M, g', m')} \ .
 \end{equation}
 The numerator is the number of matings between male of species $m_{M}$ and genotype $g_{M}$ and the female, while the denominator normalises the probability.  The matrix $w$ defaults to the identity.
 \item $P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F})$ is the probability the offspring will have sex $s$, genotype $g$ and species $m$, given the genotypes and species of its parents.  This is

@@ -418,6 +418,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                     self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
                             # multiply mat by things that don't depend on gtm or spm
                             self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+        
 
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
@@ -426,8 +427,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     age = 0
                     row = self.getIndex(sp, gt, sex, age)
                     ind = row + self.num_populations * row # diagonal entry
-                    self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.mu_larvae # mortality
                     if self.num_ages > 1:
+                        self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.mu_larvae # mortality
                         self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.aging_rate # aging to older bracket
                     for age in range(1, self.num_ages - 1):
                         row = self.getIndex(sp, gt, sex, age)

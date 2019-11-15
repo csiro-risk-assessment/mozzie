@@ -266,7 +266,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cdef inline float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
         """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
-        return 0.5 if (offspring_sex == 0 or mother_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0)
+        return 0.5 if (offspring_sex == 0 or father_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0)
 
     cdef inline float getHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring):
         """Returns the hybridisation rate for given father, mother and offspring"""
