@@ -188,11 +188,15 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # "matrix" array, defined here for efficiency (so don't have to keep allocating memory)
     cdef array.array mat
 
-    # X array, defined here for efficiency (so don't have to keep allocating memory).  This holds the value of the populations in the "fun" method.  This is unused in CellDynamicsMosquito23, but used in CellDynamicsMosquito23Scipy.  If we remove the latter then we can remove this array.
+    # X array, defined here for efficiency (so don't have to keep allocating memory).  This holds the value of the populations in the "fun_for_scipy" method.  This is only used if solve_ivp is the time_integration_method.  If we remove the latter then we can remove these array.
     cdef array.array Xarray
+    cdef float[:] cXarray
 
     # the RHS arrays in dX/dt = rhs
     cdef array.array rhs
+
+    # time-integration method (explicit_euler=0, solve_ivp=1, runge_kutta4=2,...)
+    cdef unsigned time_integration_method
 
     cdef inline unsigned getIndex(self, unsigned species, unsigned genotype, unsigned sex, unsigned age):
         """gets the index in pops_and_params corresponding to the given age, sex, genotype and species"""
@@ -277,8 +281,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cdef void computeRHS(self, float[:] x)
     """Compute the rhs in dX/dt = rhs.  Here rhs is a funtion of x"""
-    
-cdef class CellDynamicsMosquito23Scipy(CellDynamicsMosquito23):
-    """Uses Scipy solve_ivp to solve the equations"""
 
-    cdef float[:] cXarray
+    cpdef setTimeIntegrationMethod(self, str method)
+    """Sets the time integration method to be explicit_euler, solve_ivp, runge_kutta4"""
+

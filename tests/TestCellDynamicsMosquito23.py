@@ -201,6 +201,14 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
          self.c.getInheritanceFromPython(0, 0, 3)
       self.assertEqual(str(the_err.exception), "All genotypes, 0, 0, 3 must be less than the number of genotypes, 3")
 
+   def testSetTimeIntegrationMethod(self):
+      self.c.setTimeIntegrationMethod("explicit_euler")
+      self.c.setTimeIntegrationMethod("solve_ivp")
+      self.c.setTimeIntegrationMethod("runge_kutta4")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setTimeIntegrationMethod("crazy_method")
+      self.assertEqual(str(the_err.exception), "Time integration method crazy_method not supported")
+
    def testEvolveZeroFecundityZeroAging(self):
       dt = 0.01
       self.c.setFecundity(0.0)

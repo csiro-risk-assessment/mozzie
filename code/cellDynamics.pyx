@@ -212,6 +212,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # allocate rhs correctly
         self.rhs = array.clone(array.array('f', []), self.num_populations, zero = False)
 
+        # default to explicit_euler
+        self.time_integration_method = 0
+
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
     cdef void setInheritance(self):
@@ -468,16 +471,34 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             return
         self.one_over_kk = 1.0 / pops_and_params[self.num_populations]
 
-        self.computeRHS(pops_and_params)
-        for ind in range(self.num_populations):
-            pops_and_params[ind] = pops_and_params[ind] + timestep * self.rhs.data.as_floats[ind]
+        if self.time_integration_method == 0:
+            self.computeRHS(pops_and_params)
+            for ind in range(self.num_populations):
+                pops_and_params[ind] = pops_and_params[ind] + timestep * self.rhs.data.as_floats[ind]
+        elif self.time_integration_method == 1:
+            # copy into numpy array xx for use in self.fun
+            xx = np.ones(self.num_populations)
+            for ind in range(self.num_populations):
+                xx[ind] = pops_and_params[ind]
+            # solve
+            sol = solve_ivp(self.fun_for_scipy, [0.0, timestep], xx)
+            # copy back
+            for ind in range(self.num_populations):
+                pops_and_params[ind] = sol.y[ind, -1]
+        elif self.time_integration_method == 2:
+            pass # TODO
 
-
-cdef class CellDynamicsMosquito23Scipy(CellDynamicsMosquito23):
-    def __init__(self):
-        super().__init__()
-
-    def fun(self, t, y):
+    cpdef setTimeIntegrationMethod(self, str method):
+        if method == "explicit_euler":
+            self.time_integration_method = 0
+        elif method == "solve_ivp":
+            self.time_integration_method = 1
+        elif method == "runge_kutta4":
+            self.time_integration_method = 2
+        else:
+            raise ValueError("Time integration method " + method + " not supported")
+    
+    def fun_for_scipy(self, t, y):
         """Evaluates d(populations)/dt"""
         # size cXarray correctly
         self.cXarray = self.Xarray
@@ -490,25 +511,4 @@ cdef class CellDynamicsMosquito23Scipy(CellDynamicsMosquito23):
         for ind in range(self.num_populations):
             dXdt[ind] = self.rhs.data.as_floats[ind]
         return dXdt
-        
-        
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
-        cdef unsigned ind
-
-        if pops_and_params[self.num_populations] <= 0.0:
-            # instantly kill all populations
-            for ind in range(self.num_populations):
-                pops_and_params[ind] = 0.0
-            return
-        self.one_over_kk = 1.0 / pops_and_params[self.num_populations]
-
-        # copy into numpy array xx for use in self.fun
-        xx = np.ones(self.num_populations)
-        for ind in range(self.num_populations):
-            xx[ind] = pops_and_params[ind]
-        # solve
-        sol = solve_ivp(self.fun, [0.0, timestep], xx)
-        # copy back
-        for ind in range(self.num_populations):
-            pops_and_params[ind] = sol.y[ind, -1]
         

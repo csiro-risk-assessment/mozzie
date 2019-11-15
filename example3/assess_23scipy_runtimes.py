@@ -1,4 +1,4 @@
-# Allows assessment of runtimes for Mosquito23Scipy growth only, with only death, emergence and aging
+# Allows assessment of runtimes for Mosquito23 growth only, with only death, emergence and aging, using the solve_ivp time integration
 import os
 import sys
 
@@ -13,7 +13,7 @@ sys.path.append(findbin + "/../code")
 
 from wind import Wind
 from grid import Grid
-from cellDynamics import CellDynamicsMosquito23Scipy
+from cellDynamics import CellDynamicsMosquito23
 from spatialDynamics import SpatialDynamics
 from spatialDependence import SpatialDependence
 from populationsAndParameters import PopulationsAndParameters
@@ -43,16 +43,17 @@ sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 # define a zeroed populations and parameters array
 sys.stdout.write("Defining the populations and parameters array...")
 start = timeit.default_timer()
-cell = CellDynamicsMosquito23Scipy()
+cell = CellDynamicsMosquito23()
 cell.setMuLarvae(0.1)
 cell.setMuAdult(0.2)
 cell.setFecundity(0.0)
 cell.setAgingRate(0.3)
 cell.setNumAges(2)
+cell.setTimeIntegrationMethod("solve_ivp")
 all_pops = PopulationsAndParameters(g1, cell)
 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 
-# introduce carrying capacity (which, for CellDynamicsMosquito23Scipy, is 12th slot in the populations and params array)
+# introduce carrying capacity (which, for CellDynamicsMosquito23, is 12th slot in the populations and params array)
 # and a population of carrying-capacity for every population (just for ease of coding - this isn't realistic!)
 sys.stdout.write("Populating the initial populations and parameters array...")
 start = timeit.default_timer()
