@@ -9,7 +9,7 @@ sys.path.append(findbin + "/../code")
 from cellDynamics import CellDynamicsMosquito23
 
 cell = CellDynamicsMosquito23()
-dt = 50.0
+dt=0.01
 cell.setMuLarvae(0.1)
 cell.setMuAdult(0.1)
 cell.setFecundity(0.9)
@@ -19,5 +19,21 @@ cell.setAccuracy(0.95)
 
 initial_condition = [0.1] * cell.getNumberOfPopulations() + [9.0 / 7.0]
 pap = array.array('f', initial_condition)
-cell.evolve(dt, pap)
+import numpy as np
+res = np.zeros((10000, 6))
+for i in range(10000):
+    cell.evolve(dt, pap)
+    res[i,:] = pap[0:6]
+
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+for i in range(6):
+    ax.plot(np.arange(0.01, 100.0001, 0.01), res[:,i], color = ((i%3)/2.2, ((i//3)%2)*0.9, (i//6)*0.9), label = str(i))
+
+ax.legend()
+#plt.show()
+plt.savefig('foo.png')
+
+
+
 print("and the final population is....", pap)
