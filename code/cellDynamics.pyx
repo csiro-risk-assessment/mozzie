@@ -415,7 +415,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                             for gtm in range(self.num_genotypes): # male genotype
                                 for spm in range(self.num_species): # male species
                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                    self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtm, gtf)
+                                    self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
                             # multiply mat by things that don't depend on gtm or spm
                             self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
 
