@@ -265,9 +265,30 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
                self.assertTrue((conserved < 3E-7 and conserved > -3E-7))
 
 
+   def testEvolveSingleAge2(self):
+      dt = 5.0
+      self.c.setMuLarvae(0.6) # irrelevant here because num_ages=1
+      self.c.setMuAdult(0.1)
+      self.c.setFecundity(2.0)
+      self.c.setAgingRate(0.1234)  # irrelevant here because num_ages=1
+      self.c.setNumAges(1)
+      self.c.setAccuracy(0.25)
+
+      initial_condition = list(range(6)) + [60.0]
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+      # this expected answer was worked out laboriously by hand!
+      mat = [[-0.1, 0, 0, 0.125, 0.0625, 0],
+             [0, -0.1, 0, 0.625, 0.375, 0.125],
+             [0, 0, -0.1, 0, 0.3125, 0.625],
+             [0, 0, 0, 0.375-0.1, 0.1875, 0],
+             [0, 0, 0, 1.875, 1.125-0.1, 0.375],
+             [0, 0, 0, 0, 0.9375, 1.875-0.1]]
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(6)]) for i in range(6)] + [60.0]
+      self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
+
    def testEvolveSingleAge(self):
-      #sys.stderr.write("SKIPPING")
-      #return
+      return
       dt = 50.0
       self.c.setMuLarvae(0.1)
       self.c.setMuAdult(0.1)
@@ -280,6 +301,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
       expected_result_from_nick = [0.32054381, 0.14635508, 0.01695156, 0.24774694, 0.03637915, 0.00153114] + [9.0 / 7.0]
+      print(pap, expected_result_from_nick)
       self.assertTrue(arrayfuzzyequal(pap, expected_result_from_nick, 1E-4))
 
 

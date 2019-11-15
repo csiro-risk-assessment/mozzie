@@ -448,6 +448,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
 
 
+        #for row in range(self.num_populations):
+        #    for col in range(self.num_populations):
+        #        sys.stdout.write(str(self.mat[col + self.num_populations * row]) + " ")
+        #    sys.stdout.write("\n")
+
         array.zero(self.rhs)
         for row in range(self.num_populations):
             for col in range(self.num_populations):
