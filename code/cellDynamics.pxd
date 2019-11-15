@@ -192,6 +192,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef array.array Xarray
     cdef float[:] cXarray
 
+    # Runge-Kutta4 arrays that hold the values of populations (not parameters)
+    cdef array.array rk1, rk2, rk3, rk4
+
+    # Runge-Kutta "y" array that holds the value of populations and the carrying capacity: the C version is passed to computeRHS
+    cdef array.array rky
+    cdef float[:] crky
+
     # the RHS arrays in dX/dt = rhs
     cdef array.array rhs
 

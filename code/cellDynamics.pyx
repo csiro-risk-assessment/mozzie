@@ -209,6 +209,14 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # allocate Xarray correctly
         self.Xarray = array.clone(array.array('f', []), self.num_populations, zero = False)
 
+        # allocate the Runge-Kutta arrays correctly
+        self.rk1 = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rk2 = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rk3 = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rk4 = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rky = array.clone(array.array('f', []), self.num_populations + self.num_parameters, zero = False)
+        self.crky = self.rky
+
         # allocate rhs correctly
         self.rhs = array.clone(array.array('f', []), self.num_populations, zero = False)
 
@@ -241,8 +249,18 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         
         self.num_populations = self.num_ages * self.num_sexes * self.num_genotypes * self.num_species
 
+        # allocate the mat array correctly
         self.mat = array.clone(array.array('f', []), self.num_populations * self.num_populations, zero = False)
+        # allocate Xarray correctly
         self.Xarray = array.clone(array.array('f', []), self.num_populations, zero = False)
+        # allocate the Runge-Kutta arrays correctly
+        self.rk1 = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rk2 = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rk3 = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rk4 = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.rky = array.clone(array.array('f', []), self.num_populations + self.num_parameters, zero = False)
+        self.crky = self.rky
+        # allocate the rhs array correctly
         self.rhs = array.clone(array.array('f', []), self.num_populations, zero = False)
 
         # set diffusing and advecting information
@@ -475,6 +493,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             self.computeRHS(pops_and_params)
             for ind in range(self.num_populations):
                 pops_and_params[ind] = pops_and_params[ind] + timestep * self.rhs.data.as_floats[ind]
+
         elif self.time_integration_method == 1:
             # copy into numpy array xx for use in self.fun
             xx = np.ones(self.num_populations)
@@ -485,8 +504,40 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             # copy back
             for ind in range(self.num_populations):
                 pops_and_params[ind] = sol.y[ind, -1]
+
         elif self.time_integration_method == 2:
-            pass # TODO
+            # step 1
+            self.computeRHS(pops_and_params)
+            for ind in range(self.num_populations):
+                self.rk1.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
+            # step 2
+            for ind in range(self.num_populations):
+                self.crky[ind] = pops_and_params[ind] + 0.5 * self.rk1.data.as_floats[ind]
+            self.crky[self.num_populations] = pops_and_params[self.num_populations] # the carrying capacity
+            self.computeRHS(self.crky)
+            for ind in range(self.num_populations):
+                self.rk2.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
+            # step 3
+            for ind in range(self.num_populations):
+                self.crky[ind] = pops_and_params[ind] + 0.5 * self.rk2.data.as_floats[ind]
+            self.crky[self.num_populations] = pops_and_params[self.num_populations] # the carrying capacity
+            self.computeRHS(self.crky)
+            for ind in range(self.num_populations):
+                self.rk3.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
+            # step 4
+            for ind in range(self.num_populations):
+                self.crky[ind] = pops_and_params[ind] + self.rk3.data.as_floats[ind]
+            self.crky[self.num_populations] = pops_and_params[self.num_populations] # the carrying capacity
+            self.computeRHS(self.crky)
+            for ind in range(self.num_populations):
+                self.rk4.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
+            # put it all together
+            for ind in range(self.num_populations):
+                pops_and_params[ind] = pops_and_params[ind] + (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
+            
+
+                
+
 
     cpdef setTimeIntegrationMethod(self, str method):
         if method == "explicit_euler":

@@ -235,6 +235,35 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 4E-5))
 
+   def testEvolveZeroFecundityZeroAgingRK(self):
+      dt = 0.5
+      mu_larvae = 0.5
+      mu_adult = 0.7
+      self.c.setFecundity(0.0)
+      self.c.setAgingRate(0.0)
+      self.c.setMuLarvae(mu_larvae)
+      self.c.setMuAdult(mu_adult)
+      self.c.setTimeIntegrationMethod("runge_kutta4")
+      random.seed(1)
+
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
+      rhs = [- mu_larvae * x for x in initial_condition[:6]] + [- mu_adult * x for x in initial_condition[6:12]]
+      k1 = [dt * r for r in rhs]
+      rky = [initial_condition[i] + 0.5 * k1[i] for i in range(12)]
+      rhs = [- mu_larvae * y for y in rky[:6]] + [- mu_adult * y for y in rky[6:12]]
+      k2 = [dt * r for r in rhs]
+      rky = [initial_condition[i] + 0.5 * k2[i] for i in range(12)]
+      rhs = [- mu_larvae * y for y in rky[:6]] + [- mu_adult * y for y in rky[6:12]]
+      k3 = [dt * r for r in rhs]
+      rky = [initial_condition[i] + k3[i] for i in range(12)]
+      rhs = [- mu_larvae * y for y in rky[:6]] + [- mu_adult * y for y in rky[6:12]]
+      k4 = [dt * r for r in rhs]
+      expected_answer = [initial_condition[i] + (1.0 / 6.0) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) for i in range(12)] + [initial_condition[-1]]
+
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 1E-7))
+
    def testEvolveAgingOnly(self):
       dt = 0.01
       aging_rate = 0.25
