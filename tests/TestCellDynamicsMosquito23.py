@@ -287,9 +287,8 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(6)]) for i in range(6)] + [60.0]
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
 
-   def testEvolveSingleAge(self):
-      return
-      dt = 50.0
+   def testEvolveSingleAge1(self):
+      dt = 1.0
       self.c.setMuLarvae(0.1)
       self.c.setMuAdult(0.1)
       self.c.setFecundity(0.9)
@@ -300,9 +299,8 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       initial_condition = [0.1] * self.c.getNumberOfPopulations() + [9.0 / 7.0]
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
-      expected_result_from_nick = [0.32054381, 0.14635508, 0.01695156, 0.24774694, 0.03637915, 0.00153114] + [9.0 / 7.0]
-      print(pap, expected_result_from_nick)
-      self.assertTrue(arrayfuzzyequal(pap, expected_result_from_nick, 1E-4))
+      expected_result_from_nick = [0.10800000, 0.12600000, 0.10800000, 0.10231579, 0.10326316, 0.09094737] + [initial_condition[-1]]
+      self.assertTrue(arrayfuzzyequal(pap, expected_result_from_nick, 4E-8))
 
 
 if __name__ == '__main__':
