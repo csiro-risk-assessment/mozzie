@@ -136,7 +136,7 @@ For $a=0$, the populations are govened by
 \end{equation}
 The first term describes mortality of newborns, while the second describes aging into the next age-bracket of juveniles.  The final term describes the birth of newborn larvae.  It is
 \begin{equation}
-B(s, g, m) = \left(1 -  \frac{C(m)}{K} \right) \sum_{g_{M}, g_{F}, m_{M}, m_{F}}P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) P_{\mathrm{mating}}(g_{M}, m_{M}, m_{F})\lambda X(N-1, F, g_{F}, m_{F})
+B(s, g, m) = L\left(1 -  \frac{C(m)}{K} \right) \sum_{g_{M}, g_{F}, m_{M}, m_{F}}P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) P_{\mathrm{mating}}(g_{M}, m_{M}, m_{F})\lambda X(N-1, F, g_{F}, m_{F})
 \end{equation}
 This equation deserves explanations.
 \begin{itemize}
@@ -145,6 +145,7 @@ This equation deserves explanations.
 C(m) = \sum_{a=0}^{N - 2}\sum_{s=0}^{N_{\mathrm{sexes}} - 1} \sum_{g=0}^{N_{\mathrm{genotypes}} - 1} \sum_{m'=0}^{N_{\mathrm{species}} - 1}\alpha_{m, m'} X(a, s, g, m')\ .
 \end{equation}
 Notice that this does not include adults $a=N - 1$.  If $N=1$, it is assumed that the carrying-capacity still applies, and the sum over $a$ runs from $0$ to $0$.  The Lotka-Voltera matrix $\alpha$ accounts for inter-specific competition.  It defaults to $a=I$, that is, newborns only feel competition from their own species.
+\item The function $L(x)=0$ if $x\leq 0$, while $L(x)=x$ for $x>0$.  This is to ensure that if $C(m)>K$ no newborns are produced.
 \item $X(N-1, F, g_{F}, m_{F})$ is the number of adult ($a=N-1$), females of genotype $g_{F}$ and species $m_{F}$.  So $\lambda X(N-1, F, g_{F}, m_{F})$ is the number of newborns produced by these female per timestep.
 \item $P_{\mathrm{mating}}(g_{M}, m_{M}, m_{F})$ is the probability that a male adult of genogype $g_{M}$ and species $m_{M}$ successfully mates with a female adult of species $m_{F}$ to produce newborn.  It is
 \begin{equation}
