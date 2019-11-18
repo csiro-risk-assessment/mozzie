@@ -30,6 +30,8 @@ $g$ = genotype ($ww$ wildtype, $Gw$ heterozygous GM or $GG$ homozygous GM),
 $m$ = mosquito species ($C$ = \textit{An. coluzzii}, $G$ =\textit{An. gambiae})
 
 and $X(a,s,g,m)$ is abbreviated to $X$.
+
+
 \section{Parameters}
 
 \begin{center}
@@ -159,6 +161,19 @@ P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) = h(m_{M}, m_{F}, m
 The first term, $h$, determines the hybridisation between species, the second determines the inheritance of genotypes, while the final term describes any sex bias in the offspring.  The hybridisation defaults to $h=1$ if $m_{M}=m_{F}=m$ and zero otherwise.  
 \item Finally, these expressions are summed over all possible parental genotypes and species using $\sum_{g_{M}, g_{F}, m_{M}, m_{F}}$.
 \end{itemize}
+
+\subsection{Time integration}
+
+The ODEs in {\tt Mosquito23} may be integrated in time using one of the following methods.
+\begin{enumerate}
+\item Explicit-Euler, where $X(t + \Delta t) = \Delta t f(X(t))$.  This is fast, but results in the greatest error.
+\item Runge-Kutta4, where $X(t + \Delta t)$ is given by the fourth-order Runge-Kutta formula.  This is approximately 4 times slower than explicit-Euler.
+\item Scipy's {\tt solve\_ivp} method.  This is over 100 times slower than explicit-Euler, but is the most accurate.
+\end{enumerate}
+
+In addition, adaptive time-stepping is the default.  Here, the user defines $\Delta t$, and if the algorithm detects that any $X(t + \Delta t) < 0$, the time-step is solved using a number of smaller sub-time-steps, chosen to guarantee that all $X$ remain non-negative.  This type of behaviour occurs when the time-dependent carrying capacity suddenly reduces, and the explicit-Euler or Runge-Kutta4 methods produce large negative changes in population numbers, which, if allowed, would result in $X<0$.  Solving the problem using smaller sub-time-steps overcomes this problem.  In this algorithm, there is a minimum $\Delta t$ allowed, which defaults to $10^{-12}$, below which the algorithm exits with an error.
+
+Finally, a user-defined cutoff, $c$, is placed on $X(t + \Delta t)$.  If $X(t + \Delta t) < c$ (at the end of a time step) then $X(t + \Delta t)$ is set to zero.  This prevents anomalous round-off and precision errors from accumulating.  The default value of $c$ is $10^{-6}$.
 
 
 
