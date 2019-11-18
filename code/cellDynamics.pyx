@@ -220,6 +220,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # allocate rhs correctly
         self.rhs = array.clone(array.array('f', []), self.num_populations, zero = False)
 
+        # allocate the change arrays correctly
+        self.change = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.cchange = self.change
+
         # default to explicit_euler
         self.time_integration_method = 0
 
@@ -262,6 +266,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.crky = self.rky
         # allocate the rhs array correctly
         self.rhs = array.clone(array.array('f', []), self.num_populations, zero = False)
+        # allocate the change arrays correctly
+        self.change = array.clone(array.array('f', []), self.num_populations, zero = False)
+        self.cchange = self.change
+
 
         # set diffusing and advecting information
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species # only adults diffuse
@@ -489,59 +497,60 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             return
         self.one_over_kk = 1.0 / pops_and_params[self.num_populations]
 
+        # do adaptive timestepping here
+        self.popChange(timestep, pops_and_params, self.cchange)
+        for ind in range(self.num_populations):
+            pops_and_params[ind] = max(0.0, pops_and_params[ind] + self.cchange[ind])
+        
+
+    cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange):
+        cdef unsigned ind
+
         if self.time_integration_method == 0:
-            self.computeRHS(pops_and_params)
+            self.computeRHS(current_pops_and_params)
             for ind in range(self.num_populations):
-                pops_and_params[ind] = pops_and_params[ind] + timestep * self.rhs.data.as_floats[ind]
-            for ind in range(self.num_populations): # make sure pop never goes below zero
-                if pops_and_params[ind] < 0.0:
-                    pops_and_params[ind] = 0.0
+                cchange[ind] = timestep * self.rhs.data.as_floats[ind]
 
         elif self.time_integration_method == 1:
             # copy into numpy array xx for use in self.fun
             xx = np.ones(self.num_populations)
             for ind in range(self.num_populations):
-                xx[ind] = pops_and_params[ind]
+                xx[ind] = current_pops_and_params[ind]
             # solve
             sol = solve_ivp(self.fun_for_scipy, [0.0, timestep], xx)
             # copy back
             for ind in range(self.num_populations):
-                pops_and_params[ind] = sol.y[ind, -1]
+                cchange[ind] = sol.y[ind, -1] - current_pops_and_params[ind]
 
         elif self.time_integration_method == 2:
             # step 1
-            self.computeRHS(pops_and_params)
+            self.computeRHS(current_pops_and_params)
             for ind in range(self.num_populations):
                 self.rk1.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
             # step 2
             for ind in range(self.num_populations):
-                self.crky[ind] = pops_and_params[ind] + 0.5 * self.rk1.data.as_floats[ind]
-            self.crky[self.num_populations] = pops_and_params[self.num_populations] # the carrying capacity
+                self.crky[ind] = current_pops_and_params[ind] + 0.5 * self.rk1.data.as_floats[ind]
+            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
             self.computeRHS(self.crky)
             for ind in range(self.num_populations):
                 self.rk2.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
             # step 3
             for ind in range(self.num_populations):
-                self.crky[ind] = pops_and_params[ind] + 0.5 * self.rk2.data.as_floats[ind]
-            self.crky[self.num_populations] = pops_and_params[self.num_populations] # the carrying capacity
+                self.crky[ind] = current_pops_and_params[ind] + 0.5 * self.rk2.data.as_floats[ind]
+            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
             self.computeRHS(self.crky)
             for ind in range(self.num_populations):
                 self.rk3.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
             # step 4
             for ind in range(self.num_populations):
-                self.crky[ind] = pops_and_params[ind] + self.rk3.data.as_floats[ind]
-            self.crky[self.num_populations] = pops_and_params[self.num_populations] # the carrying capacity
+                self.crky[ind] = current_pops_and_params[ind] + self.rk3.data.as_floats[ind]
+            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
             self.computeRHS(self.crky)
             for ind in range(self.num_populations):
                 self.rk4.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
             # put it all together
             for ind in range(self.num_populations):
-                pops_and_params[ind] = pops_and_params[ind] + (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
-            
-            for ind in range(self.num_populations): # make sure pop never goes below zero
-                if pops_and_params[ind] < 0.0:
-                    pops_and_params[ind] = 0.0
-
+                cchange[ind] = (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
                 
 
 

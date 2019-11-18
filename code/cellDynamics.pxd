@@ -192,15 +192,19 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef array.array Xarray
     cdef float[:] cXarray
 
-    # Runge-Kutta4 arrays that hold the values of populations (not parameters)
+    # Runge-Kutta4 arrays that hold the values of populations (not parameters).  Sized to num_populations.
     cdef array.array rk1, rk2, rk3, rk4
 
-    # Runge-Kutta "y" array that holds the value of populations and the carrying capacity: the C version is passed to computeRHS
+    # Runge-Kutta "y" array that holds the value of populations and the carrying capacity: the C version is passed to computeRHS.  Sized to num_populations + num_parameters
     cdef array.array rky
     cdef float[:] crky
 
-    # the RHS arrays in dX/dt = rhs
+    # the RHS arrays in dX/dt = rhs.  Sized to num_populations.
     cdef array.array rhs
+
+    # the change arrays.  For dX/dt = rhs using explicit-Euler timestepping, this is just dt * rhs.  Sized to num_populations.
+    cdef array.array change
+    cdef float[:] cchange
 
     # time-integration method (explicit_euler=0, solve_ivp=1, runge_kutta4=2,...)
     cdef unsigned time_integration_method
@@ -287,7 +291,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     """Sets the hybridisation rate for the given father, mother and offspring.  Note, if you setNumSpecies, this will be reinitialised to its default value of 1 if species_father=species_mother=species_offspring, and 0 otherwise"""
 
     cdef void computeRHS(self, float[:] x)
-    """Compute the rhs in dX/dt = rhs.  Here rhs is a funtion of x"""
+    """Compute the rhs in dX/dt = rhs.  Here rhs is a funtion of x.  The result is put into self.rhs"""
+
+    cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange)
+    """Given the timestep and current_pops_and_params, compute the change in populations according to the ODE.
+    For explicit-Euler timestepping, this is just timestep * rhs.
+    For Runge-Kutta4 timestepping, this is given by the usual formula (1/6)(k_1 + 2k_2 + 2k_3 + k_4)"""
 
     cpdef setTimeIntegrationMethod(self, str method)
     """Sets the time integration method to be explicit_euler, solve_ivp, runge_kutta4"""
