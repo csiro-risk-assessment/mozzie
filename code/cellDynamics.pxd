@@ -215,6 +215,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # if adaptive == 0 then do not do adaptive timestepping
     cdef unsigned adaptive
 
+    # if a population < zero_cutoff at the end of a time-step then it is set to zero
+    cdef float zero_cutoff
+
     cdef inline unsigned getIndex(self, unsigned species, unsigned genotype, unsigned sex, unsigned age):
         """gets the index in pops_and_params corresponding to the given age, sex, genotype and species"""
         return species + self.num_species * (genotype + self.num_genotypes * (sex + self.num_sexes * age))
@@ -240,6 +243,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cpdef unsigned getAdaptive(self)
     """Gets the minimum allowed timestep"""
+
+    cpdef setZeroCutoff(self, float value)
+    """Sets zero_cutoff to value.  If any population is less than this value at the end of the time-step, it is set to zero"""
+
+    cpdef float getZeroCutoff(self)
+    """Gets the value of zero_cutoff"""
 
     cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value)
     """Sets alpha[sp0][sp1] = value (for inter-specific competition).  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""

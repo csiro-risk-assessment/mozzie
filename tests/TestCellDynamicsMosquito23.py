@@ -263,6 +263,31 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap[:-1], expected_answer[:-1], 2E-9))
 
+   def testSetGetZeroCutoff(self):
+      self.c.setZeroCutoff(123.25)
+      self.assertEqual(self.c.getZeroCutoff(), 123.25)
+
+
+   def testEvolveZeroCutoff(self):
+      dt = 1.0
+      mu_adult = 1.5
+      cutoff = 0.1
+      self.c.setNumAges(1)
+      self.c.setFecundity(0.0)
+      self.c.setAgingRate(0.0)
+      self.c.setMuLarvae(2.0) # irrelevant here because num_ages = 1
+      self.c.setMuAdult(mu_adult)
+      self.c.setZeroCutoff(cutoff)
+
+      initial_condition = list(range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters()))
+      pap = array.array('f', initial_condition)
+      # Explicit-Euler will first give population = initial - dt * mu * initial, which is negative.
+      # Adaptive timestepping will cut timestep to 0.9 * dt * initial / (dt * mu * initial) = 0.9 / mu = 0.6.
+      # Then explicit will give population = initial - 0.6 * mu * initial = 0.1 * initial
+      # The second substep will then try dt = min(1.1 * 0.6, 1 - 0.6) = 0.4, to give population = 0.1 * initial * (1 - dt * mu) = 0.1 * initial * 0.4
+      expected_answer = [x * 0.1 * 0.4 if x * 0.1 * 0.4 > cutoff else 0 for x in initial_condition[:6]] + [initial_condition[-1]]
+      self.c.evolve(dt, pap)
+      self.assertTrue(arrayfuzzyequal(pap[:-1], expected_answer[:-1], 1E-7))
 
    def testEvolveZeroFecundityZeroAging(self):
       dt = 0.01

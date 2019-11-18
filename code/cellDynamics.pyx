@@ -232,6 +232,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
         # default to doing adaptive timestepping
         self.adaptive = 1
+        
+        # default to zero_cutoff = 1E-6, which means that if population numbers are less than 1E-6 at the end of a timestep, they will be set to zero
+        self.zero_cutoff = 1E-6
 
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
@@ -304,6 +307,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cpdef unsigned getAdaptive(self):
         return self.adaptive
+
+    cpdef setZeroCutoff(self, float value):
+        self.zero_cutoff = value
+
+    cpdef float getZeroCutoff(self):
+        return self.zero_cutoff
 
     cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value):
         if sp0 >= self.num_species or sp1 >= self.num_species:
@@ -544,6 +553,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     sys.stderr.write("Minimum dt reached.  Exiting\n")
                     sys.exit(1)
         
+        for ind in range(self.num_populations):
+            if pops_and_params[ind] < self.zero_cutoff:
+                pops_and_params[ind] = 0.0
 
     cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange):
         cdef unsigned ind
