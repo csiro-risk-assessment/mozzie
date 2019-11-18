@@ -209,6 +209,61 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
          self.c.setTimeIntegrationMethod("crazy_method")
       self.assertEqual(str(the_err.exception), "Time integration method crazy_method not supported")
 
+   def testSetGetMinimumDt(self):
+      self.c.setMinimumDt(123.0)
+      self.assertEqual(self.c.getMinimumDt(), 123.0)
+
+   def testSetGetAdaptive(self):
+      self.c.setAdaptive(12)
+      self.assertEqual(self.c.getAdaptive(), 12)
+
+   def testEvolveAdaptiveDt1(self):
+      dt = 1.0
+      mu_adult = 1.5
+      self.c.setNumAges(1)
+      self.c.setFecundity(0.0)
+      self.c.setAgingRate(0.0)
+      self.c.setMuLarvae(2.0) # irrelevant here because num_ages = 1
+      self.c.setMuAdult(mu_adult)
+      random.seed(1)
+
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
+      pap = array.array('f', initial_condition)
+      # Explicit-Euler will first give population = initial - dt * mu * initial, which is negative.
+      # Adaptive timestepping will cut timestep to 0.9 * dt * initial / (dt * mu * initial) = 0.9 / mu = 0.6.
+      # Then explicit will give population = initial - 0.6 * mu * initial = 0.1 * initial
+      # The second substep will then try dt = min(1.1 * 0.6, 1 - 0.6) = 0.4, to give population = 0.1 * initial * (1 - dt * mu) = 0.1 * initial * 0.4
+      expected_answer = [x * 0.1 * 0.4 for x in initial_condition[:6]] + [initial_condition[-1]]
+      self.c.evolve(dt, pap)
+      self.assertTrue(arrayfuzzyequal(pap[:-1], expected_answer[:-1], 4E-8))
+
+
+   def testEvolveAdaptiveDt2(self):
+      dt = 2.0
+      mu_adult = 1.5
+      self.c.setNumAges(1)
+      self.c.setFecundity(0.0)
+      self.c.setAgingRate(0.0)
+      self.c.setMuLarvae(2.0) # irrelevant here because num_ages = 1
+      self.c.setMuAdult(mu_adult)
+      random.seed(1)
+
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
+      pap = array.array('f', initial_condition)
+      # Explicit-Euler will first give population = initial - dt * mu * initial, which is negative.
+      # Adaptive timestepping will cut timestep to 0.9 * dt * initial / (dt * mu * initial) = 0.9 / mu = 0.6.
+      # Then explicit will give population = initial - 0.6 * mu * initial = 0.1 * initial
+      # The second substep will then try dt = min(1.1 * 0.6, 2 - 0.6) = 0.66, to give population = 0.1 * initial * (1 - dt * mu) = 0.1 * initial * 0.01
+      # The third substep will then try dt = min(1.1 * 0.66, 2 - (0.6 + 0.66)) = 0.726, to give population = 0.1 * 0.01 * initial * (1 - dt * mu), which is negative
+      # Adaptive timestepping will cut timestep to 0.9 * dt * 0.1 * 0.01 * initial / (dt * mu * 0.1 * 0.01 * initial) = 0.6
+      # then explicit will give population = 0.1 * 0.01 * initial * (1 - 0.6 * mu) = 0.1 * 0.01 * initial * 0.1
+      # The next substep will then try dt = min(1.1 * 0.6, 2 - (0.6 + 0.66 + 0.6)) = 0.14
+      # Then explicit will give population = 0.1 * 0.1 * 0.01 * initial * (1 - 0.14 * mu) = 0.79 * 0.1 * 0.1 * 0.01 * initial
+      expected_answer = [x * 0.79 * 0.1 * 0.1 * 0.01 for x in initial_condition[:6]] + [initial_condition[-1]]
+      self.c.evolve(dt, pap)
+      self.assertTrue(arrayfuzzyequal(pap[:-1], expected_answer[:-1], 2E-9))
+
+
    def testEvolveZeroFecundityZeroAging(self):
       dt = 0.01
       self.c.setFecundity(0.0)

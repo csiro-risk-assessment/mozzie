@@ -227,6 +227,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # default to explicit_euler
         self.time_integration_method = 0
 
+        # default to 1E-12 being the minimum timestep allowed
+        self.min_dt = 1E-12
+
+        # default to doing adaptive timestepping
+        self.adaptive = 1
+
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
     cdef void setInheritance(self):
@@ -287,6 +293,17 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     self.advecting_indices.data.as_uints[ind] = offset
                     ind = ind + 1
 
+    cpdef setMinimumDt(self, float value):
+        self.min_dt = value
+
+    cpdef float getMinimumDt(self):
+        return self.min_dt
+
+    cpdef setAdaptive(self, unsigned value):
+        self.adaptive = value
+
+    cpdef unsigned getAdaptive(self):
+        return self.adaptive
 
     cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value):
         if sp0 >= self.num_species or sp1 >= self.num_species:
@@ -495,12 +512,37 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             for ind in range(self.num_populations):
                 pops_and_params[ind] = 0.0
             return
+
         self.one_over_kk = 1.0 / pops_and_params[self.num_populations]
 
-        # do adaptive timestepping here
-        self.popChange(timestep, pops_and_params, self.cchange)
-        for ind in range(self.num_populations):
-            pops_and_params[ind] = max(0.0, pops_and_params[ind] + self.cchange[ind])
+        cdef float time_done = 0.0
+        cdef float dt = timestep
+        cdef float new_dt = timestep
+        while time_done < timestep:
+            # try timestep dt
+            self.popChange(dt, pops_and_params, self.cchange)
+            new_dt = timestep # biggest value that ever needs to be used
+            for ind in range(self.num_populations):
+                if pops_and_params[ind] + self.cchange[ind] < 0.0:
+                    # the change will send the population negative, which is deemed to be erroneous
+                    # and due to dt being too big.  Using explicit-Euler timestepping, if we choose
+                    # new_dt = dt * pops_and_params[ind] / (-cchange[ind]), then running popChange again
+                    # will give exactly cchange[ind] = -pops_and_params[ind].  So multiply this
+                    # new_dt by 0.9 to give a factor of safety
+                    new_dt = min(new_dt, - 0.9 * dt * pops_and_params[ind] / self.cchange[ind])
+            if self.adaptive == 0 or new_dt == timestep:
+                # not doing adaptivity, or none of the populations went negative, so success:
+                for ind in range(self.num_populations):
+                    pops_and_params[ind] = pops_and_params[ind] + self.cchange[ind]
+                time_done = time_done + dt
+                # can also increase dt for next time around (if there is a next time around)
+                dt = min(1.1 * dt, timestep - time_done)
+            else:
+                # at least one of the populations went negative, so must re-do
+                dt = new_dt
+                if dt < self.min_dt:
+                    sys.stderr.write("Minimum dt reached.  Exiting\n")
+                    sys.exit(1)
         
 
     cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange):

@@ -209,6 +209,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # time-integration method (explicit_euler=0, solve_ivp=1, runge_kutta4=2,...)
     cdef unsigned time_integration_method
 
+    # the minimum timestep allowed before the code crashes
+    cdef float min_dt
+
+    # if adaptive == 0 then do not do adaptive timestepping
+    cdef unsigned adaptive
+
     cdef inline unsigned getIndex(self, unsigned species, unsigned genotype, unsigned sex, unsigned age):
         """gets the index in pops_and_params corresponding to the given age, sex, genotype and species"""
         return species + self.num_species * (genotype + self.num_genotypes * (sex + self.num_sexes * age))
@@ -222,6 +228,18 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy)
     """Given num_ages, num_species and accuracy, set all internal parameters (num_populations, diffusing_indices, fecundity_proportion, etc) that depend on these"""
+
+    cpdef setMinimumDt(self, float value)
+    """Sets the minimum allowed timestep to value"""
+
+    cpdef float getMinimumDt(self)
+    """Gets the minimum allowed timestep"""
+
+    cpdef setAdaptive(self, unsigned value)
+    """Sets adaptive to value.  If value == 0 then do no adaptive timestepping"""
+
+    cpdef unsigned getAdaptive(self)
+    """Gets the minimum allowed timestep"""
 
     cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value)
     """Sets alpha[sp0][sp1] = value (for inter-specific competition).  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""
