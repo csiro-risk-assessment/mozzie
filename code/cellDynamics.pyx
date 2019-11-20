@@ -517,12 +517,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         cdef unsigned ind
 
         if pops_and_params[self.num_populations] <= 0.0:
-            # instantly kill all populations
-            for ind in range(self.num_populations):
-                pops_and_params[ind] = 0.0
-            return
-
-        self.one_over_kk = 1.0 / pops_and_params[self.num_populations]
+			self.one_over_kk = 100000000.0 # set large but finite inverse to guarantee zero births
+		else
+			self.one_over_kk = 1.0 / pops_and_params[self.num_populations]        
+		## instantly kill all populations (commented out because want population persisting with no rainfall)
+            #for ind in range(self.num_populations):
+                #pops_and_params[ind] = 0.0
+            #return
 
         cdef float time_done = 0.0
         cdef float dt = timestep
