@@ -516,7 +516,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
 
-        if pops_and_params[self.num_populations] <= 0.0:
+		if pops_and_params[self.num_populations] <= 0.0:
 			self.one_over_kk = 100000000.0 # set large but finite inverse to guarantee zero births
 		else
 			self.one_over_kk = 1.0 / pops_and_params[self.num_populations]        
