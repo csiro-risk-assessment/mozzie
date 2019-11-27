@@ -444,7 +444,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * x[ind_d]
         # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
         for sp in range(self.num_species):
-            if self.denom.data.as_floats[sp] <= 0.0:
+            if self.denom.data.as_floats[sp] <= self.zero_cutoff:
                 # there must be zero adult males.  I presume this means there will be zero eggs layed, so setting denom=0 achieves this
                 self.denom.data.as_floats[sp] = 0.0
             else:
