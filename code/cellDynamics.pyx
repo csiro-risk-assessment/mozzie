@@ -431,7 +431,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         for sp in range(self.num_species):
                             self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
         for sp in range(self.num_species):
-            self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
+            if self.one_over_kk > 0: # if non-zero CC
+                self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
+            else:
+                self.comp.data.as_floats[sp] = 0.0
 
         # define the denominator term
         array.zero(self.denom)
@@ -517,7 +520,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         cdef unsigned ind
 
         if pops_and_params[self.num_populations] <= 0.0:
-            self.one_over_kk = 100000000.0 # set large but finite inverse to guarantee zero births
+            self.one_over_kk = -1.0 # flag zero CC for computeRHS
         else:
             self.one_over_kk = 1.0 / pops_and_params[self.num_populations]        
         ## instantly kill all populations (commented out because want population persisting with no rainfall)
