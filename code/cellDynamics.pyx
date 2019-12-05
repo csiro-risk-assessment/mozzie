@@ -519,7 +519,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
 
-        if pops_and_params[self.num_populations] <= 0.0:
+        if pops_and_params[self.num_populations] <= 1.0: # if cell cannot support one individual 
             self.one_over_kk = -1.0 # flag zero CC for computeRHS
         else:
             self.one_over_kk = 1.0 / pops_and_params[self.num_populations]        

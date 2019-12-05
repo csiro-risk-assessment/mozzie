@@ -308,7 +308,20 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cdef inline float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
         """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
-        return 0.5 if (offspring_sex == 0 or father_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0)
+        if (father_gt == 0):
+            if (mother_gt == 0):
+                return 0.5
+            else:
+                if (offspring_sex == 0): # female sex bias if modified mother, wildtype father
+                    return 0.45
+                else:
+                    return 0.55
+        else:
+            if (offspring_sex == 0): # male sex bias if modified father (any mother)
+                return 0.95
+            else:
+                return 0.05
+        # return 0.5 if (offspring_sex == 0 or father_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0) # reduced fecundity version
 
     cdef inline float getHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring):
         """Returns the hybridisation rate for given father, mother and offspring"""
