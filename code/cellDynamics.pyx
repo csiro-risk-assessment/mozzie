@@ -635,4 +635,28 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         for ind in range(self.num_populations):
             dXdt[ind] = self.rhs.data.as_floats[ind]
         return dXdt
+
+    cdef float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
+        return 0.5 if (offspring_sex == 0 or father_gt == 0) else 0.5 * (1.0 / self.accuracy - 1.0) # reduced fecundity version
+
+
+cdef class CellDynamicsMosquito23F(CellDynamicsMosquito23):
+    def __init__(self):
+        super().__init__()
+
+    cdef float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
+        if (father_gt == 0):
+            if (mother_gt == 0):
+                return 0.5
+            else:
+                if (offspring_sex == 0): # female sex bias if modified mother, wildtype father
+                    return 0.45
+                else:
+                    return 0.55
+        else:
+            if (offspring_sex == 0): # male sex bias if modified father (any mother)
+                return 0.95
+            else:
+                return 0.05
+
         
