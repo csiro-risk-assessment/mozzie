@@ -108,7 +108,7 @@ X\left(m + gN_{\mathrm{species}} + sN_{\mathrm{species}}N_{\mathrm{genotypes}} +
 where
 \begin{itemize}
 \item $N_{\mathrm{species}}$ is the number of species,
-\item $N_{\mathrm{genotypes}} = 3$ is the number of genotypes (with ordering $ww=0$, $Gw=1$, and $GG=1$)
+\item $N_{\mathrm{genotypes}} = 3$ is the number of genotypes (with ordering $ww=0$, $Gw=1$, and $GG=2$)
 \item $N_{\mathrm{sexes}} = 2$ is the number of sexes (with order male$=0$ and female$=1$)
 \item $N_{\mathrm{ages}}$ (denoted by $N$ in the above sections) is the number of ages (with ordering newborn$=0$ and adult=$N_{\mathrm{ages}}-1$, with intermediate stages in between these).
 \end{itemize}
@@ -134,7 +134,7 @@ For $N\leq 2$ there are no such intermediate juveniles.  The first term on the r
 
 For $a=0$, the populations are govened by
 \begin{equation}
-\frac{\mathrm{d}X(0, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{larvae}}X(0, s, g, m) - b X(a, s, g, m) + B(s, g, m) \ .
+\frac{\mathrm{d}X(0, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{larvae}}X(0, s, g, m) - b X(0, s, g, m) + B(s, g, m) \ .
 \end{equation}
 The first term describes mortality of newborns, while the second describes aging into the next age-bracket of juveniles.  The final term describes the birth of newborn larvae.  It is
 \begin{equation}

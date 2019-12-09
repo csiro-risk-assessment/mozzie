@@ -423,6 +423,62 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       expected_result_from_nick = [0.10800000, 0.12600000, 0.10800000, 0.10231579, 0.10326316, 0.09094737] + [initial_condition[-1]]
       self.assertTrue(arrayfuzzyequal(pap, expected_result_from_nick, 4E-8))
 
+   def testEvolveTwoAges(self):
+      dt = 3.0
+      self.c.setMuLarvae(0.0625)
+      self.c.setMuAdult(0.09375)
+      self.c.setFecundity(2.0)
+      self.c.setAgingRate(0.125)
+      self.c.setNumAges(2)
+      self.c.setAccuracy(0.25)
+
+      initial_condition = [0.25, 1.25, 0.375, 0.625, 1.125, 0.125, 0, 1, 2, 3, 4, 5, 60.0]
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+      # this expected answer was worked out laboriously by hand!
+      mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0.125 * 1.25, 0.0625 * 1.25, 0],
+             [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.625 * 1.25, 0.375 * 1.25, 0.125 * 1.25],
+             [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.3125 * 1.25, 0.625 * 1.25],
+             [0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0.375 * 1.25, 0.1875 * 1.25, 0],
+             [0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 1.875 * 1.25, 1.125 * 1.25, 0.375 * 1.25],
+             [0, 0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0.9375 * 1.25, 1.875 * 1.25],
+             [0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0, 0],
+             [0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0],
+             [0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0],
+             [0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0],
+             [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
+             [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
+
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(12)]) for i in range(12)] + [60.0]
+      self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
+
+   def testEvolveTwoAgesMinCC(self):
+      dt = 5.0
+      self.c.setMuLarvae(0.0625)
+      self.c.setMuAdult(0.09375)
+      self.c.setAgingRate(0.125)
+      self.c.setNumAges(2)
+      self.c.setMinCarryingCapacity(100.0) # large minimum carrying capacity
+
+      initial_condition = list(range(12)) + [60.0] # carrying capacity < min_cc, so no new larvae
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+      mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0],
+             [0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0, 0],
+             [0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0],
+             [0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0],
+             [0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0],
+             [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
+             [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
+      
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(12)]) for i in range(12)] + [60.0]
+      self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
+
 
 if __name__ == '__main__':
    unittest.main()
