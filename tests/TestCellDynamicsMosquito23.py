@@ -435,7 +435,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       initial_condition = [0.25, 1.25, 0.375, 0.625, 1.125, 0.125, 0, 1, 2, 3, 4, 5, 60.0]
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
-      # this expected answer was worked out laboriously by hand!
+      # this expected answer was worked out laboriously by hand.  It is based on testEvolveSingleAge2!
       mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0.125 * 1.25, 0.0625 * 1.25, 0],
              [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.625 * 1.25, 0.375 * 1.25, 0.125 * 1.25],
              [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.3125 * 1.25, 0.625 * 1.25],
