@@ -267,6 +267,10 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setZeroCutoff(123.25)
       self.assertEqual(self.c.getZeroCutoff(), 123.25)
 
+   def testSetGetMinCarryingCapacity(self):
+      self.c.setMinCarryingCapacity(45.5)
+      self.assertEqual(self.c.getMinCarryingCapacity(), 45.5)
+
 
    def testEvolveZeroCutoff(self):
       dt = 1.0

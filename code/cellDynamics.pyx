@@ -236,6 +236,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # default to zero_cutoff = 1E-6, which means that if population numbers are less than 1E-6 at the end of a timestep, they will be set to zero
         self.zero_cutoff = 1E-6
 
+        # default to min_cc = 1E-6, which means that if the carrying capacity is less than 1E-6 then no new larvae are produced
+        self.setMinCarryingCapacity(1.0E-6)
+
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
 
     cdef void setInheritance(self):
@@ -313,6 +316,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cpdef float getZeroCutoff(self):
         return self.zero_cutoff
+
+    cpdef setMinCarryingCapacity(self, float value):
+        self.min_cc = value
+        self.one_over_min_cc = 1.0 / self.min_cc
+
+    cpdef float getMinCarryingCapacity(self):
+        return self.min_cc
 
     cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value):
         if sp0 >= self.num_species or sp1 >= self.num_species:
@@ -419,64 +429,66 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         cdef unsigned col, row
         # index into mat
         cdef unsigned ind_mat
-
-        # define competition
-        array.zero(self.comp)
+        # end of for-loops in newborn larvae competition code
         cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
-        for age_d in range(end_index_for_competition):
-            for sex_d in range(self.num_sexes):
-                for gt_d in range(self.num_genotypes):
-                    for sp_d in range(self.num_species):
-                        ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
-                        for sp in range(self.num_species):
-                            self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
-        for sp in range(self.num_species):
-            if self.one_over_kk > 0: # if non-zero CC
-                self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
-            else:
-                self.comp.data.as_floats[sp] = 0.0
 
-        # define the denominator term
-        array.zero(self.denom)
-        age_d = self.num_ages - 1 # adult
-        sex_d = 0 # male
-        for gt_d in range(self.num_genotypes):
-            for sp_d in range(self.num_species):
-                ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
-                for sp in range(self.num_species): # sp = female species
-                    self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * x[ind_d]
-        # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
-        for sp in range(self.num_species):
-            if self.denom.data.as_floats[sp] <= self.zero_cutoff:
-                # there must be zero adult males.  I presume this means there will be zero eggs layed, so setting denom=0 achieves this
-                self.denom.data.as_floats[sp] = 0.0
-            else:
-                self.denom.data.as_floats[sp] = 1.0 / self.denom.data.as_floats[sp]
-
-
-        # now work out the contributions to the newborn ODEs
-        # In the following, mat is a 1D array (for efficiency)
-        # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
-        #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
-        #  - given a component, M_ij, the index in mat is j + i * self.num_populations
         array.zero(self.mat)
-        age = 0 # only newborn row in M
-        for sex in range(self.num_sexes): # row in M
-            for gt in range(self.num_genotypes): # row in M
-                for sp in range(self.num_species): # row in M
-                    row = self.getIndex(sp, gt, sex, age)
-                    # now want to set the column in M corresonding to female adults of genotype gtf and species spf
-                    for gtf in range(self.num_genotypes): # female genotype
-                        for spf in range(self.num_species): # female species
-                            col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
-                            ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
-                            for gtm in range(self.num_genotypes): # male genotype
-                                for spm in range(self.num_species): # male species
-                                    ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                    self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
-                            # multiply mat by things that don't depend on gtm or spm
-                            self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
-        
+
+        # newborn larvae
+        if self.one_over_kk < self.one_over_min_cc:
+
+            # define competition
+            array.zero(self.comp)
+            for age_d in range(end_index_for_competition):
+                for sex_d in range(self.num_sexes):
+                    for gt_d in range(self.num_genotypes):
+                        for sp_d in range(self.num_species):
+                            ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                            for sp in range(self.num_species):
+                                self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
+            for sp in range(self.num_species):
+                self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
+
+            # define the denominator term
+            array.zero(self.denom)
+            age_d = self.num_ages - 1 # adult
+            sex_d = 0 # male
+            for gt_d in range(self.num_genotypes):
+                for sp_d in range(self.num_species):
+                    ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                    for sp in range(self.num_species): # sp = female species
+                        self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * x[ind_d]
+            # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
+            for sp in range(self.num_species):
+                if self.denom.data.as_floats[sp] <= self.zero_cutoff:
+                    # there must be zero adult males.  I presume this means there will be zero eggs layed, so setting denom=0 achieves this
+                    self.denom.data.as_floats[sp] = 0.0
+                else:
+                    self.denom.data.as_floats[sp] = 1.0 / self.denom.data.as_floats[sp]
+
+
+            # now work out the contributions to the newborn ODEs
+            # In the following, mat is a 1D array (for efficiency)
+            # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
+            #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
+            #  - given a component, M_ij, the index in mat is j + i * self.num_populations
+            age = 0 # only newborn row in M
+            for sex in range(self.num_sexes): # row in M
+                for gt in range(self.num_genotypes): # row in M
+                    for sp in range(self.num_species): # row in M
+                        row = self.getIndex(sp, gt, sex, age)
+                        # now want to set the column in M corresonding to female adults of genotype gtf and species spf
+                        for gtf in range(self.num_genotypes): # female genotype
+                            for spf in range(self.num_species): # female species
+                                col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
+                                ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
+                                for gtm in range(self.num_genotypes): # male genotype
+                                    for spm in range(self.num_species): # male species
+                                        ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
+                                        self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
+                                # multiply mat by things that don't depend on gtm or spm
+                                self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+            
 
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
@@ -519,14 +531,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
 
-        if pops_and_params[self.num_populations] <= 1.0: # if cell cannot support one individual 
-            self.one_over_kk = -1.0 # flag zero CC for computeRHS
+        if pops_and_params[self.num_populations] <= self.min_cc:
+            self.one_over_kk = 2 * self.one_over_min_cc # signal to computeRHS that the carrying capacity has fallen below min_cc, so no newborns will be produced
         else:
             self.one_over_kk = 1.0 / pops_and_params[self.num_populations]        
-        ## instantly kill all populations (commented out because want population persisting with no rainfall)
-            #for ind in range(self.num_populations):
-                #pops_and_params[ind] = 0.0
-            #return
 
         cdef float time_done = 0.0
         cdef float dt = timestep

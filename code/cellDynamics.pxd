@@ -218,6 +218,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # if a population < zero_cutoff at the end of a time-step then it is set to zero
     cdef float zero_cutoff
 
+    # if the carrying capacity < min_cc, then no new larvae are produced
+    cdef float min_cc
+    # reciprocal of min_cc, for efficiency
+    cdef float one_over_min_cc
+
     cdef inline unsigned getIndex(self, unsigned species, unsigned genotype, unsigned sex, unsigned age):
         """gets the index in pops_and_params corresponding to the given age, sex, genotype and species"""
         return species + self.num_species * (genotype + self.num_genotypes * (sex + self.num_sexes * age))
@@ -249,6 +254,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cpdef float getZeroCutoff(self)
     """Gets the value of zero_cutoff"""
+
+    cpdef setMinCarryingCapacity(self, float value)
+    """Sets min_cc to value.  If the carrying capacity is less than this value, no new larvae are produced"""
+
+    cpdef float getMinCarryingCapacity(self)
+    """Gets the value of min_cc"""
 
     cpdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value)
     """Sets alpha[sp0][sp1] = value (for inter-specific competition).  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""

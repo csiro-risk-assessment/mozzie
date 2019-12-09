@@ -140,13 +140,13 @@ The first term describes mortality of newborns, while the second describes aging
 \begin{equation}
 B(s, g, m) = L\left(1 -  \frac{C(m)}{K} \right) \sum_{g_{M}, g_{F}, m_{M}, m_{F}}P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) P_{\mathrm{mating}}(g_{M}, m_{M}, m_{F})\lambda X(N-1, F, g_{F}, m_{F})
 \end{equation}
-This equation deserves explanations.
+This equation deserves explanation.
 \begin{itemize}
 \item $C(m)$ is the competition that a newborn feels from the rest of the larval populations.  It is
 \begin{equation}
 C(m) = \sum_{a=0}^{N - 2}\sum_{s=0}^{N_{\mathrm{sexes}} - 1} \sum_{g=0}^{N_{\mathrm{genotypes}} - 1} \sum_{m'=0}^{N_{\mathrm{species}} - 1}\alpha_{m, m'} X(a, s, g, m')\ .
 \end{equation}
-Notice that this does not include adults $a=N - 1$.  If $N=1$, it is assumed that the carrying-capacity still applies, and the sum over $a$ runs from $0$ to $0$.  The Lotka-Voltera matrix $\alpha$ accounts for inter-specific competition.  It defaults to $a=I$, that is, newborns only feel competition from their own species.
+Notice that this does not include adults $a=N - 1$.  If $N=1$, it is assumed that the carrying-capacity still applies, and the sum over $a$ runs from $0$ to $0$.  The Lotka-Voltera matrix $\alpha$ accounts for inter-specific competition.  It defaults to $a=I$, that is, newborns only feel competition from their own species.  There is one further caveat: if $K<K_{\mathrm{min}}$ for user-defined $K_{\mathrm{min}}$ (which defaults to $10^{-6}$) then $B=0$ for all $s$, $g$ and $m$.  This helps with numerical stability in the case when $K$ is time-dependent.
 \item The function $L(x)=0$ if $x\leq 0$, while $L(x)=x$ for $x>0$.  This is to ensure that if $C(m)>K$ no newborns are produced.
 \item $X(N-1, F, g_{F}, m_{F})$ is the number of adult ($a=N-1$), females of genotype $g_{F}$ and species $m_{F}$.  So $\lambda X(N-1, F, g_{F}, m_{F})$ is the number of newborns produced by these female per timestep.
 \item $P_{\mathrm{mating}}(g_{M}, m_{M}, m_{F})$ is the probability that a male adult of genogype $g_{M}$ and species $m_{M}$ successfully mates with a female adult of species $m_{F}$ to produce newborn.  It is
