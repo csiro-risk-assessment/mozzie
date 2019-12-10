@@ -558,7 +558,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
              [0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0],
              [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
              [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
-      ic_species1 = [0.5, 1.5, 3.46875, 0.625, 1.59375, 1.6875, 0, 1, 2, 3, 4, 5]
+      ic_species1 = [0.5, 1.5, 3.46875, 0.625, 1.59375, 1.6875, 0, 1, 2, 5, 4, 3]
       scale1 = (1.0 - sum(ic_species1[:6]) / carrying_cap) / (1.0 - sum(list(range(6))) / carrying_cap)
       # because there is no hybridisation, each species evolved separately
       # This matrix is based on testEvolveSingleAge2!
@@ -591,6 +591,126 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
          expected_result.append(expected1[i])
       expected_result.append(carrying_cap)
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
+
+   def testEvolveTwoAgesTwoSpecies(self):
+      # Test of two ages and two species with all possible bells-and-whistles
+      # The parameters chosen below are not physical!  They are just designed to identify bugs in the code
+      dt = 3.0
+      self.c.setMuLarvae(0.0625)
+      self.c.setMuAdult(0.09375)
+      self.c.setAgingRate(0.125)
+      self.c.setNumAges(2)
+      self.c.setNumSpecies(2)
+
+      fec = 2.0
+      self.c.setFecundity(fec)
+      acc = 0.25
+      self.c.setAccuracy(acc)
+
+      # set the mating ("w") matrix (species_father, species_mother, value)
+      # w_matrix[species_father][species_mother]
+      w_matrix = [[1.0, 0.5], [0.25, 1.5]]
+      for sp_father in range(2):
+         for sp_mother in range(2):
+            self.c.setMatingComponent(sp_father, sp_mother, w_matrix[sp_father][sp_mother])
+
+      # set the Lotka-Voltera ("alpha") matrix (species0, species1, value)
+      alpha = [[2.0, 0.125], [0.75, 1.5]]
+      for sp0 in range(2):
+         for sp1 in range(2):
+            self.c.setAlphaComponent(sp0, sp1, alpha[sp0][sp1])
+
+      # set hybridisation rate (species_father, species_mother, species_offspring, value)
+      # hybridisation[species_father][species_mother][species_offspring]
+      hybridisation = [[[1.0, 0.125], [0.75, 0.5]], # species_father=0
+                    [[0.0625, 0.5], [0.125, 1.25]]] # species_father=1
+      for sp_father in range(2):
+         for sp_mother in range(2):
+            for spo in range(2):
+               self.c.setHybridisationRate(sp_father, sp_mother, spo, hybridisation[sp_father][sp_mother][spo])
+
+      carrying_cap = 60.0
+
+      ic_species0 = [0.25, 1.25, 1.75, 7.5, 9.0, 0.625, 1, 2, 3, 5, 6, 4]
+      ic_species1 = [3.5, 1.5, 3.25, 0.5, 0.5, 2.5, 4, 0, 4.5, 1, 5, 2]
+
+      ###########################################
+      # Given the above, work out the "mat"
+
+      # comp[species] is competition "C", which is (using the alpha components)
+      comp = [alpha[0][0] * sum(ic_species0[:6]) + alpha[0][1] * sum(ic_species1[:6]), alpha[1][0] * sum(ic_species0[:6]) + alpha[1][1] * sum(ic_species1[:6])]
+
+      # denom[species_female] of Pmating is (using the w matrix)
+      denom = [w_matrix[0][0] * sum(ic_species0[6:9]) + w_matrix[1][0] * sum(ic_species1[6:9]), w_matrix[0][1] * sum(ic_species0[6:9]) + w_matrix[1][1] * sum(ic_species1[6:9])]
+      def p_mating(gm, mm, mf):
+         """genotype male (gm), species male (mm), species female (mf)"""
+         if mm == 0:
+            return w_matrix[mm][mf] * ic_species0[6 + gm] / denom[mf]
+         return w_matrix[mm][mf] * ic_species1[6 + gm] / denom[mf]
+
+      # inheritance[genotype_male][genotype_female][genotype_offspring]
+      inheritance = [[[1, 0, 0], [0.5, 0.5, 0], [0, 1, 0]], # genotype_male=ww
+                     [[0.5, 0.5, 0], [0.25, 0.5, 0.25], [0, 0.5, 0.5]], # genotype_male=Gw
+                     [[0, 1, 0], [0, 0.5, 0.5], [0, 0, 1]]] # genotype_male=GG
+      # fecundity[genotype_male][genotype_female][sex_offspring]
+      fecundity = [[[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]], # genotype_male=ww
+                   [[0.5, 0.5*(1.0/acc - 1)], [0.5, 0.5*(1.0/acc - 1)], [0.5, 0.5*(1.0/acc - 1)]], # genotype_male=Gw
+                   [[0.5, 0.5*(1.0/acc - 1)], [0.5, 0.5*(1.0/acc - 1)], [0.5, 0.5*(1.0/acc - 1)]]] # genotype_male=GG
+      def p_offspring(s, g, m, gm, gf, mm, mf):
+         return hybridisation[mm][mf][m] * inheritance[gm][gf][g] * fecundity[gm][gf][s]
+
+      def bb(s, g, m, gf, mf):
+         result = 0.0
+         for sp_male in range(2):
+            for gt_male in range(3):
+               result += p_offspring(s, g, m, gt_male, gf, sp_male, mf) * p_mating(gt_male, sp_male, mf)
+         return result * (1.0 - comp[m] / carrying_cap) * fec
+
+      def index_in_mat(species, genotype, sex, age):
+         return species + 2 * (genotype + 3 * (sex + 2 * age))
+
+      mat = []
+      for i in range(24):
+         mat.append([0] * 24)
+      
+      # birth of larvae
+      for sex in range(2):
+         for gt in range(3):
+            for sp in range(2):
+               for gf in range(3):
+                  for mf in range(2):
+                     mat[index_in_mat(sp, gt, sex, 0)][index_in_mat(mf, gf, 1, 1)] += bb(sex, gt, sp, gf, mf)
+      # death of larvae
+      for sex in range(2):
+         for gt in range(3):
+            for sp in range(2):
+               mat[index_in_mat(sp, gt, sex, 0)][index_in_mat(sp, gt, sex, 0)] += -0.0625
+      # aging of larvae into adults
+      for sex in range(2):
+         for gt in range(3):
+            for sp in range(2):
+               mat[index_in_mat(sp, gt, sex, 0)][index_in_mat(sp, gt, sex, 0)] += -0.125
+               mat[index_in_mat(sp, gt, sex, 1)][index_in_mat(sp, gt, sex, 0)] += 0.125
+      # death of adults
+      for sex in range(2):
+         for gt in range(3):
+            for sp in range(2):
+               mat[index_in_mat(sp, gt, sex, 1)][index_in_mat(sp, gt, sex, 1)] += -0.09375
+               
+
+      # build initial condition and evolve
+      initial_condition = []
+      for i in range(12):
+         initial_condition.append(ic_species0[i])
+         initial_condition.append(ic_species1[i])
+      initial_condition.append(carrying_cap)
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+
+      # check result
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(24)]) for i in range(24)]
+      expected_result.append(carrying_cap)
+      self.assertTrue(arrayfuzzyequal(pap, expected_result, 6E-6))
 
 
 if __name__ == '__main__':
