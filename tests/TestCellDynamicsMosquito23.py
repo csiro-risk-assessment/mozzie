@@ -395,7 +395,8 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setNumAges(1)
       self.c.setAccuracy(0.25)
 
-      initial_condition = list(range(6)) + [60.0]
+      carrying_cap = 60.0
+      initial_condition = list(range(6)) + [carrying_cap]
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
       # this expected answer was worked out laboriously by hand!
@@ -405,7 +406,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
              [0, 0, 0, 0.375-0.1, 0.1875, 0],
              [0, 0, 0, 1.875, 1.125-0.1, 0.375],
              [0, 0, 0, 0, 0.9375, 1.875-0.1]]
-      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(6)]) for i in range(6)] + [60.0]
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(6)]) for i in range(6)] + [carrying_cap]
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
 
    def testEvolveSingleAge1(self):
@@ -431,17 +432,22 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setAgingRate(0.125)
       self.c.setNumAges(2)
       self.c.setAccuracy(0.25)
+      carrying_cap = 60.0
 
-      initial_condition = [0.25, 1.25, 0.375, 0.625, 1.125, 0.125, 0, 1, 2, 3, 4, 5, 60.0]
+      # key to making "mat" the same as testEvolveSingleAge2
+      # the adult males have population (ww, Gw, GG) = (0, 1, 2).
+      # The sum of juvenile larvae give the overall scale factor
+      initial_condition = [0.25, 1.25, 0.375, 0.625, 1.125, 0.125, 0, 1, 2, 3, 4, 5, carrying_cap]
+      scale = (1.0 - sum(initial_condition[:6]) / carrying_cap) / (1.0 - sum(list(range(6))) / carrying_cap)
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
       # this expected answer was worked out laboriously by hand.  It is based on testEvolveSingleAge2!
-      mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0.125 * 1.25, 0.0625 * 1.25, 0],
-             [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.625 * 1.25, 0.375 * 1.25, 0.125 * 1.25],
-             [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.3125 * 1.25, 0.625 * 1.25],
-             [0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0.375 * 1.25, 0.1875 * 1.25, 0],
-             [0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 1.875 * 1.25, 1.125 * 1.25, 0.375 * 1.25],
-             [0, 0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0.9375 * 1.25, 1.875 * 1.25],
+      mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0.125 * scale, 0.0625 * scale, 0],
+             [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.625 * scale, 0.375 * scale, 0.125 * scale],
+             [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.3125 * scale, 0.625 * scale],
+             [0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0.375 * scale, 0.1875 * scale, 0],
+             [0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 1.875 * scale, 1.125 * scale, 0.375 * scale],
+             [0, 0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0.9375 * scale, 1.875 * scale],
              [0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0, 0],
              [0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0],
              [0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0],
@@ -449,7 +455,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
              [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
              [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
 
-      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(12)]) for i in range(12)] + [60.0]
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(12)]) for i in range(12)] + [carrying_cap]
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
 
    def testEvolveThreeAges(self):
@@ -460,17 +466,22 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setAgingRate(0.125)
       self.c.setNumAges(3)
       self.c.setAccuracy(0.25)
+      carrying_cap = 60.0
 
-      initial_condition = [0.125, 0.625, 0.1875, 0.3125, 0.5625, 0.0625,  0.625, 0.125, 0.15625, 0.34375, 0.53125, 0.09375,  0, 1, 2, 3, 4, 5, 60.0]
+      # key to making "mat" the same as testEvolveSingleAge2
+      # the adult males have population (ww, Gw, GG) = (0, 1, 2).
+      # The sum of juvenile larvae give the overall scale factor
+      initial_condition = [0.125, 0.625, 0.1875, 0.3125, 0.5625, 0.0625,  0.625, 0.125, 0.15625, 0.34375, 0.53125, 0.09375,  0, 1, 2, 3, 4, 5, carrying_cap]
+      scale = (1.0 - sum(initial_condition[:12]) / carrying_cap) / (1.0 - sum(list(range(6))) / carrying_cap)
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
       # this expected answer was worked out laboriously by hand for TwoAges
-      mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0.125 * 1.25, 0.0625 * 1.25, 0],
-             [0, -0.0625 - 0.125, 0, 0, 0, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0.625 * 1.25, 0.375 * 1.25, 0.125 * 1.25],
-             [0, 0, -0.0625 - 0.125, 0, 0, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0, 0.3125 * 1.25, 0.625 * 1.25],
-             [0, 0, 0, -0.0625 - 0.125, 0, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0.375 * 1.25, 0.1875 * 1.25, 0],
-             [0, 0, 0, 0, -0.0625 - 0.125, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 1.875 * 1.25, 1.125 * 1.25, 0.375 * 1.25],
-             [0, 0, 0, 0, 0, -0.0625 - 0.125,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0, 0.9375 * 1.25, 1.875 * 1.25],
+      mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0.125 * scale, 0.0625 * scale, 0],
+             [0, -0.0625 - 0.125, 0, 0, 0, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0.625 * scale, 0.375 * scale, 0.125 * scale],
+             [0, 0, -0.0625 - 0.125, 0, 0, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0, 0.3125 * scale, 0.625 * scale],
+             [0, 0, 0, -0.0625 - 0.125, 0, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0.375 * scale, 0.1875 * scale, 0],
+             [0, 0, 0, 0, -0.0625 - 0.125, 0,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 1.875 * scale, 1.125 * scale, 0.375 * scale],
+             [0, 0, 0, 0, 0, -0.0625 - 0.125,  0, 0, 0, 0 ,0, 0,  0, 0, 0, 0, 0.9375 * scale, 1.875 * scale],
              [0.125, 0, 0, 0, 0, 0,  -0.0625 - 0.125, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0],
              [0, 0.125, 0, 0, 0, 0,  0, -0.0625 - 0.125, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0],
              [0, 0, 0.125, 0, 0, 0,  0, 0, -0.0625 - 0.125, 0, 0, 0,  0, 0, 0, 0, 0, 0],
@@ -484,7 +495,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
              [0, 0, 0, 0 ,0, 0,  0, 0, 0, 0, 0.125, 0,  0, 0, 0, 0, -0.09375, 0],
              [0, 0, 0, 0 ,0, 0,  0, 0, 0, 0, 0, 0.125,  0, 0, 0, 0, 0, -0.09375]]
 
-      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(18)]) for i in range(18)] + [60.0]
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(18)]) for i in range(18)] + [carrying_cap]
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
 
    def testEvolveTwoAgesMinCC(self):
@@ -494,8 +505,9 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setAgingRate(0.125)
       self.c.setNumAges(2)
       self.c.setMinCarryingCapacity(100.0) # large minimum carrying capacity
+      carrying_cap = 60.0
 
-      initial_condition = list(range(12)) + [60.0] # carrying capacity < min_cc, so no new larvae
+      initial_condition = list(range(12)) + [carrying_cap] # carrying capacity < min_cc, so no new larvae
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
       mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -511,7 +523,73 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
              [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
              [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
       
-      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(12)]) for i in range(12)] + [60.0]
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(12)]) for i in range(12)] + [carrying_cap]
+      self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
+
+   def testEvolveTwoAgesTwoSpeciesNoCompetitionNoHybridisation(self):
+      dt = 3.0
+      self.c.setMuLarvae(0.0625)
+      self.c.setMuAdult(0.09375)
+      self.c.setFecundity(2.0)
+      self.c.setAgingRate(0.125)
+      self.c.setNumAges(2)
+      self.c.setNumSpecies(2)
+      self.c.setAccuracy(0.25)
+      carrying_cap = 60.0
+
+      # the initial conditions are actually basically the same for each species
+      # since we have no hybridisation and no inter-specific competition, the
+      # key to making "mat" the same as testEvolveSingleAge2 for each species is that
+      # the adult males have population (ww, Gw, GG) = (0, 1, 2).
+      # The sum of juvenile larvae give the overall scale factor
+      ic_species0 = [0.25, 1.25, 0.375, 0.625, 1.125, 0.125, 0, 1, 2, 3, 4, 5]
+      scale0 = (1.0 - sum(ic_species0[:6]) / carrying_cap) / (1.0 - sum(list(range(6))) / carrying_cap)
+      # because there is no hybridisation, each species evolved separately
+      # This matrix is based on testEvolveSingleAge2!
+      mat0 = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0.125 * scale0, 0.0625 * scale0, 0],
+             [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.625 * scale0, 0.375 * scale0, 0.125 * scale0],
+             [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.3125 * scale0, 0.625 * scale0],
+             [0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0.375 * scale0, 0.1875 * scale0, 0],
+             [0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 1.875 * scale0, 1.125 * scale0, 0.375 * scale0],
+             [0, 0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0.9375 * scale0, 1.875 * scale0],
+             [0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0, 0],
+             [0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0],
+             [0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0],
+             [0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0],
+             [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
+             [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
+      ic_species1 = [0.5, 1.5, 3.46875, 0.625, 1.59375, 1.6875, 0, 1, 2, 3, 4, 5]
+      scale1 = (1.0 - sum(ic_species1[:6]) / carrying_cap) / (1.0 - sum(list(range(6))) / carrying_cap)
+      # because there is no hybridisation, each species evolved separately
+      # This matrix is based on testEvolveSingleAge2!
+      mat1 = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0.125 * scale1, 0.0625 * scale1, 0],
+             [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.625 * scale1, 0.375 * scale1, 0.125 * scale1],
+             [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0.3125 * scale1, 0.625 * scale1],
+             [0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0.375 * scale1, 0.1875 * scale1, 0],
+             [0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 1.875 * scale1, 1.125 * scale1, 0.375 * scale1],
+             [0, 0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0.9375 * scale1, 1.875 * scale1],
+             [0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0, 0],
+             [0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0],
+             [0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0],
+             [0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0],
+             [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
+             [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
+
+      initial_condition = []
+      for i in range(12):
+         initial_condition.append(ic_species0[i])
+         initial_condition.append(ic_species1[i])
+      initial_condition.append(carrying_cap)
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+
+      expected0 = [ic_species0[i] + dt * sum([mat0[i][j] * ic_species0[j] for j in range(12)]) for i in range(12)]
+      expected1 = [ic_species1[i] + dt * sum([mat1[i][j] * ic_species1[j] for j in range(12)]) for i in range(12)]
+      expected_result = []
+      for i in range(12):
+         expected_result.append(expected0[i])
+         expected_result.append(expected1[i])
+      expected_result.append(carrying_cap)
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
 
 
