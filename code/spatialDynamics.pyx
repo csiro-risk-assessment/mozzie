@@ -96,8 +96,8 @@ cdef class SpatialDynamics:
         # initialize all_diffusing_populations
         self.all_diffusing_populations = array.clone(float_template, self.num_diffusing_populations_total, zero = False)
 
-        self.connections_from = self.grid.getConnectionsFrom()
-        self.connections_to = self.grid.getConnectionsTo()
+        self.connections_from = array.copy(self.grid.getConnectionsFrom())
+        self.connections_to = array.copy(self.grid.getConnectionsTo())
         self.num_connections = self.grid.getNumConnections()
         # Note(1): In diffuse() we need to multiply by self.num_diffusing_populations_at_cell
         # Note(1): Let's do that now instead
