@@ -38,12 +38,6 @@ cdef class Wind:
         self.num_active_cells = self.grid.getNumActiveCells()
         self.processed_data_computed = 0
 
-        #self.raw_velx = array.array('f', [])
-        #self.raw_vely = array.array('f', [])
-
-        #self.advection_from = array.array('I', [])
-        #self.advection_to = array.array('I', [])
-        #self.advection_p = array.array('f', [])
         self.num_advection = 0
 
         self.uint_template = array.array('I', [])
