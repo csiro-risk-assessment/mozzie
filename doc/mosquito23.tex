@@ -79,11 +79,13 @@ and $X(a,s,g,m)$ is abbreviated to $X$.
 &  \\
   \hline
     $p(g_M, g_F, s)$ & Proportion of offspring of given sex given genotypes of parents & 1 (accuracy $a$)\\
-     & $ = \begin{cases}
-		p(Gw, g_F, F) & = \frac{1}{2}\left(\frac{1}{a} - 1\right) \\
-		p(GG, g_F, F) & = \frac{1}{2}\left(\frac{1}{a} - 1\right) \\
-		0.5 & \textrm{elsewhere}
-		\end{cases}$ &  \\
+		& $ = \begin{cases}
+		p(Gw, g_F, M) = p(GG, g_F, M) & = a \\
+		p(Gw, g_F, F) = p(GG, g_F, F) & = 1 - a \\
+		p(ww, Gw, F) = p(ww, GG, F) & = f \\
+		p(ww, Gw, M) = p(ww, GG, M) & = 1 - f \\
+		0.5 &\textrm{elsewhere}
+		\end{cases}$ & \\
     \hline
 		$w(m_M, m_F)$ & Relative probability of female of species $m_F$ mating & 1 ($w$) \\
 		& with male of species $m_M$ & (defaults to $w=0$) \\
@@ -174,6 +176,32 @@ The ODEs in {\tt Mosquito23} may be integrated in time using one of the followin
 In addition, adaptive time-stepping is the default.  Here, the user defines $\Delta t$, and if the algorithm detects that any $X(t + \Delta t) < 0$, the time-step is solved using a number of smaller sub-time-steps, chosen to guarantee that all $X$ remain non-negative.  This type of behaviour occurs when the time-dependent carrying capacity suddenly reduces, and the explicit-Euler or Runge-Kutta4 methods produce large negative changes in population numbers, which, if allowed, would result in $X<0$.  Solving the problem using smaller sub-time-steps overcomes this problem.  In this algorithm, there is a minimum $\Delta t$ allowed, which defaults to $10^{-12}$, below which the algorithm exits with an error.
 
 Finally, a user-defined cutoff, $c$, is placed on $X(t + \Delta t)$.  If $X(t + \Delta t) < c$ (at the end of a time step) then $X(t + \Delta t)$ is set to zero.  This prevents anomalous round-off and precision errors from accumulating.  The default value of $c$ is $10^{-6}$.
+
+\section{\tt Mosquito23F}
+\subsection{Fecundity limiting (old version)}
+Female-sexed eggs of either $Gw$ or $GG$ fathers are assumed to become mostly inviable after fertilization, such that the sex ratio is skewed male with proportion $a$. The number of male-sexed eggs is assumed to stay the same as for wildtype mosquitoes.
+
+\begin{equation}
+ p(g_M, g_F, s) = \begin{cases}
+		p(Gw, g_F, F) = p(GG, g_F, F) & = \frac{1}{2}\left(\frac{1}{a} - 1\right) \\
+		0.5 & \textrm{elsewhere}
+		\end{cases}
+\end{equation}
+
+\subsection{Fecundity preserving (current version)}
+Female-sexed sperm of either $Gw$ or $GG$ fathers are assumed to become mostly inviable before implantation in eggs. In this case, the \emph{total} number of eggs remains the same as for wildtype mosquitoes (as the eggs are not affected by the construct), but the sex ratio is skewed male with proportion $a > 0.5$.
+
+We also include a corresponding female bias $b > 0.5$ in offspring of female $Gw$ or $GG$ ``survivors'' with wildtype males as demonstrated in Galizi et al. (2014) (Supp Table 6) (TODO: there is probably also an overall decrease in fecundity in this case that we should possibly also model, with $66.0 \pm 3.8$ eggs hatching versus $79.4 \pm 2.2$ for the control).
+
+\begin{equation}
+ p(g_M, g_F, s) = \begin{cases}
+		p(Gw, g_F, M) = p(GG, g_F, M) & = a \\
+		p(Gw, g_F, F) = p(GG, g_F, F) & = 1 - a \\
+		p(ww, Gw, F) = p(ww, GG, F) & = f \\
+		p(ww, Gw, M) = p(ww, GG, M) & = 1 - f \\
+		0.5 &\textrm{elsewhere}
+		\end{cases}
+\end{equation}
 
 
 
