@@ -4,6 +4,11 @@
 \usepackage{pdflscape}
 \usepackage{amsmath}
 \usepackage[margin=0.5cm]{geometry}
+
+\DeclareMathOperator*{\Binom}{\textrm{Binom}}
+\DeclareMathOperator*{\Pois}{\textrm{Pois}}
+\DeclareMathOperator*{\sign}{\textrm{sign}}
+
 \newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
 \newcommand{\dd}[2]{\frac{\mathrm{d} #1}{\mathrm{d} #2}}
 \begin{document}
@@ -203,6 +208,27 @@ We also include a corresponding female bias $b > 0.5$ in offspring of female $Gw
 		\end{cases}
 \end{equation}
 
+\section{\tt Mosquito23G}
 
+We revisit the equations solved by {\tt Mosquito23}, but discretise and make some of the variables random:
 
+\begin{eqnarray*}
+X_t(a,s,g,m) &=& X_{t-1}(a,s,g,m) -d'_{a} + b'_{s,g,m} + D'_{s,g,m} + V'_{s,g,m}
++ \\
+a = 0 & & \begin{cases}
+\displaystyle \sum_{\substack{g_M, g_F,\\m_M, m_F}} \lambda'_{s,g,m,g_M,g_F,m_M,m_F}
+
+\end{cases}
+\end{eqnarray*}
+where:
+\begin{align}
+d'_a & \sim \Binom \big(n = X_{t-1},\ p = d_a \Delta t\big) \\ 
+b'_{s,g,m} & \sim \Binom \left(n = \left[ \overbrace{X_{t-1}(a-1,s,g,m)}^{a>0} - \overbrace{X_{t-1}}^{a<N-1} \right],\ p = b_{s,g,m} \Delta t\right) \\
+D'_{s,g,m} & \sim \Binom \left(n = X_{t-1},\ p = \left| \frac{\Delta t}{X_{t-1}} \overbrace{\nabla \cdot (D_{s,g,m} \nabla X_{t-1})}^{a=N-1} \right| \right) \sign(p) \\
+V'_{s,g,m} & \sim \Binom \left(n = X_{t-1},\ p = \left| \frac{\Delta t}{X_{t-1}} \overbrace{\nabla \cdot (- \mathbf{V}_{s,g,m} X_{t-1})}^{a=N-1} \right| \right) \sign(p) \\
+\lambda'_{s,g,m,g_M,g_F,m_M,m_F} & \sim \Pois \Bigg( \left[ \frac{K - \sum_{m^*} \alpha_{m, m^*} \sum_{s,g} \sum_{i<\max(N,1)} X(i,s,g,m^*)}{K} \right] \times \\
+& h(m_M,m_F,m)\ \lambda(g_F, m_F)\ i(g_M, g_F, g)\ \frac{w(m_M, m_F) X(N-1,M,g_M,m_M)}{\sum_{g^*,m^*} w(m^*, m_F) X(N-1,M,g^*,m^*)} \times \\
+& \qquad p(g_M, g_F, m_M, m_F, s) X(N-1,F,g_F,m_F) \Delta t \Bigg) 
+\end{align}
+following North and Godfray (2018)'s use of constant probabilities of survival, mortality and dispersal but Poisson-distributed egg laying. Their model tracks the age of each individual juvenile --- this is not feasible in our case with such huge numbers of mosquitoes, so we instead assume constant probability of ageing as per the original ODE model's mean field assumption.
 \end{document}
