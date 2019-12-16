@@ -764,8 +764,8 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                     ind = row + self.num_populations * row # diagonal entry
                     if self.num_ages > 1:
                         self.rhs.data.as_floats[row] -= np.random.binomial(int(x[row]), 1 - exp(-self.mu_larvae)) # mortality
-                        tmp = np.random.binomial(x[col], 1 - exp(-self.aging_rate))
-                        self.rhs.data.as_floats[row] -= tmp # aging to older bracket
+                        self.mat.data.as_floats[0] = np.random.binomial(x[col], 1 - exp(-self.aging_rate))
+                        self.rhs.data.as_floats[row] -= self.mat.data.as_floats[0] # aging to older bracket
                         
                     for age in range(1, self.num_ages - 1):
                         row = self.getIndex(sp, gt, sex, age)
@@ -773,9 +773,9 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                         ind = col + self.num_populations * row # diagonal entry
                         #self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
                         self.rhs.data.as_floats[row] -= np.random.binomial(int(x[row]), 1 - exp(-self.mu_larvae))
-                        self.rhs.data.as_floats[row] += tmp # contribution from younger age bracket
-                        tmp = np.random.binomial(x[col], 1 - exp(-self.aging_rate))
-                        self.rhs.data.as_floats[row] -= tmp
+                        self.rhs.data.as_floats[row] += self.mat.data.as_floats[0] # contribution from younger age bracket
+                        self.mat.data.as_floats[0] = np.random.binomial(x[col], 1 - exp(-self.aging_rate))
+                        self.rhs.data.as_floats[row] -= self.mat.data.as_floats[0]
                         col = self.getIndex(sp, gt, sex, age - 1)
                         ind = col + self.num_populations * row # below diagonal
                         #self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] + self.aging_rate 
@@ -787,7 +787,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                     if self.num_ages > 1:
                         col = self.getIndex(sp, gt, sex, age - 1)
                         ind = col + self.num_populations * row # below diagonal
-                        self.rhs.data.as_floats[row] += tmp # contribution from younger age bracket
+                        self.rhs.data.as_floats[row] += self.mat.data.as_floats[0] # contribution from younger age bracket
 
         #array.zero(self.rhs)
         #for row in range(self.num_populations):
