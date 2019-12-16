@@ -344,3 +344,9 @@ cdef class CellDynamicsMosquito23F(CellDynamicsMosquito23):
 
     cdef float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt)
     """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
+
+cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
+    """CellDynamicsMosquito23F but stochastic"""
+
+    cdef void computeRHS_stoc(self, float[:] x)
+    """Evaluates change in populations for a timestep (assuming dt = 1 day)"""
