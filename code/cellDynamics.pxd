@@ -350,3 +350,8 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
 
     cdef void computeRHS_stoc(self, float[:] x)
     """Evaluates change in populations for a timestep (assuming dt = 1 day)"""
+    
+    cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange)
+    """Given the timestep and current_pops_and_params, compute the change in populations according to the ODE.
+    For this class we add stochastic timestepping, this is just rhs.
+
