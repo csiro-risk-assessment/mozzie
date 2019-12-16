@@ -3,6 +3,7 @@ import array
 cimport cpython.array as array
 import numpy as np
 from scipy.integrate import solve_ivp
+from math import exp
 
 cdef class CellDynamicsBase:
 
@@ -751,6 +752,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                                         self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
                                 # multiply mat by things that don't depend on gtm or spm
                                 self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+                                self.rhs.data.as_floats[row] += np.random.poisson(self.mat.data.as_floats[ind_mat])
             
 
         # mortality, and aging into/from neighbouring age brackets
@@ -761,7 +763,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                     row = self.getIndex(sp, gt, sex, age)
                     ind = row + self.num_populations * row # diagonal entry
                     if self.num_ages > 1:
-                        self.rhs.data.as_floats[row] -= np.random.binomial(x[row], 1 - exp(-self.mu_larvae)) # mortality
+                        self.rhs.data.as_floats[row] -= np.random.binomial(int(x[row]), 1 - exp(-self.mu_larvae)) # mortality
                         tmp = np.random.binomial(x[col], 1 - exp(-self.aging_rate))
                         self.rhs.data.as_floats[row] -= tmp # aging to older bracket
                         
@@ -770,7 +772,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                         col = self.getIndex(sp, gt, sex, age)
                         ind = col + self.num_populations * row # diagonal entry
                         #self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
-                        self.rhs.data.as_floats[row] -= np.random.binomial(x[row], 1 - exp(-self.mu_larvae))
+                        self.rhs.data.as_floats[row] -= np.random.binomial(int(x[row]), 1 - exp(-self.mu_larvae))
                         self.rhs.data.as_floats[row] += tmp # contribution from younger age bracket
                         tmp = np.random.binomial(x[col], 1 - exp(-self.aging_rate))
                         self.rhs.data.as_floats[row] -= tmp
@@ -781,7 +783,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                     age = self.num_ages - 1
                     row = self.getIndex(sp, gt, sex, age)
                     ind = row + self.num_populations * row # diagonal entry
-                    self.rhs.data.as_floats[row] -= np.random.binomial(x[row], 1 - exp(-self.mu_adult)) # mortality
+                    self.rhs.data.as_floats[row] -= np.random.binomial(int(x[row]), 1 - exp(-self.mu_adult)) # mortality
                     if self.num_ages > 1:
                         col = self.getIndex(sp, gt, sex, age - 1)
                         ind = col + self.num_populations * row # below diagonal
