@@ -675,6 +675,8 @@ cdef class CellDynamicsMosquito23F(CellDynamicsMosquito23):
 cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
     def __init__(self):
         super().__init__()
+        # default to NOT doing adaptive timestepping
+        self.adaptive = 0
 
     cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange):
         cdef unsigned ind
