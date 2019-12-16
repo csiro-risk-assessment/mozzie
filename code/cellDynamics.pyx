@@ -618,6 +618,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             for ind in range(self.num_populations):
                 cchange[ind] = (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
                 
+        if self.time_integration_method == 3:
+            self.computeRHS_stoc(current_pops_and_params)
+            for ind in range(self.num_populations):
+                cchange[ind] = self.rhs.data.as_floats[ind]
 
 
     cpdef setTimeIntegrationMethod(self, str method):
@@ -627,6 +631,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             self.time_integration_method = 1
         elif method == "runge_kutta4":
             self.time_integration_method = 2
+        elif method == "stochastic":
+            self.time_integration_method = 3
         else:
             raise ValueError("Time integration method " + method + " not supported")
     
@@ -667,4 +673,123 @@ cdef class CellDynamicsMosquito23F(CellDynamicsMosquito23):
             else:
                 return 0.05
 
-        
+cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
+    def __init__(self):
+        super().__init__()
+
+    cdef void computeRHS_stoc(self, float[:] x):
+        """Evaluates change in populations for a timestep (assuming dt = 1 day)"""
+
+        # these indices are dummy indices (that are looped over) hence the subscript _d
+        cdef unsigned age_d, sex_d, gt_d, sp_d
+        # these indices are summed over in the age=0 contributions
+        cdef unsigned gtf, spf, gtm, spm
+        # these indices are typically left-hand-side indices
+        cdef unsigned age, sex, gt, sp
+        # utility indices
+        cdef unsigned ind, ind_c, ind0, ind1
+        # indices into matrix M
+        cdef unsigned col, row
+        # index into mat
+        cdef unsigned ind_mat
+        # end of for-loops in newborn larvae competition code
+        cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
+
+        array.zero(self.mat)
+
+        # newborn larvae
+        if self.one_over_kk < self.one_over_min_cc:
+
+            # define competition
+            array.zero(self.comp)
+            for age_d in range(end_index_for_competition):
+                for sex_d in range(self.num_sexes):
+                    for gt_d in range(self.num_genotypes):
+                        for sp_d in range(self.num_species):
+                            ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                            for sp in range(self.num_species):
+                                self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
+            for sp in range(self.num_species):
+                self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
+
+            # define the denominator term
+            array.zero(self.denom)
+            age_d = self.num_ages - 1 # adult
+            sex_d = 0 # male
+            for gt_d in range(self.num_genotypes):
+                for sp_d in range(self.num_species):
+                    ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                    for sp in range(self.num_species): # sp = female species
+                        self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * x[ind_d]
+            # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
+            for sp in range(self.num_species):
+                if self.denom.data.as_floats[sp] <= self.zero_cutoff:
+                    # there must be zero adult males.  I presume this means there will be zero eggs layed, so setting denom=0 achieves this
+                    self.denom.data.as_floats[sp] = 0.0
+                else:
+                    self.denom.data.as_floats[sp] = 1.0 / self.denom.data.as_floats[sp]
+
+
+            # now work out the contributions to the newborn ODEs
+            # In the following, mat is a 1D array (for efficiency)
+            # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
+            #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
+            #  - given a component, M_ij, the index in mat is j + i * self.num_populations
+            age = 0 # only newborn row in M
+            for sex in range(self.num_sexes): # row in M
+                for gt in range(self.num_genotypes): # row in M
+                    for sp in range(self.num_species): # row in M
+                        row = self.getIndex(sp, gt, sex, age)
+                        # now want to set the column in M corresonding to female adults of genotype gtf and species spf
+                        for gtf in range(self.num_genotypes): # female genotype
+                            for spf in range(self.num_species): # female species
+                                col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
+                                ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
+                                for gtm in range(self.num_genotypes): # male genotype
+                                    for spm in range(self.num_species): # male species
+                                        ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
+                                        self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
+                                # multiply mat by things that don't depend on gtm or spm
+                                self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+            
+
+        # mortality, and aging into/from neighbouring age brackets
+        for sex in range(self.num_sexes):
+            for gt in range(self.num_genotypes):
+                for sp in range(self.num_species):
+                    age = 0
+                    row = self.getIndex(sp, gt, sex, age)
+                    ind = row + self.num_populations * row # diagonal entry
+                    if self.num_ages > 1:
+                        self.rhs.data.as_floats[row] -= np.random.binomial(x[row], 1 - exp(-self.mu_larvae)) # mortality
+                        tmp = np.random.binomial(x[col], 1 - exp(-self.aging_rate))
+                        self.rhs.data.as_floats[row] -= tmp # aging to older bracket
+                        
+                    for age in range(1, self.num_ages - 1):
+                        row = self.getIndex(sp, gt, sex, age)
+                        col = self.getIndex(sp, gt, sex, age)
+                        ind = col + self.num_populations * row # diagonal entry
+                        #self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
+                        self.rhs.data.as_floats[row] -= np.random.binomial(x[row], 1 - exp(-self.mu_larvae))
+                        self.rhs.data.as_floats[row] += tmp # contribution from younger age bracket
+                        tmp = np.random.binomial(x[col], 1 - exp(-self.aging_rate))
+                        self.rhs.data.as_floats[row] -= tmp
+                        col = self.getIndex(sp, gt, sex, age - 1)
+                        ind = col + self.num_populations * row # below diagonal
+                        #self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] + self.aging_rate 
+                        
+                    age = self.num_ages - 1
+                    row = self.getIndex(sp, gt, sex, age)
+                    ind = row + self.num_populations * row # diagonal entry
+                    self.rhs.data.as_floats[row] -= np.random.binomial(x[row], 1 - exp(-self.mu_adult)) # mortality
+                    if self.num_ages > 1:
+                        col = self.getIndex(sp, gt, sex, age - 1)
+                        ind = col + self.num_populations * row # below diagonal
+                        self.rhs.data.as_floats[row] += tmp # contribution from younger age bracket
+
+        #array.zero(self.rhs)
+        #for row in range(self.num_populations):
+            #for col in range(self.num_populations):
+                #self.rhs.data.as_floats[row] += self.mat.data.as_floats[col + self.num_populations * row] * x[col]
+
+

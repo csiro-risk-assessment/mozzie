@@ -1,5 +1,6 @@
 import time
 import array
+import numpy as np
 cimport cpython.array as array
 from wind cimport Wind
 from grid cimport Grid
@@ -284,3 +285,102 @@ cdef class SpatialDynamics:
 
         
         
+    cpdef void diffuse_stoc(self, float dt, float diffusion_coeff):
+        """One timestep of stochastic diffusion"""
+
+        # fraction of population that diffuses to nearest neighbour
+        # in comparison to the diffusion equation,
+        # diffusion_d = (diffusion_coefficient) * 4 * dt / (dx)^2
+        # (the 4 comes from the number of nearest neighbours: evaluating the laplacian on a square grid)
+        cdef int num_nearest_neighbours = 4
+        cpdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
+        # diffusion_d / 4
+        cpdef float diff_d = diffusion_d / num_nearest_neighbours
+
+        # active cell index
+        cdef unsigned ind
+        # population counter
+        cdef unsigned p
+        # utility indeces
+        cdef unsigned i, j, k
+
+        # grab all the diffusing populations
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_diffusing_populations_at_cell
+            j = ind * self.num_quantities_at_cell
+            for p in range(self.num_diffusing_populations_at_cell):
+                self.all_diffusing_populations.data.as_floats[i + p] = self.all_quantities.data.as_floats[j + self.diffusing_indices.data.as_uints[p]]
+
+        # initialise the self.change_diff in populations, which is just the amount that comes out of the cells
+        for i in range(self.num_diffusing_populations_total):
+            self.change_diff.data.as_floats[i] = - diffusion_d * self.all_diffusing_populations.data.as_floats[i]
+
+        # disperse random diff_d proportion of population to neighbours
+        cdef unsigned from_index
+        cdef unsigned to_index
+        for i in range(self.num_connections):
+            # Note(1): This is why the optimisation was performed above.  Now we don't have to do:
+            # Note(1): from_index = self.num_diffusing_populations_at_cell * self.connections_from.data.as_uints[i]
+            # Note(1): to_index = self.num_diffusing_populations_at_cell * self.connections_to.data.as_uints[i]
+            from_index = self.connections_from.data.as_uints[i]
+            to_index = self.connections_to.data.as_uints[i]
+            for p in range(self.num_diffusing_populations_at_cell):
+                self.change_diff.data.as_floats[to_index + p] = self.change_diff.data.as_floats[to_index + p] + np.random.binomial(int(self.all_diffusing_populations.data.as_floats[from_index + p]), diff_d)
+
+        # add the result to the populations
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_diffusing_populations_at_cell
+            j = ind * self.num_quantities_at_cell
+            for p in range(self.num_diffusing_populations_at_cell):
+                k = j + self.diffusing_indices.data.as_uints[p]
+                self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
+
+    cpdef advect_stoc(self, float advection_fraction, Wind wind):
+        """One timestep of stochastic advection, using the given wind.
+        advection_fraction of all populations that the Cell has labelled as 'advecting' will experience advection"""
+        if wind.getProcessedDataComputed() != 1:
+            raise ValueError("Wind must have been processed before being used")
+
+        cdef array.array afr = wind.getAdvectionFrom()
+        cdef array.array ato = wind.getAdvectionTo()
+        cdef array.array apr = wind.getAdvectionP()
+        cdef unsigned num_advections = wind.getNumAdvection()
+
+        # active cell index
+        cdef unsigned ind
+        # population counter
+        cdef unsigned p
+        # utility indeces
+        cdef unsigned i, j, k
+        # the quantity dumped at the "to" cell
+        cdef float qu
+
+        # grab all the advecting populations
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_advecting_populations_at_cell
+            j = ind * self.num_quantities_at_cell
+            for p in range(self.num_advecting_populations_at_cell):
+                self.all_advecting_populations.data.as_floats[i + p] = self.all_quantities.data.as_floats[j + self.advecting_indices.data.as_uints[p]]
+
+        # initialise the self.change_adv in populations, which is just the amount that comes out of the cells
+        for i in range(self.num_advecting_populations_total):
+            self.change_adv.data.as_floats[i] = - advection_fraction * self.all_advecting_populations.data.as_floats[i]
+
+        # use wind to disperse to neighbours
+        cdef unsigned from_index
+        cdef unsigned to_index
+        for i in range(num_advections):
+            from_index = self.num_advecting_populations_at_cell * afr.data.as_uints[i]
+            to_index = self.num_advecting_populations_at_cell * ato.data.as_uints[i]
+            qu = advection_fraction * apr.data.as_floats[i]
+            for p in range(self.num_advecting_populations_at_cell):
+                self.change_adv.data.as_floats[to_index + p] = self.change_adv.data.as_floats[to_index + p] + np.random.binomial(int(self.all_advecting_populations.data.as_floats[from_index + p]), qu)
+
+        # add the result to the populations
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_advecting_populations_at_cell
+            j = ind * self.num_quantities_at_cell
+            for p in range(self.num_advecting_populations_at_cell):
+                k = j + self.advecting_indices.data.as_uints[p]
+                self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_adv.data.as_floats[i + p]
+
