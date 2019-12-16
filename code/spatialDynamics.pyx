@@ -1,6 +1,7 @@
 import time
 import array
 import numpy as np
+cimport numpy as np
 cimport cpython.array as array
 from wind cimport Wind
 from grid cimport Grid

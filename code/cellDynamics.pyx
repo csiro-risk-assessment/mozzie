@@ -2,6 +2,7 @@ import sys
 import array
 cimport cpython.array as array
 import numpy as np
+cimport numpy as np
 from scipy.integrate import solve_ivp
 from math import exp
 
