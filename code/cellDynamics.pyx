@@ -618,11 +618,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             # put it all together
             for ind in range(self.num_populations):
                 cchange[ind] = (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
-                
-        if self.time_integration_method == 3:
-            self.computeRHS_stoc(current_pops_and_params)
-            for ind in range(self.num_populations):
-                cchange[ind] = self.rhs.data.as_floats[ind]
+
+        elif self.time_integration_method == 3:
+            raise ValueError("Need CellDynamicsMosquito23G")
 
 
     cpdef setTimeIntegrationMethod(self, str method):
@@ -677,6 +675,60 @@ cdef class CellDynamicsMosquito23F(CellDynamicsMosquito23):
 cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
     def __init__(self):
         super().__init__()
+
+    cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange):
+        cdef unsigned ind
+
+        if self.time_integration_method == 0:
+            self.computeRHS(current_pops_and_params)
+            for ind in range(self.num_populations):
+                cchange[ind] = timestep * self.rhs.data.as_floats[ind]
+
+        elif self.time_integration_method == 1:
+            # copy into numpy array xx for use in self.fun
+            xx = np.ones(self.num_populations)
+            for ind in range(self.num_populations):
+                xx[ind] = current_pops_and_params[ind]
+            # solve
+            sol = solve_ivp(self.fun_for_scipy, [0.0, timestep], xx)
+            # copy back
+            for ind in range(self.num_populations):
+                cchange[ind] = sol.y[ind, -1] - current_pops_and_params[ind]
+
+        elif self.time_integration_method == 2:
+            # step 1
+            self.computeRHS(current_pops_and_params)
+            for ind in range(self.num_populations):
+                self.rk1.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
+            # step 2
+            for ind in range(self.num_populations):
+                self.crky[ind] = current_pops_and_params[ind] + 0.5 * self.rk1.data.as_floats[ind]
+            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
+            self.computeRHS(self.crky)
+            for ind in range(self.num_populations):
+                self.rk2.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
+            # step 3
+            for ind in range(self.num_populations):
+                self.crky[ind] = current_pops_and_params[ind] + 0.5 * self.rk2.data.as_floats[ind]
+            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
+            self.computeRHS(self.crky)
+            for ind in range(self.num_populations):
+                self.rk3.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
+            # step 4
+            for ind in range(self.num_populations):
+                self.crky[ind] = current_pops_and_params[ind] + self.rk3.data.as_floats[ind]
+            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
+            self.computeRHS(self.crky)
+            for ind in range(self.num_populations):
+                self.rk4.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
+            # put it all together
+            for ind in range(self.num_populations):
+                cchange[ind] = (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
+                
+        if self.time_integration_method == 3:
+            self.computeRHS_stoc(current_pops_and_params)
+            for ind in range(self.num_populations):
+                cchange[ind] = self.rhs.data.as_floats[ind]
 
     cdef void computeRHS_stoc(self, float[:] x):
         """Evaluates change in populations for a timestep (assuming dt = 1 day)"""
