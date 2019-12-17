@@ -388,5 +388,5 @@ cdef class SpatialDynamics:
             j = ind * self.num_quantities_at_cell
             for p in range(self.num_advecting_populations_at_cell):
                 k = j + self.advecting_indices.data.as_uints[p]
-                self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_adv.data.as_floats[i + p]
+                self.all_quantities.data.as_floats[k] += self.change_adv.data.as_floats[i + p]
 
