@@ -1,12 +1,12 @@
 import time
 import array
-import numpy as np
-cimport numpy as np
+#import numpy as np
+#cimport numpy as np
 cimport cpython.array as array
 from wind cimport Wind
 from grid cimport Grid
 from populationsAndParameters cimport PopulationsAndParameters
-from cellDynamics cimport CellDynamicsBase
+from cellDynamics cimport CellDynamicsBase, binomial, poisson
 
 cdef class SpatialDynamics:
     """Performs the diffusion and advection over the grid"""
@@ -327,7 +327,7 @@ cdef class SpatialDynamics:
             from_index = self.connections_from.data.as_uints[i]
             to_index = self.connections_to.data.as_uints[i]
             for p in range(self.num_diffusing_populations_at_cell):
-                tmp = np.random.binomial(int(self.all_diffusing_populations.data.as_floats[from_index + p]), diff_d)
+                tmp = binomial(int(self.all_diffusing_populations.data.as_floats[from_index + p]), diff_d)
                 self.change_diff.data.as_floats[to_index + p] += tmp
                 self.change_diff.data.as_floats[from_index + p] -= tmp
 
@@ -378,7 +378,7 @@ cdef class SpatialDynamics:
             to_index = self.num_advecting_populations_at_cell * ato.data.as_uints[i]
             qu = advection_fraction * apr.data.as_floats[i]
             for p in range(self.num_advecting_populations_at_cell):
-                tmp = np.random.binomial(int(self.all_advecting_populations.data.as_floats[from_index + p]), qu)
+                tmp = binomial(int(self.all_advecting_populations.data.as_floats[from_index + p]), qu)
                 self.change_adv.data.as_floats[to_index + p] += tmp
                 self.change_adv.data.as_floats[from_index + p] -= tmp
 
