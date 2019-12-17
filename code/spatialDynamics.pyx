@@ -297,6 +297,7 @@ cdef class SpatialDynamics:
         cpdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
         # diffusion_d / 4
         cpdef float diff_d = diffusion_d / num_nearest_neighbours
+        cpdef float tmp
 
         # active cell index
         cdef unsigned ind
@@ -314,7 +315,7 @@ cdef class SpatialDynamics:
 
         # initialise the self.change_diff in populations, which is just the amount that comes out of the cells
         for i in range(self.num_diffusing_populations_total):
-            self.change_diff.data.as_floats[i] = - diffusion_d * self.all_diffusing_populations.data.as_floats[i]
+            self.change_diff.data.as_floats[i] = 0. #- diffusion_d * self.all_diffusing_populations.data.as_floats[i]
 
         # disperse random diff_d proportion of population to neighbours
         cdef unsigned from_index
@@ -326,7 +327,9 @@ cdef class SpatialDynamics:
             from_index = self.connections_from.data.as_uints[i]
             to_index = self.connections_to.data.as_uints[i]
             for p in range(self.num_diffusing_populations_at_cell):
-                self.change_diff.data.as_floats[to_index + p] = self.change_diff.data.as_floats[to_index + p] + np.random.binomial(int(self.all_diffusing_populations.data.as_floats[from_index + p]), diff_d)
+                tmp = np.random.binomial(int(self.all_diffusing_populations.data.as_floats[from_index + p]), diff_d)
+                self.change_diff.data.as_floats[to_index + p] += tmp
+                self.change_diff.data.as_floats[from_index + p] -= tmp
 
         # add the result to the populations
         for ind in range(self.num_active_cells):
@@ -354,7 +357,7 @@ cdef class SpatialDynamics:
         # utility indeces
         cdef unsigned i, j, k
         # the quantity dumped at the "to" cell
-        cdef float qu
+        cdef float qu, tmp
 
         # grab all the advecting populations
         for ind in range(self.num_active_cells):
@@ -365,7 +368,7 @@ cdef class SpatialDynamics:
 
         # initialise the self.change_adv in populations, which is just the amount that comes out of the cells
         for i in range(self.num_advecting_populations_total):
-            self.change_adv.data.as_floats[i] = - advection_fraction * self.all_advecting_populations.data.as_floats[i]
+            self.change_adv.data.as_floats[i] = 0. # - advection_fraction * self.all_advecting_populations.data.as_floats[i]
 
         # use wind to disperse to neighbours
         cdef unsigned from_index
@@ -375,7 +378,9 @@ cdef class SpatialDynamics:
             to_index = self.num_advecting_populations_at_cell * ato.data.as_uints[i]
             qu = advection_fraction * apr.data.as_floats[i]
             for p in range(self.num_advecting_populations_at_cell):
-                self.change_adv.data.as_floats[to_index + p] = self.change_adv.data.as_floats[to_index + p] + np.random.binomial(int(self.all_advecting_populations.data.as_floats[from_index + p]), qu)
+                tmp = np.random.binomial(int(self.all_advecting_populations.data.as_floats[from_index + p]), qu)
+                self.change_adv.data.as_floats[to_index + p] += tmp
+                self.change_adv.data.as_floats[from_index + p] -= tmp
 
         # add the result to the populations
         for ind in range(self.num_active_cells):

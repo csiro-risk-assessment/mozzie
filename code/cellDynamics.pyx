@@ -4,7 +4,27 @@ cimport cpython.array as array
 import numpy as np
 cimport numpy as np
 from scipy.integrate import solve_ivp
-from math import exp
+from math import exp, ceil, log
+from libc.stdlib cimport rand, RAND_MAX
+
+def binomial(int N, float p)
+    cdef int N, count, wait
+    cdef float p
+    
+    if (N*p > 9. & N*(1-p) > 9.):
+    else:
+        count = -1
+        wait = 0
+        if (p < 0.0001):
+            p = -p
+        else:
+            p = log(1. - p)
+
+        while (wait <= N):
+            count++
+            N -= wait
+            wait = ceil( log(rand()) / p );
+    return count
 
 cdef class CellDynamicsBase:
 
@@ -752,7 +772,8 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
         cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
 
         array.zero(self.mat)
-
+        array.zero(self.rhs)
+        
         # newborn larvae
         if self.one_over_kk < self.one_over_min_cc:
 
@@ -844,7 +865,6 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                         ind = col + self.num_populations * row # below diagonal
                         self.rhs.data.as_floats[row] += self.mat.data.as_floats[0] # contribution from younger age bracket
 
-        #array.zero(self.rhs)
         #for row in range(self.num_populations):
             #for col in range(self.num_populations):
                 #self.rhs.data.as_floats[row] += self.mat.data.as_floats[col + self.num_populations * row] * x[col]
