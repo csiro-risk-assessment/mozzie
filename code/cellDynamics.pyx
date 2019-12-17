@@ -8,8 +8,7 @@ from math import exp, ceil, log, cos, sqrt
 from libc.stdlib cimport rand, RAND_MAX
 
 def binomial(int N, float p):
-    cdef int N, count, wait
-    cdef float p
+    cdef count, wait
     
     if (N*p > 9. & N*(1-p) > 9.):
         count = sqrt(-2*log(rand() / RAND_MAX)) * cos(2*3.1415926535*rand()/RAND_MAX)
