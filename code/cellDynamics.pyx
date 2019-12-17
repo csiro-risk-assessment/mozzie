@@ -7,7 +7,7 @@ from scipy.integrate import solve_ivp
 from math import exp, ceil, log
 from libc.stdlib cimport rand, RAND_MAX
 
-def binomial(int N, float p)
+def binomial(int N, float p):
     cdef int N, count, wait
     cdef float p
     
