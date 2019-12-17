@@ -23,7 +23,7 @@ def binomial(int N, float p):
             p = log(1. - p)
 
         while (wait <= N):
-            count++
+            count += 1
             N -= wait
             wait = ceil( log(rand() / RAND_MAX) / p );
     return count
