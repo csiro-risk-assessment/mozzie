@@ -1,20 +1,19 @@
 import sys
 import array
 cimport cpython.array as array
-#import numpy as np
-#cimport numpy as np
+import numpy as np
 from scipy.integrate import solve_ivp
 from math import exp, ceil, log, cos, sqrt
 from libc.stdlib cimport rand, RAND_MAX
 
-cdef binomial(int N, float p):
+cdef int binomial(int N, float p):
     cdef int count, wait
     cdef float tmp
     
     if ((N == 0) | (p == 0)):
         return 0
     if ((N*p > 9.) & (N*(1-p) > 9.)):
-        tmp = sqrt(-2*log(rand() / RAND_MAX)) * cos(2*3.1415926535*rand()/RAND_MAX)
+        tmp = sqrt(-2*log(rand() / RAND_MAX)) * cos(2.*3.1415926535*rand()/RAND_MAX)
         count = int(tmp*sqrt(N*p*(1.-p)) + N*p + 0.5)
     else:
         count = -1
@@ -30,14 +29,14 @@ cdef binomial(int N, float p):
             wait = ceil( log(rand() / RAND_MAX) / p );
     return count
     
-cdef poisson(float l):
+cdef int poisson(float l):
     cdef int k
     cdef float p, L
     
     if (l == 0):
         return 0
     elif (l > 10):
-        p = sqrt(-2*log(rand() / RAND_MAX)) * cos(2*3.1415926535*rand()/RAND_MAX)
+        p = sqrt(-2*log(rand() / RAND_MAX)) * cos(2.*3.1415926535*rand()/RAND_MAX)
         k = int(p*sqrt(l) + l + 0.5)
         return k
     else:
