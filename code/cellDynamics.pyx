@@ -4,7 +4,7 @@ cimport cpython.array as array
 import numpy as np
 cimport numpy as np
 from scipy.integrate import solve_ivp
-from math import exp, ceil, log
+from math import exp, ceil, log, cos, sqrt
 from libc.stdlib cimport rand, RAND_MAX
 
 def binomial(int N, float p):
@@ -12,6 +12,8 @@ def binomial(int N, float p):
     cdef float p
     
     if (N*p > 9. & N*(1-p) > 9.):
+        count = sqrt(-2*log(rand() / RAND_MAX)) * cos(2*3.1415926535*rand()/RAND_MAX)
+        count = int(count*sqrt(N*p*(1.-p)) + N*p + 0.5)
     else:
         count = -1
         wait = 0
@@ -23,7 +25,7 @@ def binomial(int N, float p):
         while (wait <= N):
             count++
             N -= wait
-            wait = ceil( log(rand()) / p );
+            wait = ceil( log(rand() / RAND_MAX) / p );
     return count
 
 cdef class CellDynamicsBase:
