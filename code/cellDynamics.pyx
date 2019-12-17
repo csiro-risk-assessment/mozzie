@@ -1,16 +1,18 @@
 import sys
 import array
 cimport cpython.array as array
-import numpy as np
-cimport numpy as np
+#import numpy as np
+#cimport numpy as np
 from scipy.integrate import solve_ivp
 from math import exp, ceil, log, cos, sqrt
 from libc.stdlib cimport rand, RAND_MAX
 
-def binomial(int N, float p):
+cdef binomial(int N, float p):
     cdef int count, wait
     cdef float tmp
     
+    if ((N == 0) | (p == 0)):
+        return 0
     if ((N*p > 9.) & (N*(1-p) > 9.)):
         tmp = sqrt(-2*log(rand() / RAND_MAX)) * cos(2*3.1415926535*rand()/RAND_MAX)
         count = int(tmp*sqrt(N*p*(1.-p)) + N*p + 0.5)
@@ -28,9 +30,24 @@ def binomial(int N, float p):
             wait = ceil( log(rand() / RAND_MAX) / p );
     return count
     
-#def poisson(float lambda):
-    #cdef int k
+cdef poisson(float l):
+    cdef int k
+    cdef float p, L
     
+    if (l == 0):
+        return 0
+    elif (l > 10):
+        p = sqrt(-2*log(rand() / RAND_MAX)) * cos(2*3.1415926535*rand()/RAND_MAX)
+        k = int(p*sqrt(l) + l + 0.5)
+        return k
+    else:
+        L = exp(-l)
+        k = 0
+        p = 1.
+        while (p > L):
+            k += 1
+            p *= rand() / RAND_MAX
+        return k - 1
 
 cdef class CellDynamicsBase:
 
@@ -834,7 +851,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                                         self.mat.data.as_floats[ind_mat] += self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
                                 # multiply mat by things that don't depend on gtm or spm
                                 self.mat.data.as_floats[ind_mat] *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
-                                self.rhs.data.as_floats[row] += np.random.poisson(self.mat.data.as_floats[ind_mat])
+                                self.rhs.data.as_floats[row] += poisson(self.mat.data.as_floats[ind_mat] * x[col])
 
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
@@ -844,20 +861,20 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                     row = self.getIndex(sp, gt, sex, age)
                     ind = row + self.num_populations * row # diagonal entry
                     if self.num_ages > 1:
-                        self.rhs.data.as_floats[row] -= np.random.binomial(int(x[row]), 1 - exp(-self.mu_larvae)) # mortality
-                        self.mat.data.as_floats[0] = np.random.binomial(int(x[row]), 1 - exp(-self.aging_rate))
+                        self.rhs.data.as_floats[row] -= binomial(int(x[row]), 1 - exp(-self.mu_larvae)) # mortality
+                        self.mat.data.as_floats[0] = binomial(int(x[row]), 1 - exp(-self.aging_rate))
                         self.rhs.data.as_floats[row] -= self.mat.data.as_floats[0] # aging to older bracket
                         
                     for age in range(1, self.num_ages - 1):
                         row = self.getIndex(sp, gt, sex, age)
-                        self.rhs.data.as_floats[row] -= np.random.binomial(int(x[row]), 1 - exp(-self.mu_larvae))
+                        self.rhs.data.as_floats[row] -= binomial(int(x[row]), 1 - exp(-self.mu_larvae))
                         self.rhs.data.as_floats[row] += self.mat.data.as_floats[0] # contribution from younger age bracket
-                        self.mat.data.as_floats[0] = np.random.binomial(int(x[row]), 1 - exp(-self.aging_rate))
+                        self.mat.data.as_floats[0] = binomial(int(x[row]), 1 - exp(-self.aging_rate))
                         self.rhs.data.as_floats[row] -= self.mat.data.as_floats[0]
                         
                     age = self.num_ages - 1
                     row = self.getIndex(sp, gt, sex, age)
-                    self.rhs.data.as_floats[row] -= np.random.binomial(int(x[row]), 1 - exp(-self.mu_adult)) # mortality
+                    self.rhs.data.as_floats[row] -= binomial(int(x[row]), 1 - exp(-self.mu_adult)) # mortality
                     if self.num_ages > 1:
                         self.rhs.data.as_floats[row] += self.mat.data.as_floats[0] # contribution from younger age bracket
 

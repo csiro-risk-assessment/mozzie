@@ -1,6 +1,10 @@
 import array
 cimport cpython.array as array
 
+cdef int binomial(int N, float p)
+
+cdef int poisson(float l)
+
 cdef class CellDynamicsBase:
     """Manipulates information at a single cell, in particular this class solves lifecycle ODEs"""
 
