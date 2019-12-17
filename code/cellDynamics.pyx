@@ -10,7 +10,7 @@ from libc.stdlib cimport rand, RAND_MAX
 def binomial(int N, float p):
     cdef count, wait
     
-    if (N*p > 9. & N*(1-p) > 9.):
+    if ((N*p > 9.) & (N*(1-p) > 9.)):
         count = sqrt(-2*log(rand() / RAND_MAX)) * cos(2*3.1415926535*rand()/RAND_MAX)
         count = int(count*sqrt(N*p*(1.-p)) + N*p + 0.5)
     else:
