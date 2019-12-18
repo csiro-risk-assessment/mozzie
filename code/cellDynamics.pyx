@@ -10,15 +10,15 @@ cdef int binomial(int N, float p):
     cdef int count, wait
     cdef float tmp
     
-    if ((N == 0) | (p == 0)):
+    if ((N == 0) | (p == 0.)): # trivial cases
         return 0
-    if ((N*p > 9.) & (N*(1-p) > 9.)):
+    if ((N*p > 9.) & (N*(1-p) > 9.)): # normal approximation
         tmp = sqrt(-2*log(rand() / RAND_MAX)) * cos(2.*3.1415926535*rand()/RAND_MAX)
         count = int(tmp*sqrt(N*p*(1.-p)) + N*p + 0.5)
-    else:
+    else: # exact solution
         count = -1
         wait = 0
-        if (p < 0.0001):
+        if (p < 0.0001): # if p small approximate log(1-p) with -p
             p = -p
         else:
             p = log(1. - p)
@@ -33,13 +33,13 @@ cdef int poisson(float l):
     cdef int k
     cdef float p, L
     
-    if (l == 0):
+    if (l == 0.): # trivial case
         return 0
-    elif (l > 10):
+    elif (l > 10.): # normal approximation
         p = sqrt(-2*log(rand() / RAND_MAX)) * cos(2.*3.1415926535*rand()/RAND_MAX)
         k = int(p*sqrt(l) + l + 0.5)
         return k
-    else:
+    else: # exact solution
         L = exp(-l)
         k = 0
         p = 1.
