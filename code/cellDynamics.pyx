@@ -662,9 +662,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             for ind in range(self.num_populations):
                 cchange[ind] = (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
 
-        elif self.time_integration_method == 3:
-            raise ValueError("Need CellDynamicsMosquito23G")
-
 
     cpdef setTimeIntegrationMethod(self, str method):
         if method == "explicit_euler":
@@ -674,6 +671,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         elif method == "runge_kutta4":
             self.time_integration_method = 2
         elif method == "stochastic":
+            if self.__class__.__name__ != "CellDynamicsMosquito23G":
+                raise ValueError("Stochastic time integration can only be used in CellDynamicsMosquito23G")
             self.time_integration_method = 3
         else:
             raise ValueError("Time integration method " + method + " not supported")
