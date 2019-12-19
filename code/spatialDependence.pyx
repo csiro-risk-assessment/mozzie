@@ -1,6 +1,7 @@
 import time
 import array
 cimport cpython.array as array
+cimport csvparser
 
 cdef class SpatialDependence:
 
@@ -22,6 +23,13 @@ cdef class SpatialDependence:
         if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed" or filetype == "generic_float"):
             raise ValueError("filetype not recognized")
         self.filetype = filetype
+
+        cdef char header[4096] # probably better to char* and allocate it in getHeader, and return a size
+        cdef int error_code = csvparser.getHeader(filename.encode(), header)
+        if error_code != 0:
+            raise IOError('Cannot open or read ' + filename)
+        # now pass header.decode() to checkHeader
+        #print("got header=" + header.decode() + "END")
 
         # open and read file
         try:
