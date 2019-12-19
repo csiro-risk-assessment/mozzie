@@ -38,8 +38,6 @@ cdef class SpatialDependence:
             self.checkHeader(py_bytes_header.decode(), filename, required_additional_headers + [self.required_header])
         except:
             raise
-        #print("got header=" + py_bytes_header.decode() + "END")
-        # now pass py_bytes_header.decode() to checkHeader
 
         # open and read file
         try:
