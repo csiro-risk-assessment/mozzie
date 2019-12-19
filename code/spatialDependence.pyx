@@ -2,6 +2,7 @@ import time
 import array
 cimport cpython.array as array
 cimport csvparser
+from libc.stdlib cimport free
 
 cdef class SpatialDependence:
 
@@ -24,12 +25,21 @@ cdef class SpatialDependence:
             raise ValueError("filetype not recognized")
         self.filetype = filetype
 
-        cdef char header[4096] # probably better to char* and allocate it in getHeader, and return a size
-        cdef int error_code = csvparser.getHeader(filename.encode(), header)
+        cdef char* header = NULL
+        cdef size_t header_length = 0
+        cdef int error_code = csvparser.getHeader(filename.encode(), &header, &header_length)
         if error_code != 0:
             raise IOError('Cannot open or read ' + filename)
-        # now pass header.decode() to checkHeader
-        #print("got header=" + header.decode() + "END")
+        try:
+            py_bytes_header = header[:header_length]
+        finally:
+            free(header)
+        try:
+            self.checkHeader(py_bytes_header.decode(), filename, required_additional_headers + [self.required_header])
+        except:
+            raise
+        #print("got header=" + py_bytes_header.decode() + "END")
+        # now pass py_bytes_header.decode() to checkHeader
 
         # open and read file
         try:
@@ -37,12 +47,6 @@ cdef class SpatialDependence:
                 data = f.readlines()
         except:
             raise IOError('Cannot open or read ' + filename)
-
-        # check the header
-        try:
-            self.checkHeader(data, filename, required_additional_headers + [self.required_header])
-        except:
-            raise
 
         cdef unsigned lendata
         # Size data with full-sized arrays
@@ -119,9 +123,9 @@ cdef class SpatialDependence:
             array.resize(self.data2, ind)
 
 
-    cdef checkHeader(self, list data, str filename, list required_headers):
+    cdef checkHeader(self, str header_data, str filename, list required_headers):
         headers_found = []
-        for line in data:
+        for line in header_data.split("\n"):
             if not line.strip():
                 continue
             line = line.strip()
@@ -131,7 +135,7 @@ cdef class SpatialDependence:
                     headers_found.append(line)
                 continue
             else:
-                # must be starting to read data
+                # must be starting to read numerical data
                 break
         if len(headers_found) != len(required_headers):
             raise ValueError("Header lines in " + filename + " must include " + "\n".join(required_headers))
