@@ -754,6 +754,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
         # newborn larvae
         if self.one_over_kk < self.one_over_min_cc:
 
+            # ANDY QUESTION: duplicated block?
             # define competition
             array.zero(self.comp)
             for age_d in range(end_index_for_competition):
@@ -766,6 +767,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
             for sp in range(self.num_species):
                 self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
 
+            # ANDY QUESTION: duplicated block?
             # define the denominator term
             array.zero(self.denom)
             age_d = self.num_ages - 1 # adult
@@ -805,6 +807,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                                         self.mat.data.as_floats[ind_mat] += self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
                                 # multiply mat by things that don't depend on gtm or spm
                                 self.mat.data.as_floats[ind_mat] *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+                                # ANDY QUESTION: Is this the only change from the mosquito23 version?
                                 self.rhs.data.as_floats[row] += poisson(self.mat.data.as_floats[ind_mat] * x[col])
 
         # mortality, and aging into/from neighbouring age brackets
@@ -816,13 +819,17 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                     ind = row + self.num_populations * row # diagonal entry
                     if self.num_ages > 1:
                         self.rhs.data.as_floats[row] -= binomial(int(x[row]), 1 - exp(-self.mu_larvae)) # mortality
+                        
+                        # ANDY QUESTION: correctly re-setting mat[0] here?
                         self.mat.data.as_floats[0] = binomial(int(x[row]), 1 - exp(-self.aging_rate))
                         self.rhs.data.as_floats[row] -= self.mat.data.as_floats[0] # aging to older bracket
                         
                     for age in range(1, self.num_ages - 1):
                         row = self.getIndex(sp, gt, sex, age)
                         self.rhs.data.as_floats[row] -= binomial(int(x[row]), 1 - exp(-self.mu_larvae))
+                        # ANDY QUESTION: Should [0] be [age - 1] ?
                         self.rhs.data.as_floats[row] += self.mat.data.as_floats[0] # contribution from younger age bracket
+                        # ANDY QUESTION: correctly re-setting mat[0] here?
                         self.mat.data.as_floats[0] = binomial(int(x[row]), 1 - exp(-self.aging_rate))
                         self.rhs.data.as_floats[row] -= self.mat.data.as_floats[0]
                         
@@ -830,6 +837,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
                     row = self.getIndex(sp, gt, sex, age)
                     self.rhs.data.as_floats[row] -= binomial(int(x[row]), 1 - exp(-self.mu_adult)) # mortality
                     if self.num_ages > 1:
+                        # ANDY QUESTION: Should [0] be [age - 1] ?
                         self.rhs.data.as_floats[row] += self.mat.data.as_floats[0] # contribution from younger age bracket
 
         #for row in range(self.num_populations):
