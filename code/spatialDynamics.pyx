@@ -1,7 +1,5 @@
 import time
 import array
-#import numpy as np
-#cimport numpy as np
 cimport cpython.array as array
 from wind cimport Wind
 from grid cimport Grid
@@ -289,6 +287,7 @@ cdef class SpatialDynamics:
     cpdef void diffuse_stoc(self, float dt, float diffusion_coeff):
         """One timestep of stochastic diffusion"""
 
+        # ANDY QUESTION: probably lots of code duplication here
         # fraction of population that diffuses to nearest neighbour
         # in comparison to the diffusion equation,
         # diffusion_d = (diffusion_coefficient) * 4 * dt / (dx)^2
@@ -345,6 +344,7 @@ cdef class SpatialDynamics:
         if wind.getProcessedDataComputed() != 1:
             raise ValueError("Wind must have been processed before being used")
 
+        # ANDY QUESTION: probably lots of code duplication here
         cdef array.array afr = wind.getAdvectionFrom()
         cdef array.array ato = wind.getAdvectionTo()
         cdef array.array apr = wind.getAdvectionP()
