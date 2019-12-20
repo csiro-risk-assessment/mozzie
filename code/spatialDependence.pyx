@@ -67,6 +67,15 @@ cdef class SpatialDependence:
         elif error_code == 6:
             raise ValueError("The data entries in " + filename + " must be either 0 or 1")
 
+        # shove the data into the data0, etc, arrays
+        # i can't figure out how to just do self.data0 = uint, so have to copy
+        cdef unsigned ind = 0
+        if filetype == "active_inactive":
+            self.data0 = array.clone(self.uint_template, self.num_cells, zero=False)
+            for ind in range(self.num_cells):
+                self.data0.data.as_uints[ind] = udata[ind]
+            free(udata)
+            return
 
         # open and read file
         try:
@@ -91,7 +100,6 @@ cdef class SpatialDependence:
             self.data0 = array.clone(self.float_template, self.num_cells, zero=False)
 
         # Read the data
-        cdef unsigned ind = 0
         cdef unsigned i, j
         cdef float fl
         for line in data:
