@@ -27,8 +27,8 @@ cdef class SpatialDependence:
 
         cdef char* header = NULL
         cdef size_t header_length = 0
-        cdef int error_code = csvparser.getHeader(filename.encode(), &header, &header_length)
-        if error_code != 0:
+        cdef int error_code = csvparser.parse(filename.encode(), &header, &header_length)
+        if error_code == 1:
             raise IOError('Cannot open or read ' + filename)
         try:
             py_bytes_header = header[:header_length]
