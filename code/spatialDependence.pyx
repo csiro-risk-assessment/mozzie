@@ -28,11 +28,28 @@ cdef class SpatialDependence:
         cdef char* header = NULL
         cdef size_t header_length = 0
         cdef unsigned* udata = NULL
-        cdef int error_code = csvparser.parse(filename.encode(), &header, &header_length, &udata)
+        cdef float* fdata = NULL
+        cdef int error_code = 0
+        cdef size_t expected_num_in_row = self.nx
+        if filetype == "active_inactive":
+            error_code = csvparser.parseBool(filename.encode(), &header, &header_length, &udata, expected_num_in_row, self.num_cells)
+        elif filetype == "wind_raw":
+            expected_num_in_row = 2 * self.nx
+            error_code = csvparser.parseWind(filename.encode(), &header, &header_length, &fdata, expected_num_in_row, self.num_cells)
+        elif filetype == "wind_processed":
+            expected_num_in_row = 3
+            error_code = csvparser.parseProcessedWind(filename.encode(), &header, &header_length, &fdata, expected_num_in_row, self.num_cells)
+        elif filetype == "generic_float":
+            error_code = csvparser.parseFloat(filename.encode(), &header, &header_length, &fdata, expected_num_in_row, self.num_cells)
+
         if error_code == 1:
             raise IOError('Cannot open or read ' + filename)
-        if error_code == 2:
-            raise IOError('C buffer not big enough to read ' + filename + '  You will have to increase MAX_FILE_LENGTH')
+        elif error_code == 2:
+            raise MemoryError('C buffer not big enough to read ' + filename + '  You will have to increase MAX_FILE_LENGTH')
+        elif error_code == 3:
+            raise MemoryError('C memory allocation problem when reading ' + filename)
+
+        # file was opened and header successfully read, so check header
         try:
             py_bytes_header = header[:header_length]
         finally:
@@ -41,6 +58,15 @@ cdef class SpatialDependence:
             self.checkHeader(py_bytes_header.decode(), filename, required_additional_headers + [self.required_header])
         except:
             raise
+
+        # header is OK, so check for poor data
+        if error_code == 4:
+            raise ValueError("There must be " + str(self.ny) + " data lines in " + filename)
+        elif error_code == 5:
+            raise ValueError("There must be " + str(expected_num_in_row) + " entries per line in " + filename)
+        elif error_code == 6:
+            raise ValueError("The data entries in " + filename + " must be either 0 or 1")
+
 
         # open and read file
         try:
