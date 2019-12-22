@@ -25,6 +25,9 @@ cdef class Wind:
     # number of entries in pdf
     cdef unsigned num_pdf
 
+    # whether the wind files are binary (=1) or ascii (=0)
+    cdef unsigned binary_file_format
+
     # the grid (which defines cell_size, etc)
     cdef Grid grid
     
@@ -115,5 +118,11 @@ cdef class Wind:
 
     cpdef unsigned getNumAdvection(self)
     """Returns the size of the advection_from array (= size of advection_to array = size of advection_p array)"""
+
+    cpdef setBinaryFileFormat(self, unsigned value)
+    """set binary_file_format to value, which must be 0 (indicating ascii plaintext CSV) or 1 (indicating binary)"""
+    
+    cpdef unsigned getBinaryFileFormat(self)
+    """returns binary_file_format"""
     
 

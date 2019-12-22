@@ -38,16 +38,13 @@ cdef class SpatialDependence:
     # more imported data
     cdef array.array data1
 
-    # event more imported data
+    # even more imported data
     cdef array.array data2
 
     # unsigned array template, for faster building of arrays
     cdef array.array uint_template
     # float array template, for faster building of arrays
     cdef array.array float_template
-
-    cpdef parseBinary(self, str filename, str filetype, list required_additional_headers)
-    """Parses filename, assuming it is in binary format.  See method parse(...) for documentation"""
 
     cpdef parse(self, str filename, str filetype, list required_additional_headers)
     """Parses filename and places data into self.data internal data structures.
@@ -64,9 +61,6 @@ cdef class SpatialDependence:
     The third row corresponds to the ymin+2*cell_size set of cells, etc
     - Each row must typically have nx comma-separated entries (depending on filetype)
     - The entries must sometimes obey bounds (depending on filetype)"""
-
-    cpdef parseWithC(self, str filename, str filetype, list required_additional_headers, int binary)
-    """Parses file using the C code in csvparser.  The file can be either binary (binary = 1) or plaintext (binary = 0).  See parse(...) for documentation"""
 
     cpdef parseWithPython(self, str filename, str filetype, list required_additional_headers)
     """Pure python version of parse(...)

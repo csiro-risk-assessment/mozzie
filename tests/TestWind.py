@@ -23,6 +23,11 @@ class TestWind(unittest.TestCase):
       self.g2 = Grid(1.0, 2.0, 3.0, 4, 3)
       self.g2.setActiveAndInactive(os.path.join(findbin, "inactive_active.csv"))
       self.w2 = Wind(os.path.join(findbin, "wind1.csv"), os.path.join(findbin, "wind2_processed.csv"), [[1.0, 0.3], [2.0, 0.7]], self.g2)
+
+      self.w1b = Wind(os.path.join(findbin, "wind1.bin"), os.path.join(findbin, "wind1_processed.bin"), [[1.0, 0.3], [2.0, 0.7]], self.g1)
+      self.w1b.setBinaryFileFormat(1)
+      self.w2b = Wind(os.path.join(findbin, "wind1.bin"), os.path.join(findbin, "wind2_processed.bin"), [[1.0, 0.3], [2.0, 0.7]], self.g2)
+      self.w2b.setBinaryFileFormat(1)
       
 
    def testBadPDF(self):
@@ -91,6 +96,13 @@ class TestWind(unittest.TestCase):
             w.parseProcessedFile()
          self.assertEqual(str(the_err.exception), "Header lines in " + os.path.join(findbin, "bad_wind_processed" + num + ".csv") + " must include #Active cells defined by file inactive_active.csv\n#raw_vel_filename=no_file\n#processed_pdf=[[1.0, 1.0]]\n#xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3")
 
+      for num in ["1", "2", "3"]:
+         wb = Wind("no_file", os.path.join(findbin, "bad_wind_processed" + num + ".bin"), [[1, 1]], self.g2)
+         wb.setBinaryFileFormat(1)
+         with self.assertRaises(ValueError) as the_err:
+            wb.parseProcessedFile()
+         self.assertEqual(str(the_err.exception), "Header lines in " + os.path.join(findbin, "bad_wind_processed" + num + ".bin") + " must include #Active cells defined by file inactive_active.csv\n#raw_vel_filename=no_file\n#processed_pdf=[[1.0, 1.0]]\n#xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3")
+
       for num in ["8", "9"]:
          w = Wind("no_file", os.path.join(findbin, "bad_wind_processed" + num + ".csv"), [[1, 1]], self.g2)
          with self.assertRaises(ValueError) as the_err:
@@ -102,6 +114,13 @@ class TestWind(unittest.TestCase):
          with self.assertRaises(ValueError) as the_err:
             w.parseProcessedFile()
          self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_wind_processed" + num + ".csv") + " is incorrectly bounded.  Bad data line number = 0")
+
+      for num in ["11", "12", "13", "14"]:
+         wb = Wind("no_file", os.path.join(findbin, "bad_wind_processed" + num + ".bin"), [[1, 1]], self.g2)
+         wb.setBinaryFileFormat(1)
+         with self.assertRaises(ValueError) as the_err:
+            wb.parseProcessedFile()
+         self.assertEqual(str(the_err.exception), "Data in " + os.path.join(findbin, "bad_wind_processed" + num + ".bin") + " is incorrectly bounded.  Bad data line number = 0")
 
 
    def testGetRawWindFilename(self):
@@ -132,11 +151,23 @@ class TestWind(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal(self.w1.getAdvectionP(), [1.0, 1.0, 1.0, 1.0, 1.0, 0.3, 0.7, 0.3, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
       self.assertEqual(self.w1.getNumAdvection(), 16)
       
+      self.w1b.parseRawFile()
+      self.assertTrue(arrayequal(self.w1b.getAdvectionFrom(), [0, 1, 2, 4, 5, 6, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11]))
+      self.assertTrue(arrayequal(self.w1b.getAdvectionTo(), [0, 5, 0, 5, 5, 2, 0, 3, 1, 5, 10, 11, 11, 10, 10, 11]))
+      self.assertTrue(arrayfuzzyequal(self.w1b.getAdvectionP(), [1.0, 1.0, 1.0, 1.0, 1.0, 0.3, 0.7, 0.3, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
+      self.assertEqual(self.w1b.getNumAdvection(), 16)
+      
       self.w2.parseRawFile()
       self.assertTrue(arrayequal(self.w2.getAdvectionFrom(), [0, 1, 4, 4, 5, 5, 6, 6]))
       self.assertTrue(arrayequal(self.w2.getAdvectionTo(), [0, 0, 1, 0, 6, 5, 5, 6]))
       self.assertTrue(arrayfuzzyequal(self.w2.getAdvectionP(), [1.0, 1.0, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
       self.assertEqual(self.w2.getNumAdvection(), 8)
+
+      self.w2b.parseRawFile()
+      self.assertTrue(arrayequal(self.w2b.getAdvectionFrom(), [0, 1, 4, 4, 5, 5, 6, 6]))
+      self.assertTrue(arrayequal(self.w2b.getAdvectionTo(), [0, 0, 1, 0, 6, 5, 5, 6]))
+      self.assertTrue(arrayfuzzyequal(self.w2b.getAdvectionP(), [1.0, 1.0, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
+      self.assertEqual(self.w2b.getNumAdvection(), 8)
 
    def testOutputProcessedCSV(self):
       w3 = Wind(os.path.join(findbin, "wind1.csv"), os.path.join(findbin, "wind3_processed.csv"), [[1.0, 0.3], [2.0, 0.7]], self.g2)
@@ -180,6 +211,27 @@ class TestWind(unittest.TestCase):
       self.assertEqual(self.w2.getNumAdvection(), 8)
       self.assertEqual(self.w2.getProcessedDataComputed(), 1)
 
+      self.w1b.parseProcessedFile()
+      self.assertTrue(arrayequal(self.w1b.getAdvectionFrom(), [0, 1, 2, 4, 5, 6, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11]))
+      self.assertTrue(arrayequal(self.w1b.getAdvectionTo(), [0, 5, 0, 5, 5, 2, 0, 3, 1, 5, 10, 11, 11, 10, 10, 11]))
+      self.assertTrue(arrayfuzzyequal(self.w1b.getAdvectionP(), [1.0, 1.0, 1.0, 1.0, 1.0, 0.3, 0.7, 0.3, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
+      self.assertEqual(self.w1b.getNumAdvection(), 16)
+      self.assertEqual(self.w1b.getProcessedDataComputed(), 1)
+
+      self.w2b.parseProcessedFile()
+      self.assertTrue(arrayequal(self.w2b.getAdvectionFrom(), [0, 1, 4, 4, 5, 5, 6, 6]))
+      self.assertTrue(arrayequal(self.w2b.getAdvectionTo(), [0, 0, 1, 0, 6, 5, 5, 6]))
+      self.assertTrue(arrayfuzzyequal(self.w2b.getAdvectionP(), [1.0, 1.0, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
+      self.assertEqual(self.w2b.getNumAdvection(), 8)
+      self.assertEqual(self.w2b.getProcessedDataComputed(), 1)
+
+   def testBinaryFormat(self):
+      with self.assertRaises(ValueError) as the_err:
+         self.w1.setBinaryFileFormat(3)
+      self.assertEqual(str(the_err.exception), "FileFormat must be 0 or 1");
+      self.assertEqual(self.w1.getBinaryFileFormat(), 0)
+      self.w1.setBinaryFileFormat(1)
+      self.assertEqual(self.w1.getBinaryFileFormat(), 1)
 
       
 

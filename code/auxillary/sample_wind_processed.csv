@@ -1,0 +1,23 @@
+#Processed wind advection written at: Mon Dec 23 10:32:23 2019
+#Active cells defined by file None
+#xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3
+#raw_vel_filename=wind1.csv
+#processed_pdf=[[1.0, 0.3], [1.0, 0.7]]
+#Data is of the form:
+#active_cell_id_from,active_cell_id_to,probability
+0,0,1.0
+1,5,1.0
+2,0,1.0
+4,5,1.0
+5,5,1.0
+6,2,0.30000001192092896
+6,0,0.699999988079071
+7,3,0.30000001192092896
+8,1,0.30000001192092896
+8,5,0.699999988079071
+9,10,0.30000001192092896
+9,11,0.699999988079071
+10,11,0.30000001192092896
+10,10,0.699999988079071
+11,10,0.30000001192092896
+11,11,0.699999988079071

@@ -27,6 +27,7 @@ cdef class Wind:
         if sum([p[1] for p in self.pdf]) > 1.0001 or sum([p[1] for p in self.pdf]) < 0.9999:
             raise ValueError(pdf_error_string)
             
+        self.binary_file_format = 0
         self.grid = grid
         self.xmin = self.grid.getXmin()
         self.ymin = self.grid.getYmin()
@@ -46,7 +47,10 @@ cdef class Wind:
     cpdef parseRawFile(self):
         """Parse the raw wind file specified in the constructor, then processes this data to produce advection_from, etc"""
         self.windParser = SpatialDependence(self.xmin, self.ymin, self.cell_size, self.nx, self.ny)
-        self.windParser.parse(self.raw_wind_fn, "wind_raw", [])
+        if self.binary_file_format == 0:
+            self.windParser.parse(self.raw_wind_fn, "wind_raw", [])
+        else:
+            self.windParser.parse(self.raw_wind_fn, "wind_raw_binary", [])
         self.raw_velx = self.windParser.getData0()
         self.raw_vely = self.windParser.getData1()
         cdef float scale = 1.0 / self.cell_size
@@ -60,7 +64,10 @@ cdef class Wind:
     cpdef parseProcessedFile(self):
         """Parse the processed wind file specified in the constructor, putting the results in advection_from, etc"""
         self.windParser = SpatialDependence(self.xmin, self.ymin, self.cell_size, self.nx, self.ny)
-        self.windParser.parse(self.processed_wind_fn, "wind_processed", ["#Active cells defined by file " + self.grid.getActiveFilename(), "#raw_vel_filename=" + os.path.basename(self.raw_wind_fn), "#processed_pdf=" + str(self.pdf)])
+        if self.binary_file_format == 0:
+            self.windParser.parse(self.processed_wind_fn, "wind_processed", ["#Active cells defined by file " + self.grid.getActiveFilename(), "#raw_vel_filename=" + os.path.basename(self.raw_wind_fn), "#processed_pdf=" + str(self.pdf)])
+        else:
+            self.windParser.parse(self.processed_wind_fn, "wind_processed_binary", ["#Active cells defined by file " + self.grid.getActiveFilename(), "#raw_vel_filename=" + os.path.basename(self.raw_wind_fn), "#processed_pdf=" + str(self.pdf)])
         self.advection_from = self.windParser.getData0()
         self.advection_to = self.windParser.getData1()
         self.advection_p = self.windParser.getData2()
@@ -210,3 +217,12 @@ cdef class Wind:
         return self.num_advection
     
 
+    cpdef setBinaryFileFormat(self, unsigned value):
+        if not (value == 0 or value == 1):
+            raise ValueError("FileFormat must be 0 or 1")
+        self.binary_file_format = value
+
+    cpdef unsigned getBinaryFileFormat(self):
+        return self.binary_file_format
+
+        

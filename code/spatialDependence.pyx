@@ -20,23 +20,12 @@ cdef class SpatialDependence:
         self.float_template = array.array('f', [])
 
 
-    cpdef parseBinary(self, str filename, str filetype, list required_additional_headers):
-        try:
-            self.parseWithC(filename, filetype, required_additional_headers, 0)
-        except:
-            raise
-
     cpdef parse(self, str filename, str filetype, list required_additional_headers):
-        try:
-            self.parseWithC(filename, filetype, required_additional_headers, 1)
-        except:
-            raise
-
-    cpdef parseWithC(self, str filename, str filetype, list required_additional_headers, int binary):
-        if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed" or filetype == "generic_float"):
+        if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed" or filetype == "generic_float" or filetype == "active_inactive_binary" or filetype == "wind_raw_binary" or filetype == "wind_processed_binary" or filetype == "generic_float_binary"):
             raise ValueError("filetype not recognized")
         self.filetype = filetype
 
+        cdef int binary = (1 if filetype.endswith("binary") else 0)
         cdef char* header = NULL
         cdef size_t header_length = 0
         cdef size_t wind_length = 0
@@ -45,18 +34,18 @@ cdef class SpatialDependence:
         cdef int error_code = 0
         cdef size_t expected_num_in_row = self.nx
         cdef size_t expected_num_data = self.num_cells
-        if filetype == "active_inactive":
-            error_code = csvparser.parseBool(filename.encode(), &header, &header_length, &udata, expected_num_in_row, expected_num_data)
-        elif filetype == "wind_raw":
+        if filetype.startswith("active_inactive"):
+            error_code = csvparser.parseBool(filename.encode(), &header, &header_length, &udata, expected_num_in_row, expected_num_data, binary)
+        elif filetype.startswith("wind_raw"):
             expected_num_in_row = 2 * self.nx
             expected_num_data = 2 * self.num_cells
-            error_code = csvparser.parseFloat(filename.encode(), &header, &header_length, &fdata, expected_num_in_row, expected_num_data)
-        elif filetype == "wind_processed":
+            error_code = csvparser.parseFloat(filename.encode(), &header, &header_length, &fdata, expected_num_in_row, expected_num_data, binary)
+        elif filetype.startswith("wind_processed"):
             expected_num_in_row = 3
             expected_num_data = 0
-            error_code = csvparser.parseProcessedWind(filename.encode(), &header, &header_length, &udata, &fdata, &wind_length, expected_num_in_row)
-        elif filetype == "generic_float":
-            error_code = csvparser.parseFloat(filename.encode(), &header, &header_length, &fdata, expected_num_in_row, expected_num_data)
+            error_code = csvparser.parseProcessedWind(filename.encode(), &header, &header_length, &udata, &fdata, &wind_length, expected_num_in_row, binary)
+        elif filetype.startswith("generic_float"):
+            error_code = csvparser.parseFloat(filename.encode(), &header, &header_length, &fdata, expected_num_in_row, expected_num_data, binary)
 
         if error_code == 1:
             raise IOError('Cannot open or read ' + filename)
@@ -86,13 +75,13 @@ cdef class SpatialDependence:
         # shove the data into the data0, etc, arrays
         # i can't figure out how to just do self.data0 = uint, so have to copy
         cdef unsigned ind = 0
-        if filetype == "active_inactive":
+        if filetype.startswith("active_inactive"):
             self.data0 = array.clone(self.uint_template, self.num_cells, zero=False)
             for ind in range(self.num_cells):
                 self.data0.data.as_uints[ind] = udata[ind]
             free(udata)
             return
-        elif filetype == "wind_raw":
+        elif filetype.startswith("wind_raw"):
             self.data0 = array.clone(self.float_template, self.num_cells, zero=False)
             self.data1 = array.clone(self.float_template, self.num_cells, zero=False)
             for ind in range(self.num_cells):
@@ -100,7 +89,7 @@ cdef class SpatialDependence:
                 self.data1.data.as_floats[ind] = fdata[2 * ind + 1]
             free(fdata)
             return
-        elif filetype == "wind_processed":
+        elif filetype.startswith("wind_processed"):
             self.data0 = array.clone(self.uint_template, wind_length, zero=False)
             self.data1 = array.clone(self.uint_template, wind_length, zero=False)
             self.data2 = array.clone(self.float_template, wind_length, zero=False)
@@ -111,7 +100,7 @@ cdef class SpatialDependence:
             free(udata)
             free(fdata)
             return
-        elif filetype == "generic_float":
+        elif filetype.startswith("generic_float"):
             self.data0 = array.clone(self.float_template, self.num_cells, zero=False)
             for ind in range(self.num_cells):
                 self.data0.data.as_floats[ind] = fdata[ind]
@@ -240,12 +229,12 @@ cdef class SpatialDependence:
         cdef array.array c1
         cdef unsigned num_active = len(global_index)
         cdef unsigned i
-        if self.filetype == "active_inactive":
+        if self.filetype.startswith("active_inactive"):
             c0 = array.clone(self.uint_template, num_active, zero = False)
             for i in range(num_active):
                 c0.data.as_uints[i] = self.data0.data.as_uints[global_index.data.as_uints[i]]
             self.data0 = c0
-        elif self.filetype == "wind_raw":
+        elif self.filetype.startswith("wind_raw"):
             c0 = array.clone(self.float_template, num_active, zero = False)
             c1 = array.clone(self.float_template, num_active, zero = False)
             for i in range(num_active):
@@ -253,7 +242,7 @@ cdef class SpatialDependence:
                 c1.data.as_floats[i] = self.data1.data.as_floats[global_index.data.as_uints[i]]
             self.data0 = c0
             self.data1 = c1
-        elif self.filetype == "generic_float":
+        elif self.filetype.startswith("generic_float"):
             c0 = array.clone(self.float_template, num_active, zero = False)
             for i in range(num_active):
                 c0.data.as_floats[i] = self.data0.data.as_floats[global_index.data.as_uints[i]]
