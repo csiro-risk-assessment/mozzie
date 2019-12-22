@@ -59,6 +59,10 @@ cdef class SpatialDependence:
     - Each row must typically have nx comma-separated entries (depending on filetype)
     - The entries must sometimes obey bounds (depending on filetype)"""
 
+    cpdef parseWithPython(self, str filename, str filetype, list required_additional_headers)
+    """Pure python version of parse(...)
+    This is slower than parse(...) but is retained in the code because Andy feels that parse(...) is likely to fail due to some subtle anomaly"""
+
     cdef checkHeader(self, str header_data, str filename, list required_headers)
     """Checks the header, which is contained in a long \n-separated string.  If any errors, then a ValueError exception is raised.  Otherwise the header is fine and data reading may proceed"""
 
