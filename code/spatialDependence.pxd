@@ -46,9 +46,15 @@ cdef class SpatialDependence:
     # float array template, for faster building of arrays
     cdef array.array float_template
 
+    cpdef parseBinary(self, str filename, str filetype, list required_additional_headers)
+    """Parses filename, assuming it is in binary format.  See method parse(...) for documentation"""
+
     cpdef parse(self, str filename, str filetype, list required_additional_headers)
-    """Parses filename and places data into self.data internal data structures
+    """Parses filename and places data into self.data internal data structures.
+    Note that this uses parseWithC(...) which Andy feels might fail at some stage due to some subtle anomaly.
+    If this occurs, and your data in filename is plaintext (not binary) then use parseWithPython(...) instead.
     Filename must have the following format:
+    - be plaintext (not binary) formatted.  If binary formatted, use parseBinary(...) instead.
     - any empty lines are ignored
     - Data must be preceded by a line of the form '#xmin=a,ymin=b,cell_size=c,nx=d,ny=e' where a,b,c,d,e must match that defined by the Grid.  This allows for error checking
     - The file may also have required_additional_headers (a list of strings, which must all begin with '#')
@@ -58,6 +64,9 @@ cdef class SpatialDependence:
     The third row corresponds to the ymin+2*cell_size set of cells, etc
     - Each row must typically have nx comma-separated entries (depending on filetype)
     - The entries must sometimes obey bounds (depending on filetype)"""
+
+    cpdef parseWithC(self, str filename, str filetype, list required_additional_headers, int binary)
+    """Parses file using the C code in csvparser.  The file can be either binary (binary = 1) or plaintext (binary = 0).  See parse(...) for documentation"""
 
     cpdef parseWithPython(self, str filename, str filetype, list required_additional_headers)
     """Pure python version of parse(...)

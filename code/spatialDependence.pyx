@@ -20,7 +20,19 @@ cdef class SpatialDependence:
         self.float_template = array.array('f', [])
 
 
+    cpdef parseBinary(self, str filename, str filetype, list required_additional_headers):
+        try:
+            self.parseWithC(filename, filetype, required_additional_headers, 0)
+        except:
+            raise
+
     cpdef parse(self, str filename, str filetype, list required_additional_headers):
+        try:
+            self.parseWithC(filename, filetype, required_additional_headers, 1)
+        except:
+            raise
+
+    cpdef parseWithC(self, str filename, str filetype, list required_additional_headers, int binary):
         if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed" or filetype == "generic_float"):
             raise ValueError("filetype not recognized")
         self.filetype = filetype
