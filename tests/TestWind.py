@@ -211,6 +211,8 @@ class TestWind(unittest.TestCase):
       self.assertEqual(self.w2.getNumAdvection(), 8)
       self.assertEqual(self.w2.getProcessedDataComputed(), 1)
 
+      self.w1b.parseRawFile()
+      self.w1b.outputProcessedCSV()
       self.w1b.parseProcessedFile()
       self.assertTrue(arrayequal(self.w1b.getAdvectionFrom(), [0, 1, 2, 4, 5, 6, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11]))
       self.assertTrue(arrayequal(self.w1b.getAdvectionTo(), [0, 5, 0, 5, 5, 2, 0, 3, 1, 5, 10, 11, 11, 10, 10, 11]))
@@ -218,12 +220,15 @@ class TestWind(unittest.TestCase):
       self.assertEqual(self.w1b.getNumAdvection(), 16)
       self.assertEqual(self.w1b.getProcessedDataComputed(), 1)
 
+      self.w2b.parseRawFile()
+      self.w2b.outputProcessedCSV()
       self.w2b.parseProcessedFile()
       self.assertTrue(arrayequal(self.w2b.getAdvectionFrom(), [0, 1, 4, 4, 5, 5, 6, 6]))
       self.assertTrue(arrayequal(self.w2b.getAdvectionTo(), [0, 0, 1, 0, 6, 5, 5, 6]))
       self.assertTrue(arrayfuzzyequal(self.w2b.getAdvectionP(), [1.0, 1.0, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
       self.assertEqual(self.w2b.getNumAdvection(), 8)
       self.assertEqual(self.w2b.getProcessedDataComputed(), 1)
+
 
    def testBinaryFormat(self):
       with self.assertRaises(ValueError) as the_err:

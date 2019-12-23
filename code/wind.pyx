@@ -1,8 +1,10 @@
 import os
 import time
 from grid cimport Grid
+cimport csvparser
 import array
 cimport cpython.array as array
+from libc.stdlib cimport malloc, free
 
 cdef class Wind:
     def __init__(self, str raw_wind_fn, str processed_wind_fn, list pdf, Grid grid):
@@ -158,18 +160,37 @@ cdef class Wind:
 
     cpdef outputProcessedCSV(self):
         "Outputs the active information to a file"""
-        f = open(self.processed_wind_fn, 'w')
-        f.write("#Processed wind advection written at: " + time.asctime() + "\n")
-        f.write("#Active cells defined by file " + self.grid.getActiveFilename() + "\n")
-        f.write("#xmin=" + str(self.xmin) + ",ymin=" + str(self.ymin) + ",cell_size=" + str(self.cell_size) + ",nx=" + str(self.nx) + ",ny=" + str(self.ny) + "\n")
-        f.write("#raw_vel_filename=" + os.path.basename(self.raw_wind_fn) + "\n")
-        f.write("#processed_pdf=" + str(self.pdf) + "\n")
-        f.write("#Data is of the form:\n")
-        f.write("#active_cell_id_from,active_cell_id_to,probability\n")
         cdef unsigned ind
-        for ind in range(self.num_advection):
-            f.write(str(self.advection_from.data.as_uints[ind]) + "," + str(self.advection_to.data.as_uints[ind]) + "," + str(self.advection_p.data.as_floats[ind]) + "\n")
-        f.close()
+        cdef float* float_data = NULL
+        cdef unsigned* uint = NULL
+        header_output = ""
+        header_output += "#Processed wind advection written at: " + time.asctime() + "\n"
+        header_output += "#Active cells defined by file " + self.grid.getActiveFilename() + "\n"
+        header_output += "#xmin=" + str(self.xmin) + ",ymin=" + str(self.ymin) + ",cell_size=" + str(self.cell_size) + ",nx=" + str(self.nx) + ",ny=" + str(self.ny) + "\n"
+        header_output += "#raw_vel_filename=" + os.path.basename(self.raw_wind_fn) + "\n"
+        header_output += "#processed_pdf=" + str(self.pdf) + "\n"
+        header_output += "#Data is of the form:\n"
+        header_output += "#active_cell_id_from,active_cell_id_to,probability\n"
+        if (self.binary_file_format == 0):
+            f = open(self.processed_wind_fn, 'w')
+            f.write(header_output)
+            for ind in range(self.num_advection):
+                f.write(str(self.advection_from.data.as_uints[ind]) + "," + str(self.advection_to.data.as_uints[ind]) + "," + str(self.advection_p.data.as_floats[ind]) + "\n")
+            f.close()
+        else:
+            uint = <unsigned *> malloc(2 * self.num_advection * sizeof(unsigned))
+            if not uint:
+                raise MemoryError()
+            float_data = <float *> malloc(self.num_advection * sizeof(float))
+            if not float_data:
+                raise MemoryError()
+            for ind in range(self.num_advection):
+                uint[2 * ind] = self.advection_from.data.as_uints[ind]
+                uint[2 * ind + 1] = self.advection_to.data.as_uints[ind]
+                float_data[ind] = self.advection_p.data.as_floats[ind]
+            err = csvparser.writeProcessedWind(self.processed_wind_fn.encode(), header_output.encode(), uint, float_data, self.num_advection, 1)
+            free(float_data)
+            free(uint)
 
     cpdef str getRawWindFilename(self):
         """Returns the raw wind filename"""
