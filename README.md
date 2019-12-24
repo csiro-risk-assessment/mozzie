@@ -38,7 +38,7 @@ For this reason, you will typically want to read *binary* versions of the input 
 
 To instruct the code to read binary, rather than plaintext files, you need to ensure the `SpatialDependence` file-type is `generic_float_binary` (rather than just `generic_float`).  Similarly, to instruct the code that your wind files ("raw" or "processed") are binary, use `Wind.setBinaryFileFormat(1)`.  The `tests` directory has examples of this.
 
-To create a binary version of a plaintext file use the `ab_convert` program contained in the `auxillary` directory.  `ab_convert` stands for "ascii-binary converter`.  Eg
+To create a binary version of a plaintext file use the `ab_convert` program contained in the `auxillary` directory.  `ab_convert` stands for "ascii-binary converter".  Eg
 ```
 ./code/auxillary/ab_convert ascii2binary 1517 1667 generic_float plaintext.csv binary_version.bin
 ```
@@ -54,7 +54,7 @@ The other choice that must be made regarding file I/O is whether to read "raw" w
 
 It is simply a matter of experimentation to determine whether reading "raw" or "processed" files is faster.
 
-Remember that there are hardware limitations when considering file I/O..  For example, Pearcey's `/scratch1` SSDs have an I/O speed of about 1GB/s (this is impacted by caching and other users).  Processed, binary wind data can be read and organised into data structures at a speed of about 0.7GB/s, indicating the code is close to optimal.  `Generic_float_binary` data (describing carrying-capacity, etc) can be read and organised into data structures at around 0.8GB/s.
+Remember that there are hardware limitations when considering file I/O.  For example, Pearcey's `/scratch1` SSDs have a read-speed of about 1GB/s (this is impacted by caching and other users).  Processed, binary wind data can be read, checked and organised into data structures at a speed of about 0.7GB/s, indicating the code is close to optimal.  `Generic_float_binary` data (describing carrying-capacity, etc) can be read and organised into data structures at greater than 0.8GB/s.
 
 Lots of memory is needed when reading lots of data describing wind, etc.  A lower bound on the program's memory requirements is the size of the binary files (sum of the "processed" wind and the `generic_float_binary` files).  For instance, in a recent simulation, 1 year of processed wind files used 84GB on disk, so the simulation is going to use at least this amount of memory, assuming all the wind files (either "raw" or "processed") are read and stored.  In reality, in this case this simulation uses almost exactly 84GB.
 
@@ -107,7 +107,7 @@ This is a cython class that may be imported or cimported into other classes.  It
 
 This is a cython class that may be imported or cimported into other classes.  It's purpose is to load and hold spatially-dependent parameters, such as carrying capacity.  Most simulations would involve many of these objects.  It is instantiated with `xmin`, etc, information, which facilitates error checking in its other methods.  The methods are:
 
-- `parse`, which parses a CSV file (or a binary version of it) which typically has format described in the "Spatial structure" section above.  One argument to `parse` is the file type, which is most frequently `generic_float` or `generic_float_binary`.  (In addition, `SpatialDependence` is also used by `Grid` to define inactive/active cells, and `Wind` to define wind vectors, but these are not of the `generic_float` type.)  A `binary` file will have been created by the program `ab_convert` (see above for detailed discussion of binary formats).
+- `parse`, which parses a CSV file (or a binary version of it) which typically has format described in the "Spatial structure" section above.  One argument to `parse` is the file type, which is most frequently `generic_float` or `generic_float_binary`.  (In addition, `SpatialDependence` is also used by `Grid` to define inactive/active cells, and `Wind` to define wind vectors, but these are not of the `generic_float` type.)  A `binary` file will have been created by the program `ab_convert`.  (See above for a discussion of binary files: they can be read about 30-times faster than plaintext files.)
 
 - `restrictToActive` which restricts the data read by `parse` to active cells only.  After this, the data may be used.
 
