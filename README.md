@@ -7,28 +7,56 @@ Mosquito lifecycle, diffusion and advection
 
 The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  To our knowledge, all python distributions come 
 with `cythonize` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory 
-we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, etc).
+we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, etc).
 
 ### Simulating
 
-The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  An example is `example1/runner.py`.  Generally, each "runner" python script contains the following.
+The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  An example is `example1/runner.py`, and there are other more sophisticated models in the other `example` directories.  Generally, each "runner" python script contains the following.
 
-- An `import` block in which you import all the core libraries (described below) and any other python libraries you need
+- An `import` block in which you import all the core libraries (described below) and any other python libraries you need.
 - A block in which you set up the grid and active cells, defining the spatial extents and discretisation of the model.  You will use `Grid` and `Grid.setActiveAndInactive`.
-- A block that defines `Wind` (multiple input files corresponding to different times).  This is different from the spatially-varying parameters (next item) because it usually requires some sort of pre-processing, or is read from specially-preprocessed files.
+- A block that defines `Wind` (multiple input files corresponding to different times).  This is a little different from the generic spatially-varying parameters (next item) because it usually requires some sort of pre-processing, or is read from specially-preprocessed files.
 - A block in which you read files corresponding to spatially-varying parameters in your model, such as carrying capacities.  You'll typically have to read multiple of these per parameter, as the parameters will also vary with time.  You will use `SpatialDependence` and `SpatialDependence.restrictToActive`
 - A definition of your cell dynamics (the ODE model), such as `CellDynamicsMosquito23`
 - A block that defines the populations and parameters, and sets initial conditions.  You'll use `PopulationsAndParameters`.
 - A block that gathers the grid structure, the populations and the cell dynamics together into a `SpatialDynamics` object.
 - A block that controls the time-stepping of the simulation, involving `diffuse`, `evolveCells`, and `advect`.  There can be multiple of these, depending on the complexity of your model, as different carrying capacities, wind vectors, etc, are used at different times.
 
-Because of this "block" structure, you can run partial simulations, for instance, just processing wind files, or loading files, processing in some way and outputting to produce figures.
+Because of this "block" structure, you can run partial simulations, for instance, just processing wind files, or loading files, processing in some way and outputting to produce figures.  You can also chain together multiple simulations that rely on just one initial block of file reading, to avoid reading data files for each and every simulation.
 
 ### Directory layout
 
 - `tests` directory contains tests (.py files) and associated files (all other files).  Run the tests by using, for example, `python TestGrid.py`.  Much of the code is tested by multiple tests.
 - `code` directory contains the core code (described below) that numerically simulates mosquito population dynamics.
-- `code/auxillary` directory contains python scripts that perform auxillary functions, such as plotting results.  These scripts are useful but are not necessary for the numerical simulation of mosquitoes.
+- `code/auxillary` directory contains python scripts that perform auxillary functions, such as plotting results and the important `ab_convert` program that converts between plaintext and binary data files.  These scripts are useful but are not necessary for the numerical simulation of mosquitoes.
+
+### File I/O and memory requirements
+
+Full-sized simulations require substantial file I/O and memory.
+
+For this reason, you will typically want to read *binary* versions of the input files (that define wind, carrying-capacity, etc) rather than plaintext files.  The only exception to this is the file that sets inactive/active cells: that must be plaintext.  Reading a binary file using the optimised C parser (this is called `csvparser` in the code) is approximately *30 times* faster than reading a plaintext CSV file using python (`SpatialDependence.parse` vs `SpatialDependence.parseWithPython`).
+
+To instruct the code to read binary, rather than plaintext files, you need to ensure the `SpatialDependence` file-type is `generic_float_binary` (rather than just `generic_float`).  Similarly, to instruct the code that your wind files ("raw" or "processed") are binary, use `Wind.setBinaryFileFormat(1)`.  The `tests` directory has examples of this.
+
+To create a binary version of a plaintext file use the `ab_convert` program contained in the `auxillary` directory.  `ab_convert` stands for "ascii-binary converter`.  Eg
+```
+./code/auxillary/ab_convert ascii2binary 1517 1667 generic_float plaintext.csv binary_version.bin
+```
+The `ab_convert` program has in-built documentation: just use `./code/auxillary/ab_convert` without arguments to retrieve it.  `ab_convert` can also convert binary files to plain-text.  For instance:
+```
+./code/auxillary/ab_convert binary2ascii 1517 1667 wind_raw wind_file.bin wind_file.csv
+```
+
+The other choice that must be made regarding file I/O is whether to read "raw" wind files (describing the velocity at each grid cell) or "processed" wind files (describing the probability of a mosquito advecting between cells).  Optimally, these are binary.
+
+- The "raw" files are typically much smaller, so the file I/O is much quicker, but they require in-code processing to make them usable.  That means that reading+processing binary files is only about 2.7-times faster than plaintext versions.
+- The "processed" files are generated in a pre-processing script by parsing "raw" files (`Wind.parseRawFile`) and then outputting the processed result (`Wind.outputProcessedCSV`).  The `tests` have examples of this.  Reading binary "processed" files is much faster than plaintext versions, but it may be better to read+process "raw" files instead because the "processed" versions are typically substantially bigger (if a detailed `pdf` is used).
+
+It is simply a matter of experimentation to determine whether reading "raw" or "processed" files is faster.
+
+Remember that there are hardware limitations when considering file I/O..  For example, Pearcey's `/scratch1` SSDs have an I/O speed of about 1GB/s (this is impacted by caching and other users).  Processed, binary wind data can be read and organised into data structures at a speed of about 0.7GB/s, indicating the code is close to optimal.  `Generic_float_binary` data (describing carrying-capacity, etc) can be read and organised into data structures at around 0.8GB/s.
+
+Lots of memory is needed when reading lots of data describing wind, etc.  A lower bound on the program's memory requirements is the size of the binary files (sum of the "processed" wind and the `generic_float_binary` files).  For instance, in a recent simulation, 1 year of processed wind files used 84GB on disk, so the simulation is going to use at least this amount of memory, assuming all the wind files (either "raw" or "processed") are read and stored.  In reality, in this case this simulation uses almost exactly 84GB.
 
 
 ## Units
@@ -79,7 +107,7 @@ This is a cython class that may be imported or cimported into other classes.  It
 
 This is a cython class that may be imported or cimported into other classes.  It's purpose is to load and hold spatially-dependent parameters, such as carrying capacity.  Most simulations would involve many of these objects.  It is instantiated with `xmin`, etc, information, which facilitates error checking in its other methods.  The methods are:
 
-- `parse`, which parses a CSV file, which typically has format described in the "Spatial structure" section above.
+- `parse`, which parses a CSV file (or a binary version of it) which typically has format described in the "Spatial structure" section above.  One argument to `parse` is the file type, which is most frequently `generic_float` or `generic_float_binary`.  (In addition, `SpatialDependence` is also used by `Grid` to define inactive/active cells, and `Wind` to define wind vectors, but these are not of the `generic_float` type.)  A `binary` file will have been created by the program `ab_convert` (see above for detailed discussion of binary formats).
 
 - `restrictToActive` which restricts the data read by `parse` to active cells only.  After this, the data may be used.
 
@@ -93,11 +121,11 @@ This is a cython class that may be imported or cimported into other classes.  It
 This is a cython class that may be imported or cimported into other classes.  Its purpose is to define wind advection, for a single time-step over the entire spatial grid defined by a `Grid` object.  If wind advection does not change in time, just one `Wind` object is needed, while if wind advection changes daily or seasonally, multiple `Wind` objects will be needed.
 
 A `Wind` object is instantiated with:
-- `raw_wind_fn`: a filename describing the raw wind data.  This must be defined over the entire grid, not just at the active cells.  These assumptions are made:
+- `raw_wind_fn`: a filename describing the raw wind data.  This may be in plaintext (default) or binary form (use `setBinaryFileFormat(1)`).  This must be defined over the entire grid, not just at the active cells.  These assumptions are made:
   - the file contains a header of the form `#xmin=...`, exactly the same as defined in the "Spatial structure" section, above.  This facilitates error checking.
   - the file contains `ny` lines of data.  Each line contains CSV entries defining the wind velocities in the x and y direction.  The line has the format `vx0,vy0,vx1,vy1,vx2,vy2,...`, where `vx0` is the x-component of velocity at the first cell, etc.  So, each line contains `2*nx` pieces of data.  The first line corresponds to the velocities at `ymin`, the second to velocities at `ymin + cell_size`, etc.
   - the units for velocity must be consistent with the remainder of the simulation (for instance km/day)
-- `processed_wind_fn`: a filename describing the processed wind data.  Each data line contains three numbers: `from_index,to_index,probability`.  The method `outputProcessedCSV()` writes this file for later (or immediate) use.  Examples of files are in the test suite, and some more details are mentioned below (see `getAdvectionFrom()`, etc).
+- `processed_wind_fn`: a filename describing the processed wind data.  This may be in plaintext (default) or binary form (use `setBinaryFileFormat(1)`).  Each data line contains three numbers: `from_index,to_index,probability`.  The method `outputProcessedCSV()` writes this file for later (or immediate) use.  Examples of files are in the test suite, and some more details are mentioned below (see `getAdvectionFrom()`, etc).
 - `pdf`: a probability distribution of times an advecting mosquito will stay in the air and be advected by the wind.  This is specified as a list of the form `[[time0, prob0], [time1, prob1], [time2, prob2], ...]`.  The times must be in the same time unit as the wind data (for instance, days).  It is important to make the times commensurate with the time-step size used in `SpatialDynamics.diffuse` and `SpatialDynamics.evolveCells` described below.  The probabilities should sum to 1 (prob0 + prob1 + ... = 1).  Some examples are:
   - If all mosquitoes that are being advected by the wind stay in the wind for 0.5 days, then pdf = [[0.5, 1.0]]
   - If 30% of mosquitoes stay in the wind for 0.1 days, and 70% stay in the wind for 0.4 days, then pdf = [[0.1, 0.3], [0.4, 0.7]]
@@ -111,7 +139,7 @@ A `Wind` object is only of use if `getProcessedDataComputed()==1`.  Upon constru
   - This process is repeated until the `pdf` is exhausted.
   - This process is repeated for all active cells.
   - This has the consequence that if a mosquito ends its advection in a inactive cell it is assumed to instantly die, but mosquitoes may in principal pass over inactive cells, using the wind in those cells to reach active cells.  If a mosquito ever advects outside the grid's boundary they are assumed to instantly die.
-  - The result may be written to a file using `outputProcessedCSV()`.
+  - The result may be written to a file using `outputProcessedCSV()`.  Usually you will want to `setBinaryFileFormat(1)` before the writing, so a binary file is written.
 - `parseProcessedFile()`.  This parses the processed file defined in the constructor, to build the data mentioned in the previous bullet-point.
 
 After this, the `Wind` object is fully operational, and the useful methods are:
@@ -120,7 +148,7 @@ After this, the `Wind` object is fully operational, and the useful methods are:
 - `getAdvectionP()`, returns the array `p`.
 - `getNumAdvection()`, returns the length of `f` (which equals the length of `t`, which also equals the length of `p`).
 
-For any `i`, `f[i]` is the active cell index from which a mosquito is advecting, `t[i]` is the active cell index to which it is advecting, and `p[i]` is the probability of this occuring.  This is stored in the processed data file and may be outputted using `outputProcessedCSV()`.
+For any `i`, `f[i]` is the active cell index from which a mosquito is advecting, `t[i]` is the active cell index to which it is advecting, and `p[i]` is the probability of this occuring.  This is stored in the processed data file and may be outputted using `outputProcessedCSV()` (as plaintext, or, if `setBinaryFileFormat(1), binary format).
 
 Note that `f` may not contain all active cell indices.  For instance, for a cell on the grid boundary, wind may instantly advect all mosquitoes out of the domain.  Hence, `p` is the probability of moving from `f` to `t`, given that the mosquito is indeed advecting.  It is not simply the probability of advecting away from `f`.  This latter probability is specified in `spatialDynamics.advect`.
 
