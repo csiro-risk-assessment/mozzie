@@ -47,7 +47,7 @@ sys.stdout.write("There are " + str(g1.getNumActiveCells()) + " active cells\n")
 sys.stdout.write("Reading the carrying capacity and restricting to active cells...")
 start = timeit.default_timer()
 cc_parser = SpatialDependence(-4614.0, -3967.0, 5.0, 1517, 1667)
-cc_parser.parse(os.path.join(findbin, "../example1/carrying.csv"), "generic_float", [])
+cc_parser.parse(os.path.join(findbin, "../example1/carrying.bin"), "generic_float_binary", [])
 cc_parser.restrictToActive(g1.getGlobalIndex())
 cc_high = cc_parser.getData0()
 # some of carrying.csv is zero, but we divide by Kx and Ky in the ODEs, so set a minimum carrying capacity
@@ -92,15 +92,52 @@ ya = [math.exp(-x * 6) for x in xa]
 su = sum(ya)
 ya = [y / sum(ya) for y in ya]
 pdf = [[xa[i], ya[i]] for i in range(len(xa))]
-wind = Wind(os.path.join(findbin, "../example1/raw_wind.csv"), os.path.join(findbin, "../example1/wind_8_subdivisions.csv"), pdf, g1)
+wind = Wind(os.path.join(findbin, "../example1/raw_wind.bin"), os.path.join(findbin, "../example2/wind_8_subdivisions.csv"), pdf, g1)
+wind.setBinaryFileFormat(1)
 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 sys.stdout.write("Parsing raw_wind.csv and doing particle tracking (not necessary if particle-tracking pre-done)...")
 start = timeit.default_timer()
 wind.parseRawFile()
 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
 
+
 ######################################################
-# Simulate
+# Simulate, with Kx varying between cc_high and cc_low, and Ky = cc_low always
+sys.stdout.write("Doing ODE evolution, diffusion and advection, and time-varying Kx\n")
+start = timeit.default_timer()
+timestep_size = 0.5
+the_time = 0.0
+end_time = 200.0
+for bigP in [20, 1]:
+   all_pops.setPopulationAndParametersFromXY(-2000.0, 700.0, [10000, 0, 0, 0]) # introduce 10000 type X at (-2000,700) (the population of Y and carrying capacities get overwritten by the following lines)
+   num_cycles = int(end_time / bigP + 0.5)
+   all_pops.setOverActiveGrid(1, initial_y)
+   for cycle_num in range(num_cycles + 1):
+      sys.stdout.write("  Cycle " + str(cycle_num) + " of " + str(num_cycles + 1) + "\n")
+      all_pops.setOverActiveGrid(2, cc_high)
+      all_pops.setOverActiveGrid(3, cc_low)
+      for sub_cycle in range(bigP):
+         sys.stdout.write("    K_high subcycle " + str(sub_cycle) + "\n")
+         spatial.evolveCells(timestep_size)
+         spatial.diffuse(timestep_size, 0.1)
+         spatial.advect(0.01, wind)
+         the_time += timestep_size
+      all_pops.setOverActiveGrid(2, cc_low)
+      all_pops.setOverActiveGrid(3, cc_low)
+      for sub_cycle in range(bigP):
+         sys.stdout.write("    K_low subcycle " + str(sub_cycle) + "\n")
+         spatial.evolveCells(timestep_size)
+         spatial.diffuse(timestep_size, 0.1)
+         spatial.advect(0.01, wind)
+         the_time += timestep_size
+
+   sys.stdout.write("Outputting population result...\n")
+   spatial.outputCSV("runner_Kxvary_x_P_" + str(bigP) + "_" + str(cycle_num * bigP) + "_days.csv", 0, "0", "")
+   spatial.outputCSV("runner_Kxvary_y_P_" + str(bigP) + "_" + str(cycle_num * bigP) + "_days.csv", 1, "0", "")
+
+
+######################################################
+# Simulate again, with both Kx and Ky varying in time
 sys.stdout.write("Doing ODE evolution, diffusion and advection\n")
 start = timeit.default_timer()
 timestep_size = 0.5
@@ -111,7 +148,7 @@ for bigP in [20, 1]:
    num_cycles = int(end_time / bigP + 0.5)
    all_pops.setOverActiveGrid(1, initial_y)
    for cycle_num in range(num_cycles + 1):
-      sys.stdout.write("  Cycle " + str(cycle_num) + "\n")
+      sys.stdout.write("  Cycle " + str(cycle_num) + " of " + str(num_cycles + 1) + "\n")
       all_pops.setOverActiveGrid(2, cc_high)
       all_pops.setOverActiveGrid(3, cc_high)
       for sub_cycle in range(bigP):
@@ -147,7 +184,7 @@ for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparis
    num_cycles = int(end_time / bigP + 0.5)
    all_pops.setOverActiveGrid(1, initial_y)
    for cycle_num in range(num_cycles + 1):
-      sys.stdout.write("  Cycle " + str(cycle_num) + "\n")
+      sys.stdout.write("  Cycle " + str(cycle_num) + " of " + str(num_cycles + 1) + "\n")
       #all_pops.setOverActiveGrid(2, cc_high)
       #all_pops.setOverActiveGrid(3, cc_high)
       for sub_cycle in range(bigP):
@@ -184,7 +221,7 @@ for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparis
    num_cycles = int(end_time / bigP + 0.5)
    all_pops.setOverActiveGrid(1, initial_y)
    for cycle_num in range(num_cycles + 1):
-      sys.stdout.write("  Cycle " + str(cycle_num) + "\n")
+      sys.stdout.write("  Cycle " + str(cycle_num) + " of " + str(num_cycles + 1) + "\n")
       all_pops.setOverActiveGrid(2, cc_high)
       all_pops.setOverActiveGrid(3, cc_low)
       for sub_cycle in range(bigP):

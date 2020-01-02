@@ -35,7 +35,16 @@ In the spatially-dependent simulations, both $X$ and $Y$ are assumed to diffuse 
 \section{Simulation of the ODE only}
 \label{sec.ode.only}
 
-Beeton et al. describe a time-varying scnario where the carrying capacity $K_{X}=K_{Y}$ oscillates between $1$ and $0.2$ in a stepwise fashion.  They demonstrate that the evolution of $X$ and $Y$ can depend on the period of the oscillation.  This may be simulated using the current code (see the ``runner'' script {\tt ode\_only.py}) and results in Figure~\ref{ode_only.fig} that replicates Beeton et al.'s result
+Beeton et al. describe a time-varying scnario where the carrying capacity $K_{X}=K_{Y}$ oscillates between $1$ and $0.2$ in a stepwise fashion, as in Figure~\ref{ode_K.fig}
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=5cm]{ode_K.png}
+  \caption{\label{ode_K.fig}The periodic carrying capacity, depending on period $P$}
+\end{figure}
+
+
+They demonstrate that the evolution of $X$ and $Y$ can depend on the period of the oscillation.  This may be simulated using the current code (see the ``runner'' script {\tt ode\_only.py}) and results in Figure~\ref{ode_only.fig} that replicates Beeton et al.'s result
 
 \begin{figure}[htb]
   \centering
@@ -139,7 +148,7 @@ the ODE dynamics evolves towards an $X$-dominant steady state.  Coupling this wi
 \begin{equation}
   K_{X} = K_{Y} = \beta(t) C(x, y) \ .
 \end{equation}
-where $\beta(t)$ oscillates between 1 and 0.2 in a stepwise fashion with periodicity $P$ (days).  The results after 200 days is shown in Figure~\ref{runner_x_P_1_200_days.fig}.
+where $\beta(t)$ oscillates between 1 and 0.2 in a stepwise fashion with periodicity $P$ (days): see Figure~\ref{ode_K.fig}.  The results after 200 days is shown in Figure~\ref{runner_x_P_1_200_days.fig}.
 
 Although the ODE dynamics of shown in Figure~\ref{ode_only.fig} suggests there might be a difference between $P=1$\,day and $P=20$\,days, there is very little difference, and $X=0$ in cells neighbouring the release site.  What happens is that any $X$ that spreads to neighbouring cells gets immediately out-competed by the $Y$ that is present there.
 
@@ -148,6 +157,24 @@ Although the ODE dynamics of shown in Figure~\ref{ode_only.fig} suggests there m
   \includegraphics[width=5cm]{runner_x_P_1_200_days.png} \quad
   \includegraphics[width=5cm]{runner_x_P_20_200_days.png}
   \caption{\label{runner_x_P_1_200_days.fig}The population of $X$ after 200 days of evolution, diffusion and advection, when the carrying capacity oscillates between $C$ and $0.2C$ with periodicity $P$.  Left: $P=1$\,days.  Right: $P=20$\,days.}
+\end{figure}
+
+
+\section{Time-varying $K_{X}$}
+
+(Using {\tt runner.py})  Here I study a spatially-varying analogue of Section~\ref{sec.ode.only}.  That is
+\begin{equation}
+  K_{X} = \beta(t) C(x, y) \ \ \mbox{ and }\ \  K_{Y} = 0.2 C(x, y) \ .
+\end{equation}
+where $\beta(t)$ oscillates between 1 and 0.2 in a stepwise fashion with periodicity $P$ (days).  The results after 200 days is shown in Figure~\ref{runner_Kxvary_x_P_1_200_days.fig}.
+
+Evidently, there is a difference between $P=1$\,day and $P=20$\,days.  Comparing with Figure~\ref{runner_x_highcc_200_days.fig} there is less lateral diffusion (perpendicular to the prevailing wind direction) as the $X$ that spreads laterally to neighbouring cells gets out-competed by the $Y$ that is present there.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=5cm]{runner_Kxvary_x_P_1_200_days.png} \quad
+  \includegraphics[width=5cm]{runner_Kxvary_x_P_20_200_days.png}
+  \caption{\label{runner_Kxvary_x_P_1_200_days.fig}The population of $X$ after 200 days of evolution, diffusion and advection, when the carrying capacity $K_{X}$ oscillates between $C$ and $0.2C$ with periodicity $P$, and $K_{Y}=0.2C$.  Left: $P=1$\,days.  Right: $P=20$\,days.}
 \end{figure}
 
 \end{document}
