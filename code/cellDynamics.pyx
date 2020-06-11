@@ -137,7 +137,7 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         self.axy = 0.4
         self.ayx = 0.4
         self.w = 0.05
-		self.small = 0.1
+        self.small = 0.1
 
     cpdef void setMuX(self, float mux):
         self.mux = mux
