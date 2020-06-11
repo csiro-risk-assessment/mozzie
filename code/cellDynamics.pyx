@@ -137,6 +137,7 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         self.axy = 0.4
         self.ayx = 0.4
         self.w = 0.05
+		self.small = 1E-12
 
     cpdef void setMuX(self, float mux):
         self.mux = mux
@@ -192,8 +193,8 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         cpdef float y = pops_and_params[1]
         cpdef float kx = pops_and_params[2]
         cpdef float ky = pops_and_params[3]
-        cpdef float f = - self.mux + (1.0 - (x + self.axy * y) / kx) * (x / (x + self.w * y)) * self.gax
-        cpdef float g = - self.muy + (1.0 - (self.ayx * x + y) / ky) * (self.gay + self.w * x / (x + self.w * y) * self.gax)
+        cpdef float f = - self.mux + (1.0 - (x + self.axy * y) / (kx + self.small)) * (x / (x + self.w * y + self.small)) * self.gax
+        cpdef float g = - self.muy + (1.0 - (self.ayx * x + y) / (ky + self.small)) * (self.gay + self.w * x / (x + self.w * y + self.small) * self.gax)
         # max means (x,y) doesn't stray outside physical quadrant, even if timestep is too large
         pops_and_params[0] = max(0.0, x + timestep * f * x)
         pops_and_params[1] = max(0.0, y + timestep * g * y)
