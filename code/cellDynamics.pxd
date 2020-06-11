@@ -79,7 +79,7 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
     cpdef float axy # alpha_{xy}
     cpdef float ayx # alpha_{yx}
     cpdef float w   # w
-	cpdef float small
+    cpdef float small
 
     cpdef void setMuX(self, float mux)
     """Sets mu_x"""
