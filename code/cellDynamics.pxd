@@ -364,5 +364,12 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
 cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     """CellDynamicsMosquito23 but with 6 genotypes"""
 
+    cdef float k_c
+    cdef float k_j
+    cdef float k_ne
+    cdef float w_prob
+    cdef float c_prob
+    cdef float r_prob
+
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""
