@@ -360,3 +360,9 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
     """Given the timestep and current_pops_and_params, compute the change in populations according to the ODE.
     For this class we add stochastic timestepping, this is just rhs."""
 
+
+cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
+    """CellDynamicsMosquito23 but with 6 genotypes"""
+
+    cdef void setInheritance(self)
+    """Version of setInheritance for 6 genotypes"""
