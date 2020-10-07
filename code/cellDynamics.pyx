@@ -868,7 +868,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
                              [0., 0.5, 0.5, 0., 0., 0.], # ww x cr
                              [0., 0., 1., 0., 0., 0.]],# ww x rr
                             [[self.w_prob, self.c_prob, self.r_prob, 0., 0., 0.], # wc x ww
-                             [self.w_prob*self.w_prob, 2.*self.w_prob*self.c_prob, 2.*self.w_prob*self.r_prob, self.c_prob*self.c_prob, 2.*self.c_prob*self.r_prob., self.r_prob*self.r_prob], # wc x wc
+                             [self.w_prob*self.w_prob, 2.*self.w_prob*self.c_prob, 2.*self.w_prob*self.r_prob, self.c_prob*self.c_prob, 2.*self.c_prob*self.r_prob, self.r_prob*self.r_prob], # wc x wc
                              [0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.w_prob + self.r_prob), 0., 0.5*self.c_prob, 0.5*self.r_prob], # wc x wr
                              [0., self.w_prob, 0., self.c_prob, self.r_prob, 0.], # wc x cc
                              [0., 0.5*self.w_prob, 0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.c_prob + self.r_prob), 0.5*self.r_prob], # wc x cr
