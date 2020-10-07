@@ -844,4 +844,61 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
             #for col in range(self.num_populations):
                 #self.rhs.data.as_floats[row] += self.mat.data.as_floats[col + self.num_populations * row] * x[col]
 
-
+cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
+    def __init__(self):
+        super().__init__()
+        self.num_genotypes = 6 # ww, wc, wr, cc, cr, rr always
+        
+        self.k_c = 0.995
+        self.k_j = 0.02
+        self.k_ne = 0.0001
+        self.w_prob = 0.5*(1. - self.k_c)
+        self.c_prob = 0.5*(1 + self.k_c*(1. - self.k_j)*(1. - self.k_ne)
+        self.r_prob = 1. - self.w_prob - self.c_prob
+        
+        # size inheritance correctly
+        self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+        self.setInheritance()
+        
+    cdef void setInheritance(self):
+        inheritance_list = [[[1., 0., 0., 0., 0., 0.], # ww x ww
+                             [self.w_prob, self.c_prob, self.r_prob, 0., 0., 0.], # ww x wc
+                             [1., 0., 1., 0., 0., 0.], # ww x wr
+                             [0., 1., 0., 0., 0., 0.], # ww x cc
+                             [0., 0.5, 0.5, 0., 0., 0.], # ww x cr
+                             [0., 0., 1., 0., 0., 0.]],# ww x rr
+                            [[self.w_prob, self.c_prob, self.r_prob, 0., 0., 0.], # wc x ww
+                             [self.w_prob*self.w_prob, 2.*self.w_prob*self.c_prob, 2.*self.w_prob*self.r_prob, self.c_prob*self.c_prob, 2.*self.c_prob*self.r_prob., self.r_prob*self.r_prob], # wc x wc
+                             [0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.w_prob + self.r_prob), 0., 0.5*self.c_prob, 0.5*self.r_prob], # wc x wr
+                             [0., self.w_prob, 0., self.c_prob, self.r_prob, 0.], # wc x cc
+                             [0., 0.5*self.w_prob, 0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.c_prob + self.r_prob), 0.5*self.r_prob], # wc x cr
+                             [0., 0., self.w_prob, 0., self.c_prob, self.r_prob]],# wc x rr
+                            [[0.5, 0., 0.5, 0., 0., 0.], # wr x ww
+                             [0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.w_prob + self.r_prob), 0., 0.5*self.c_prob, 0.5*self.r_prob], # wr x wc
+                             [0.25, 0., 0.5, 0., 0., 0.25], # wr x wr
+                             [0., 0.5, 0.5, 0., 0., 0.], # wr x cc
+                             [0., 0.25, 0.25, 0., 0.25, 0.25], # wr x cr
+                             [0., 0., 0.5, 0., 0., 0.5]],# wr x rr
+                            [[0., 1., 0., 0., 0., 0.], # cc x ww
+                             [0., self.w_prob, 0., self.c_prob, self.r_prob, 0.], # cc x wc
+                             [0., 0.5, 0.5, 0., 0., 0.], # cc x wr
+                             [0., 0., 0., 1., 0., 0.], # cc x cc
+                             [0., 0., 0., 0.5, 0.5, 0.], # cc x cr
+                             [0., 0., 0., 0., 1., 0.]],# cc x rr
+                            [[0., 0.5, 0.5, 0., 0., 0.], # cr x ww
+                             [0., 0.5*self.w_prob, 0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.c_prob + self.r_prob), 0.5*self.r_prob], # cr x wc
+                             [0., 0.25, 0.25, 0., 0.25, 0.25], # cr x wr
+                             [0., 0., 0., 0.5, 0.5, 0.], # cr x cc
+                             [0., 0., 0., 0.25, 0.5, 0.25], # cr x cr
+                             [0., 0., 0., 0., 0.5, 0.5]],# cr x rr
+                            [[0., 0., 1., 0., 0., 0.], # rr x ww
+                             [0., 0., self.w_prob, 0., self.c_prob, self.r_prob], # rr x wc
+                             [0., 0., 0.5, 0., 0., 0.5], # rr x wr
+                             [0., 0., 0., 0., 1., 0.], # rr x cc
+                             [0., 0., 0., 0., 0.5, 0.5], # rr x cr
+                             [0., 0., 0., 0., 0., 1.]]]# rr x rr
+        cdef unsigned gt_father, gt_mother, gt_offspring
+        for gt_father in range(self.num_genotypes):
+            for gt_mother in range(self.num_genotypes):
+                for gt_offspring in range(self.num_genotypes):
+                    self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + gt_offspring * self.num_genotypes2] = inheritance_list[gt_father][gt_mother][gt_offspring]
