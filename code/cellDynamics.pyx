@@ -860,6 +860,8 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
         self.setInheritance()
         
+        self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
+        
     cdef void setInheritance(self):
         inheritance_list = [[[1., 0., 0., 0., 0., 0.], # ww x ww
                              [self.w_prob, self.c_prob, self.r_prob, 0., 0., 0.], # ww x wc
