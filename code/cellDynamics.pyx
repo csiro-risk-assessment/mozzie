@@ -853,7 +853,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.k_j = 0.02
         self.k_ne = 0.0001
         self.w_prob = 0.5*(1. - self.k_c)
-        self.c_prob = 0.5*(1 + self.k_c*(1. - self.k_j)*(1. - self.k_ne))
+        self.c_prob = 0.5*(1. + self.k_c*(1. - self.k_j)*(1. - self.k_ne))
         self.r_prob = 1. - self.w_prob - self.c_prob
         
         # size inheritance correctly
