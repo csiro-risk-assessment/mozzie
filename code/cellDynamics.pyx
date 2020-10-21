@@ -848,6 +848,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     def __init__(self):
         super().__init__()
         self.num_genotypes = 6 # ww, wc, wr, cc, cr, rr always
+		self.num_genotypes2 = self.num_genotypes * self.num_genotypes
         
         self.k_c = 0.995
         self.k_j = 0.02
@@ -865,7 +866,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     cdef void setInheritance(self):
         inheritance_list = [[[1., 0., 0., 0., 0., 0.], # ww x ww
                              [self.w_prob, self.c_prob, self.r_prob, 0., 0., 0.], # ww x wc
-                             [1., 0., 1., 0., 0., 0.], # ww x wr
+                             [0.5, 0., 0.5, 0., 0., 0.], # ww x wr
                              [0., 1., 0., 0., 0., 0.], # ww x cc
                              [0., 0.5, 0.5, 0., 0., 0.], # ww x cr
                              [0., 0., 1., 0., 0., 0.]],# ww x rr
