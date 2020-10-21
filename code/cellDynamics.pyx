@@ -848,7 +848,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     def __init__(self):
         super().__init__()
         self.num_genotypes = 6 # ww, wc, wr, cc, cr, rr always
-		self.num_genotypes2 = self.num_genotypes * self.num_genotypes
+        self.num_genotypes2 = self.num_genotypes * self.num_genotypes
         
         self.k_c = 0.995
         self.k_j = 0.02
