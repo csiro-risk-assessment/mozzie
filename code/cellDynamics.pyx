@@ -206,10 +206,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
         # Following quantities are always fixed
         self.num_sexes = 2 # male, female, always
-        self.num_genotypes = 3 # ww, Gw, GG, always
+        #self.num_genotypes = 3 # ww, Gw, GG, always
+        self.setNumGenotypes(3)
         self.num_parameters = 1 # the only spatially-varying quantity is the carrying capacity, K
 
-        self.num_genotypes2 = self.num_genotypes * self.num_genotypes
+        #self.num_genotypes2 = self.num_genotypes * self.num_genotypes
 
         # Following parameters may be set by user.
         self.mu_larvae = 0.1
@@ -225,9 +226,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # Set default carrying capacity
         self.one_over_kk = 1.0
 
-        # size inheritance correctly
-        self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
-        self.setInheritance()
+        ## size inheritance correctly
+        #self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+        #self.setInheritance()
 
         # allocate alpha array correctly, and set to the identity
         self.alpha = array.clone(array.array('f', []), 1, zero = True)
@@ -390,6 +391,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             raise ValueError("species_father " + str(species_father) + " and species_mother " + str(species_mother) + " must be less than the number of species, " + str(self.num_species))
         self.mating.data.as_floats[species_father + species_mother * self.num_species] = value
 
+    cpdef setFitnessComponent(self, unsigned genotype, float value):
+        if genotype >= self.num_genotypes:
+            raise ValueError("genotype " + str(genotype) + " must be less than the number of genotypes " + str(self.num_genotypes))
+        self.fitness.data.as_floats[genotype] = value
 
     cpdef void setMuLarvae(self, float mu_larvae):
         self.mu_larvae = mu_larvae
@@ -435,6 +440,16 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             self.setMatingComponent(species, species, 1.0)
         self.comp = array.clone(array.array('f', []), num_species, zero = False)
         self.denom = array.clone(array.array('f', []), num_species, zero = False)
+
+    cpdef void setNumGenotypes(self, unsigned num_genotypes):
+        self.num_genotypes = num_genotypes
+        self.num_genotypes2 = self.num_genotypes * self.num_genotypes
+        # size inheritance correctly
+        self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+        self.setInheritance()
+        self.fitness = array.clone(array.array('f', []), num_genotypes, zero = True)
+        for genotype in range(num_genotypes):
+            self.setFitnessComponent(genotype, 1.0)
 
     def getAlphaComponentFromPython(self, unsigned sp0, unsigned sp1):
         """Python interface for getting a component of the alpha matrix (inter-specific competition).  This is a slow interface: use getAlphaComponent from all cython code"""
@@ -502,7 +517,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                 for sp_d in range(self.num_species):
                     ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                     for sp in range(self.num_species): # sp = female species
-                        self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * x[ind_d]
+                        self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.getFitnessComponent(gt_d) * x[ind_d]
             # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
             for sp in range(self.num_species):
                 if self.denom.data.as_floats[sp] <= self.zero_cutoff:
@@ -530,7 +545,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                 for gtm in range(self.num_genotypes): # male genotype
                                     for spm in range(self.num_species): # male species
                                         ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                        self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
+                                        self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * self.getFitnessComponent(gtm) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
                                 # multiply mat by things that don't depend on gtm or spm
                                 self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
             
@@ -847,8 +862,6 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
 cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     def __init__(self):
         super().__init__()
-        self.num_genotypes = 6 # ww, wc, wr, cc, cr, rr always
-        self.num_genotypes2 = self.num_genotypes * self.num_genotypes
         
         self.k_c = 0.995
         self.k_j = 0.02
@@ -856,10 +869,24 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.w_prob = 0.5*(1. - self.k_c)
         self.c_prob = 0.5*(1. + self.k_c*(1. - self.k_j)*(1. - self.k_ne))
         self.r_prob = 1. - self.w_prob - self.c_prob
+        self.h_e = 0.5
+        self.h_n = 0.5
+        self.s_e = 0.1
+        self.s_n = 0.05
         
-        # size inheritance correctly
-        self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
-        self.setInheritance()
+        self.setNumGenotypes(6)
+        #self.setFitnessComponent(0, 1.)
+        self.setFitnessComponent(1, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
+        #self.setFitnessComponent(2, 1.)
+        self.setFitnessComponent(3, (1. - self.s_e)*(1. - slef.s_n))
+        self.setFitnessComponent(4, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
+        #self.setFitnessComponent(5, 1.)
+
+        #self.num_genotypes = 6 # ww, wc, wr, cc, cr, rr always
+        #self.num_genotypes2 = self.num_genotypes * self.num_genotypes
+        ## size inheritance correctly
+        #self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+        #self.setInheritance()
         
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
         
