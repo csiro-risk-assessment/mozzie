@@ -172,6 +172,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # relative-mating "matrix".  Default value is 1 if species_father==species_mother, and 0 otherwise
     cdef array.array mating
 
+    # relative fitness "vector".  Default value is 1 for all genotypes
+    cdef array.array fitness
+
     # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
     cdef unsigned num_ages
 
@@ -343,7 +346,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     """Sets the hybridisation rate for the given father, mother and offspring.  Note, if you setNumSpecies, this will be reinitialised to its default value of 1 if species_father=species_mother=species_offspring, and 0 otherwise"""
 
     cdef void computeRHS(self, float[:] x)
-    """Compute the rhs in dX/dt = rhs.  Here rhs is a funtion of x.  The result is put into self.rhs"""
+    """Compute the rhs in dX/dt = rhs.  Here rhs is a function of x.  The result is put into self.rhs"""
 
     cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange)
     """Given the timestep and current_pops_and_params, compute the change in populations according to the ODE.

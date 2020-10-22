@@ -238,10 +238,15 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.hyb = array.clone(array.array('f', []), 1, zero = True)
         self.setHybridisationRate(0, 0, 0, 1.0)
 
-        # allocate the mating array correctly, and set it to the identiy
+        # allocate the mating array correctly, and set it to the identity
         # allocate hyb array correctly, and set it to the identity
         self.mating = array.clone(array.array('f', []), 1, zero = True)
         self.setMatingComponent(0, 0, 1.0)
+
+        # NICK Q: DO WE NEED THIS? PUTTING IN JUST IN CASE
+        self.fitness = array.clone(array.array('f', []), 3, zero = True)
+        for genotype in range(3):
+            self.setFitnessComponent(genotype, 1.0)
 
         # allocate comp correctly
         self.comp = array.clone(array.array('f', []), self.num_species, zero = False)
