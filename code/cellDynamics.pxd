@@ -380,10 +380,10 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     cdef float w_prob
     cdef float c_prob
     cdef float r_prob
-    cdef float self.h_e
-    cdef float self.h_n
-    cdef float self.s_e
-    cdef float self.s_n
+    cdef float h_e
+    cdef float h_n
+    cdef float s_e
+    cdef float s_n
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""
