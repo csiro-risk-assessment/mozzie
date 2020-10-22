@@ -878,7 +878,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         #self.setFitnessComponent(0, 1.)
         self.setFitnessComponent(1, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
         #self.setFitnessComponent(2, 1.)
-        self.setFitnessComponent(3, (1. - self.s_e)*(1. - slef.s_n))
+        self.setFitnessComponent(3, (1. - self.s_e)*(1. - self.s_n))
         self.setFitnessComponent(4, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
         #self.setFitnessComponent(5, 1.)
 
