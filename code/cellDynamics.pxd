@@ -274,10 +274,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         return self.alpha.data.as_floats[sp0 + sp1 * self.num_species]
 
     cpdef setMatingComponent(self, unsigned species_father, unsigned species_mother, float value)
-        """Sets mating[species_father][species_father] = value (for relative probability of inter-specific mating).  Note, if you setNumSpecies, mating will be re-initialised to the identity"""
+    """Sets mating[species_father][species_father] = value (for relative probability of inter-specific mating).  Note, if you setNumSpecies, mating will be re-initialised to the identity"""
 
     cpdef setFitnessComponent(self, unsigned genotype, float value):
-        """Sets fitness[genotype] = value (for relative reproductive fitness of males of each genotype).  Note, if you setNumGenotypes, fitness will be re-initialised to the identity"""
+    """Sets fitness[genotype] = value (for relative reproductive fitness of males of each genotype).  Note, if you setNumGenotypes, fitness will be re-initialised to the identity"""
 
     cdef inline float getMatingComponent(self, unsigned species_father, unsigned species_mother):
         """Gets mating[species_father][species_mother]: the inter-specific mating relative probability"""

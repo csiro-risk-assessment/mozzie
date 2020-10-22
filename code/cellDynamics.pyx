@@ -478,7 +478,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         """Evaluates d(populations)/dt"""
 
         # these indices are dummy indices (that are looped over) hence the subscript _d
-        cdef unsigned age_d, sex_d, gt_d, sp_d
+        cdef unsigned age_d, sex_d, gt_d, sp_d, ind_d
         # these indices are summed over in the age=0 contributions
         cdef unsigned gtf, spf, gtm, spm
         # these indices are typically left-hand-side indices
