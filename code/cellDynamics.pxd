@@ -320,6 +320,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef void setNumSpecies(self, unsigned num_species)
     """Set number of species.  This calls setInternalParameters to appropriately set other parameters, given num_species.  It also reinitialises the alpha, hybridisation and mating matrices"""
 
+    cpdef void setNumGenotypes(self, unsigned num_genotypes)
+    """Set number of genotypes. This calls setInheritance and setFitnessComponent to appropriately initialise the inheritance tensor and fitness vector"""
+
     cpdef unsigned getNumSpecies(self)
     """Get number of species"""
     
