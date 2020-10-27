@@ -879,6 +879,8 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.s_e = 0.1
         self.s_n = 0.05
         
+        self.accuracy = 0.5 # no sex bias
+        
         self.setNumGenotypes(6)
         #self.setFitnessComponent(0, 1.)
         self.setFitnessComponent(1, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
