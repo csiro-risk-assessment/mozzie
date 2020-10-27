@@ -213,9 +213,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         #self.num_genotypes2 = self.num_genotypes * self.num_genotypes
 
         # Following parameters may be set by user.
-        self.mu_larvae = 0.1
-        self.mu_adult = 0.1
-        self.fecundity = 0.9
+        self.mu_larvae = 0.05
+        self.mu_adult = 0.125
+        self.fecundity = 9
         self.aging_rate = 0.1
         self.num_ages = 2
         self.num_species = 1
