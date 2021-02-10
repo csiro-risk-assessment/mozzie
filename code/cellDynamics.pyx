@@ -224,8 +224,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.num_species2 = 1
 
         # Set default carrying capacities
-        self.one_over_kk = array.clone(array.array('f', []), self.num_parameters, zero = True) + 1.0
+        self.one_over_kk = array.clone(array.array('f', []), self.num_parameters, zero = True)
 
+        for i in range(11):
+            self.one_over_kk[i] = 1.0
+            
         ## size inheritance correctly
         #self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
         #self.setInheritance()
