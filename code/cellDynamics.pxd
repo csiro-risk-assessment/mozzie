@@ -157,7 +157,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef float aging_rate
 
     # 1/(carrying capacity).  This is spatially-varying and is set upon entry to evolve()
-    cdef float one_over_kk
+    #cdef float one_over_kk
+    cdef array.array one_over_kk
 
     # inheritance_cube[i, j, k] = probability of mother genotype i, father genotype j producing offspring genotype k
     # where index 0, 1, 2 = ww, Gw, GG respectively
