@@ -223,8 +223,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
         self.num_species2 = 1
 
-        # Set default carrying capacity
-        self.one_over_kk = 1.0
+        # Set default carrying capacities
+        self.one_over_kk = array.clone(array.array('f', []), self.num_parameters, zero = True) + 1.0
 
         ## size inheritance correctly
         #self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
@@ -489,7 +489,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # these indices are typically left-hand-side indices
         cdef unsigned age, sex, gt, sp
         # utility indices
-        cdef unsigned ind, ind_c, ind0, ind1
+        cdef unsigned ind, ind_c, ind0, ind1, cidx
         # indices into matrix M
         cdef unsigned col, row
         # index into mat
@@ -500,38 +500,49 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         array.zero(self.mat)
 
         # newborn larvae
-        if self.one_over_kk < self.one_over_min_cc:
-
-            # define competition
-            array.zero(self.comp)
-            for age_d in range(end_index_for_competition):
-                for sex_d in range(self.num_sexes):
-                    for gt_d in range(self.num_genotypes):
-                        for sp_d in range(self.num_species):
-                            ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
-                            for sp in range(self.num_species):
+        # first calculate all comp.data and denom.data where needed
+        for sp in range(self.num_species):
+            if self.num_parameters == 1: # only using one CC
+                cidx = 0
+            else:
+                cidx = sp # one CC for each species
+            if self.one_over_kk[cidx] < self.one_over_min_cc: # if there are any newborns of species sp (or any species) born at all
+                # define competition
+                array.zero(self.comp)
+                for age_d in range(end_index_for_competition):
+                    for sex_d in range(self.num_sexes):
+                        for gt_d in range(self.num_genotypes):
+                            for sp_d in range(self.num_species):
+                                ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                                #for sp in range(self.num_species):
                                 self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
-            for sp in range(self.num_species):
+                #for sp in range(self.num_species):
                 self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
 
-            # define the denominator term
-            array.zero(self.denom)
-            age_d = self.num_ages - 1 # adult
-            sex_d = 0 # male
-            for gt_d in range(self.num_genotypes):
-                for sp_d in range(self.num_species):
-                    ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
-                    for sp in range(self.num_species): # sp = female species
-                        self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.getFitnessComponent(gt_d) * x[ind_d]
-            # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
-            for sp in range(self.num_species):
+                # define the denominator term
+                array.zero(self.denom)
+                age_d = self.num_ages - 1 # adult
+                sex_d = 0 # male
+                for gt_d in range(self.num_genotypes):
+                    for sp_d in range(self.num_species):
+                        ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                        for sp in range(self.num_species): # sp = female species
+                            self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.getFitnessComponent(gt_d) * x[ind_d]
+                # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
+    #            for sp in range(self.num_species):
                 if self.denom.data.as_floats[sp] <= self.zero_cutoff:
                     # there must be zero adult males.  I presume this means there will be zero eggs layed, so setting denom=0 achieves this
                     self.denom.data.as_floats[sp] = 0.0
                 else:
                     self.denom.data.as_floats[sp] = 1.0 / self.denom.data.as_floats[sp]
 
-
+        for sp in range(self.num_species):
+            if self.num_parameters == 1: # only using one CC
+                cidx = 0
+            else:
+                cidx = sp # one CC for each species
+            if self.one_over_kk[cidx] < self.one_over_min_cc: # if there are any newborns of species sp (or any species) born at all
+                # define competition
             # now work out the contributions to the newborn ODEs
             # In the following, mat is a 1D array (for efficiency)
             # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
@@ -540,7 +551,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             age = 0 # only newborn row in M
             for sex in range(self.num_sexes): # row in M
                 for gt in range(self.num_genotypes): # row in M
-                    for sp in range(self.num_species): # row in M
+                    #for sp in range(self.num_species): # row in M
                         row = self.getIndex(sp, gt, sex, age)
                         # now want to set the column in M corresonding to female adults of genotype gtf and species spf
                         for gtf in range(self.num_genotypes): # female genotype
@@ -596,10 +607,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
 
-        if pops_and_params[self.num_populations] <= self.min_cc:
-            self.one_over_kk = 2 * self.one_over_min_cc # signal to computeRHS that the carrying capacity has fallen below min_cc, so no newborns will be produced
-        else:
-            self.one_over_kk = 1.0 / pops_and_params[self.num_populations]        
+        for sp in range(self.num_parameters): # for each defined carrying capacity
+            if pops_and_params[self.num_populations + sp] <= self.min_cc:
+                self.one_over_kk[sp] = 2 * self.one_over_min_cc # signal to computeRHS that the carrying capacity has fallen below min_cc, so no newborns will be produced
+            else:
+                self.one_over_kk[sp] = 1.0 / pops_and_params[self.num_populations + sp]        
 
         cdef float time_done = 0.0
         cdef float dt = timestep
@@ -888,6 +900,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.setFitnessComponent(3, (1. - self.s_e)*(1. - self.s_n))
         self.setFitnessComponent(4, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
         #self.setFitnessComponent(5, 1.)
+        self.num_parameters = self.num_species # the only spatially-varying quantities are the carrying capacities, Kx and Ky
 
         #self.num_genotypes = 6 # ww, wc, wr, cc, cr, rr always
         #self.num_genotypes2 = self.num_genotypes * self.num_genotypes
