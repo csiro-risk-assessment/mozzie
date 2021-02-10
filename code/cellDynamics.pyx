@@ -226,7 +226,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # Set default carrying capacities
         self.one_over_kk = array.clone(array.array('f', []), self.num_parameters, zero = True)
 
-        for i in range(11):
+        for i in range(self.num_parameters):
             self.one_over_kk[i] = 1.0
             
         ## size inheritance correctly
