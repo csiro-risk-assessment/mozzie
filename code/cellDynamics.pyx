@@ -542,28 +542,28 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             else:
                 cidx = sp # one CC for each species
             if self.one_over_kk[cidx] < self.one_over_min_cc: # if there are any newborns of species sp (or any species) born at all
-                # define competition
-            # now work out the contributions to the newborn ODEs
-            # In the following, mat is a 1D array (for efficiency)
-            # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
-            #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
-            #  - given a component, M_ij, the index in mat is j + i * self.num_populations
-            age = 0 # only newborn row in M
-            for sex in range(self.num_sexes): # row in M
-                for gt in range(self.num_genotypes): # row in M
-                    #for sp in range(self.num_species): # row in M
-                        row = self.getIndex(sp, gt, sex, age)
-                        # now want to set the column in M corresonding to female adults of genotype gtf and species spf
-                        for gtf in range(self.num_genotypes): # female genotype
-                            for spf in range(self.num_species): # female species
-                                col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
-                                ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
-                                for gtm in range(self.num_genotypes): # male genotype
-                                    for spm in range(self.num_species): # male species
-                                        ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                        self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * self.getFitnessComponent(gtm) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
-                                # multiply mat by things that don't depend on gtm or spm
-                                self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+                    # define competition
+                # now work out the contributions to the newborn ODEs
+                # In the following, mat is a 1D array (for efficiency)
+                # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
+                #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
+                #  - given a component, M_ij, the index in mat is j + i * self.num_populations
+                age = 0 # only newborn row in M
+                for sex in range(self.num_sexes): # row in M
+                    for gt in range(self.num_genotypes): # row in M
+                        #for sp in range(self.num_species): # row in M
+                            row = self.getIndex(sp, gt, sex, age)
+                            # now want to set the column in M corresonding to female adults of genotype gtf and species spf
+                            for gtf in range(self.num_genotypes): # female genotype
+                                for spf in range(self.num_species): # female species
+                                    col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
+                                    ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
+                                    for gtm in range(self.num_genotypes): # male genotype
+                                        for spm in range(self.num_species): # male species
+                                            ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
+                                            self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * self.getFitnessComponent(gtm) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
+                                    # multiply mat by things that don't depend on gtm or spm
+                                    self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
             
 
         # mortality, and aging into/from neighbouring age brackets
