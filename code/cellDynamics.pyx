@@ -319,6 +319,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         
         self.num_populations = self.num_ages * self.num_sexes * self.num_genotypes * self.num_species
 
+        self.one_over_kk = array.clone(array.array('f', []), self.num_parameters, zero = True)
+
+        for i in range(self.num_parameters):
+            self.one_over_kk[i] = 1.0
+            
         # allocate the mat array correctly
         self.mat = array.clone(array.array('f', []), self.num_populations * self.num_populations, zero = False)
         # allocate Xarray correctly
@@ -896,6 +901,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         
         self.accuracy = 0.5 # no sex bias
         
+        self.num_species = 2
         self.setNumGenotypes(6)
         #self.setFitnessComponent(0, 1.)
         self.setFitnessComponent(1, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
