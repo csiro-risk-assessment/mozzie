@@ -102,6 +102,9 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
     cpdef void setW(self, float w)
     """Sets w"""
 
+    cpdef void setSmall(self, float small)
+    """Sets small"""
+
     cpdef float getMuX(self)
     """Gets mu_x"""
 
@@ -122,6 +125,9 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
 
     cpdef float getW(self)
     """Gets w"""
+
+    cpdef float getSmall(self)
+    """Gets small"""
 
 cdef class CellDynamicsMosquito23(CellDynamicsBase):
     """Solves Mosquito ODE with 2 sexes and 3 genotypes.

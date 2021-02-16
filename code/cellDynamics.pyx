@@ -160,6 +160,9 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
     cpdef void setW(self, float w):
         self.w = w
 
+    cpdef void setSmall(self, float small):
+        self.small = small
+
     cpdef float getMuX(self):
         return self.mux
 
@@ -180,6 +183,9 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
 
     cpdef float getW(self):
         return self.w
+
+    cpdef float getSmall(self):
+        return self.small
 
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):

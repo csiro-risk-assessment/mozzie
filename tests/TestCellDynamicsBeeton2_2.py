@@ -48,6 +48,10 @@ class TestCellDynamicsBeeton2_2(unittest.TestCase):
       self.c.setW(-123.0)
       self.assertEqual(self.c.getW(), -123.0)
 
+   def testSetGetSmall(self):
+      self.c.setSmall(1234.0)
+      self.assertEqual(self.c.getSmall(), 1234.0)
+
    def testEvolve(self):
       x = 1.0
       y = 2.0
@@ -60,6 +64,7 @@ class TestCellDynamicsBeeton2_2(unittest.TestCase):
       muy = 9.0
       ayx = 10.0
       gay = 11.0
+      small = 0.2
       pap = array.array('f', [x, y, kx, ky])
       self.c.setMuX(mux)
       self.c.setMuY(muy)
@@ -68,12 +73,13 @@ class TestCellDynamicsBeeton2_2(unittest.TestCase):
       self.c.setAxy(axy)
       self.c.setAyx(ayx)
       self.c.setW(w)
+      self.c.setSmall(small)
       dt = 0.02
       self.c.evolve(dt, pap)
 
       # this should be the solution:
-      f = -mux + (1 - (x + axy * y) / kx) * (x / (x + w * y)) * gax
-      g = -muy + (1 - (ayx * x + y) / ky) * (gay + w * x * gax / (x + w * y))
+      f = -mux + (1 - (x + axy * y) / (kx + small)) * (x / (x + w * y + small)) * gax
+      g = -muy + (1 - (ayx * x + y) / (ky + small)) * (gay + w * x * gax / (x + w * y + small))
       rhsx = f * x
       rhsy = g * y
       xnew = x + dt * rhsx
