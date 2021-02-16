@@ -525,7 +525,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                 #for sp in range(self.num_species):
                                 self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
                 #for sp in range(self.num_species):
-                self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk)
+                self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk[cidx])
 
                 # define the denominator term
                 array.zero(self.denom)
@@ -791,7 +791,7 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
         array.zero(self.mat)
         array.zero(self.rhs)
         
-        # newborn larvae
+        # newborn larvae (TODO: incorporate multiple species as in CellDynamicsMosquito.computeRHS)
         if self.one_over_kk < self.one_over_min_cc:
 
             # ANDY QUESTION: duplicated block?
