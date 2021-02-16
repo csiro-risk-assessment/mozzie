@@ -162,8 +162,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # rate of transferral from one age bracket to the next-eldest age bracket
     cdef float aging_rate
 
-    # 1/(carrying capacity).  This is spatially-varying and is set upon entry to evolve()
-    #cdef float one_over_kk
+    # 1/(carrying capacity).  This is of size num_parameters.  This is spatially-varying and is set upon entry to evolve()
     cdef array.array one_over_kk
 
     # inheritance_cube[i, j, k] = probability of mother genotype i, father genotype j producing offspring genotype k
