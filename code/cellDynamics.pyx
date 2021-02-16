@@ -512,64 +512,64 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         array.zero(self.mat)
 
         # newborn larvae
-        # first calculate all comp.data and denom.data where needed
-        cdef unsigned needed = 0
+        cdef unsigned newborn_calcs_needed = 0
         for p in range(self.num_parameters):
             if self.one_over_kk[p] < self.one_over_min_cc:
-                needed = 1
+                newborn_calcs_needed = 1
                 break
-        if needed == 1:
+        if newborn_calcs_needed == 1:
             array.zero(self.comp)
             array.zero(self.denom)
-        for sp in range(self.num_species):
-            if self.num_parameters == 1: # only using one CC
-                cidx = 0
-            else:
-                cidx = sp # one CC for each species
-            if self.one_over_kk[cidx] < self.one_over_min_cc: # if there are any newborns of species sp (or any species) born at all
-                # define competition
-                for age_d in range(end_index_for_competition):
-                    for sex_d in range(self.num_sexes):
-                        for gt_d in range(self.num_genotypes):
-                            for sp_d in range(self.num_species):
-                                ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
-                                #for sp in range(self.num_species):
-                                self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
-                #for sp in range(self.num_species):
-                self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk[cidx])
 
-                # define the denominator term
-                age_d = self.num_ages - 1 # adult
-                sex_d = 0 # male
-                for gt_d in range(self.num_genotypes):
-                    for sp_d in range(self.num_species):
-                        ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
-                        #for sp in range(self.num_species): # sp = female species
-                        self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.getFitnessComponent(gt_d) * x[ind_d]
-                # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
-    #            for sp in range(self.num_species):
-                if self.denom.data.as_floats[sp] <= self.zero_cutoff:
-                    # there must be zero adult males.  I presume this means there will be zero eggs layed, so setting denom=0 achieves this
-                    self.denom.data.as_floats[sp] = 0.0
+            # first calculate all comp.data and denom.data where needed
+            for sp in range(self.num_species):
+                if self.num_parameters == 1: # only using one CC
+                    cidx = 0
                 else:
-                    self.denom.data.as_floats[sp] = 1.0 / self.denom.data.as_floats[sp]
+                    cidx = sp # one CC for each species
+                if self.one_over_kk[cidx] < self.one_over_min_cc: # if there are any newborns of species sp (or any species) born at all
+                    # define competition
+                    for age_d in range(end_index_for_competition):
+                        for sex_d in range(self.num_sexes):
+                            for gt_d in range(self.num_genotypes):
+                                for sp_d in range(self.num_species):
+                                    ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                                    self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
+                    self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk[cidx])
 
-        for sp in range(self.num_species):
-            if self.num_parameters == 1: # only using one CC
-                cidx = 0
-            else:
-                cidx = sp # one CC for each species
-            if self.one_over_kk[cidx] < self.one_over_min_cc: # if there are any newborns of species sp (or any species) born at all
-                # define competition
-                # now work out the contributions to the newborn ODEs
-                # In the following, mat is a 1D array (for efficiency)
-                # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
-                #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
-                #  - given a component, M_ij, the index in mat is j + i * self.num_populations
-                age = 0 # only newborn row in M
-                for sex in range(self.num_sexes): # row in M
-                    for gt in range(self.num_genotypes): # row in M
-                        #for sp in range(self.num_species): # row in M
+                    # define the denominator term
+                    age_d = self.num_ages - 1 # adult
+                    sex_d = 0 # male
+                    for gt_d in range(self.num_genotypes):
+                        for sp_d in range(self.num_species):
+                            ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
+                            # note: here sp = female species
+                            self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.getFitnessComponent(gt_d) * x[ind_d]
+                    # form the reciprocal of denom.  This is so that C doesn't have to check for division-by-zero in the big loops below
+                    if self.denom.data.as_floats[sp] <= self.zero_cutoff:
+                        # there must be zero adult males.  I presume this means there will be zero eggs layed, so setting denom=0 achieves this
+                        self.denom.data.as_floats[sp] = 0.0
+                    else:
+                        self.denom.data.as_floats[sp] = 1.0 / self.denom.data.as_floats[sp]
+
+            # now define competition
+
+            for sp in range(self.num_species):
+                if self.num_parameters == 1: # only using one CC
+                    cidx = 0
+                else:
+                    cidx = sp # one CC for each species
+                if self.one_over_kk[cidx] < self.one_over_min_cc: # if there are any newborns of species sp (or any species) born at all
+                    # define competition
+                    # now work out the contributions to the newborn ODEs
+                    # In the following, mat is a 1D array (for efficiency)
+                    # If visualised as a matrix, M, where the ODE is dot{X} = MX (X is a column vector) then:
+                    #  - given an age, species, genotype and species, the index in the X vector is given by the function getIndex (inlined for efficiency)
+                    #  - given a component, M_ij, the index in mat is j + i * self.num_populations
+                    age = 0 # only newborn row in M
+                    # Note: the species loop above (over sp) is a row in M
+                    for sex in range(self.num_sexes): # row in M
+                        for gt in range(self.num_genotypes): # row in M
                             row = self.getIndex(sp, gt, sex, age)
                             # now want to set the column in M corresonding to female adults of genotype gtf and species spf
                             for gtf in range(self.num_genotypes): # female genotype
