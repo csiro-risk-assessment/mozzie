@@ -912,6 +912,18 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.accuracy = 0.5 # no sex bias
         
         self.num_species = 2
+        self.setNumSpecies(2)
+        
+        #self.alpha = array.clone(array.array('f', []), self.num_species * self.num_species, zero = True)
+        self.setAlphaComponent(0, 1, 0.4)
+        self.setAlphaComponent(1, 0, 0.4)
+        
+        self.setHybridisationRate(0, 1, 0, 1.0) # cross matings always produce An. gambiae s.s.
+        self.setHybridisationRate(1, 0, 0, 1.0)
+
+        self.setMatingComponent(0, 1, 0.01) # relative cross mating w = 0.01
+        self.setMatingComponent(1, 0, 0.01)
+
         self.setNumGenotypes(6)
         #self.setFitnessComponent(0, 1.)
         self.setFitnessComponent(1, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
