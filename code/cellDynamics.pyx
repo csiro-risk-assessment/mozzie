@@ -918,8 +918,13 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.setAlphaComponent(0, 1, 0.4)
         self.setAlphaComponent(1, 0, 0.4)
         
-        self.setHybridisationRate(0, 1, 0, 1.0) # cross matings always produce An. gambiae s.s.
-        self.setHybridisationRate(1, 0, 0, 1.0)
+        self.setHybridisationRate(0, 1, 0, 0.5) # cross matings produce 50/50 gambiae + coluzzii
+        self.setHybridisationRate(0, 1, 1, 0.5) 
+        self.setHybridisationRate(1, 0, 0, 0.5)
+        self.setHybridisationRate(0, 1, 0, 0.5) 
+
+        #self.setHybridisationRate(0, 1, 0, 1.0) # cross matings always produce An. gambiae s.s.
+        #self.setHybridisationRate(1, 0, 0, 1.0)
 
         self.setMatingComponent(0, 1, 0.01) # relative cross mating w = 0.01
         self.setMatingComponent(1, 0, 0.01)
