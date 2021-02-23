@@ -624,6 +624,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
+        cdef unsigned sp
 
         for sp in range(self.num_parameters): # for each defined carrying capacity
             if pops_and_params[self.num_populations + sp] <= self.min_cc:
