@@ -52,7 +52,7 @@ cdef class SpatialDependence:
         elif error_code == 2:
             raise MemoryError('C buffer not big enough to read ' + filename + '  You will have to increase MAX_FILE_LENGTH')
         elif error_code == 3:
-            raise MemoryError('C memory allocation problem when reading ' + filename)
+            raise MemoryError('C memory allocation problem when reading ' + filename + '  Perhaps MAX_FILE_LENGTH is too large for your computer')
 
         # file was opened and header successfully read, so check header
         try:
