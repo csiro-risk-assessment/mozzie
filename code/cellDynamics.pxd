@@ -211,6 +211,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     
     # Arrays to hold intermediate values of sums
     cdef array.array speciesStuff, genotypeStuff
+    
+    # Arrays to indicate presence or absence of species or genotype
+    cdef array.array speciesPresent, genotypePresent
 
     # Runge-Kutta "y" array that holds the value of populations and the carrying capacity: the C version is passed to computeRHS.  Sized to num_populations + num_parameters
     cdef array.array rky
