@@ -508,8 +508,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         cdef unsigned ind_mat
         # end of for-loops in newborn larvae competition code
         cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
+        self.speciesStuff = array.clone(array.array('f', []), self.num_species * self.num_species, zero = True)
+        self.genotypeStuff = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes, zero = True)
+        cdef float tmp
 
-        array.zero(self.mat)
+        #array.zero(self.mat) # no longer using matrix multiplication, just putting results straight into RHS
+        array.zero(self.rhs)
 
         # newborn larvae
         cdef unsigned newborn_calcs_needed = 0
@@ -554,6 +558,30 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
             # now define competition
 
+            # Pre-calculate species stuff
+            for spf in range(self.num_species): # female species
+                for spm in range(self.num_species): # male species
+                    ind0 = spf * self.num_species + spm
+                    self.speciesStuff.data.as_floats[ind0] = self.getMatingComponent(spm, spf)
+                    
+            # Pre-calculate genotype stuff
+            for gtf in range(self.num_genotypes): # female genotype
+                for gtm in range(self.num_genotypes): # male genotype
+                    ind1 = gtf * self.num_genotypes + gtm
+                    self.genotypeStuff.data.as_floats[ind1] = self.getFitnessComponent(gtm)
+
+            for sex in range(self.num_sexes): # row in M
+                for gtf in range(self.num_genotypes): # female genotype
+                    for gtm in range(self.num_genotypes): # male genotype
+                        ind1 = gtf * self.num_genotypes + gtm
+                        self.genotypeStuff.data.as_floats[ind1] *= self.fecundity_proportion(sex, gtf, gtm)
+
+            for gt in range(self.num_genotypes): # row in M
+                for gtf in range(self.num_genotypes): # female genotype
+                    for gtm in range(self.num_genotypes): # male genotype
+                        ind1 = gtf * self.num_genotypes + gtm
+                        self.genotypeStuff.data.as_floats[ind1] *= self.getInheritance(gtm, gtf, gt)
+
             for sp in range(self.num_species):
                 if self.num_parameters == 1: # only using one CC
                     cidx = 0
@@ -568,6 +596,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     #  - given a component, M_ij, the index in mat is j + i * self.num_populations
                     age = 0 # only newborn row in M
                     # Note: the species loop above (over sp) is a row in M
+                    
+                    # Pre-calculate species stuff
+                    for spf in range(self.num_species): # female species
+                        for spm in range(self.num_species): # male species
+                            ind0 = spf * self.num_species + spm
+                            self.speciesStuff.data.as_floats[ind0] *= self.getHybridisationRate(spm, spf, sp)
+                    
                     for sex in range(self.num_sexes): # row in M
                         for gt in range(self.num_genotypes): # row in M
                             row = self.getIndex(sp, gt, sex, age)
@@ -575,13 +610,17 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                             for gtf in range(self.num_genotypes): # female genotype
                                 for spf in range(self.num_species): # female species
                                     col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
+                                    tmp = 0.
                                     ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
                                     for gtm in range(self.num_genotypes): # male genotype
+                                        ind1 = gtf * self.num_genotypes + gtm
                                         for spm in range(self.num_species): # male species
                                             ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                            self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] + self.getHybridisationRate(spm, spf, sp) * self.getInheritance(gtm, gtf, gt) * self.getMatingComponent(spm, spf) * self.getFitnessComponent(gtm) * x[ind] * self.fecundity_proportion(sex, gtf, gtm)
-                                    # multiply mat by things that don't depend on gtm or spm
-                                    self.mat.data.as_floats[ind_mat] = self.mat.data.as_floats[ind_mat] * self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+                                            ind0 = spf * self.num_species + spm
+                                            tmp += self.speciesStuff.data.as_floats[ind0] * self.genotypeStuff.data.as_floats[ind1] * x[ind] * x[col]
+                                    # multiply rhs by things that don't depend on gtm or spm
+                                    tmp *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+                                    self.rhs.data.as_floats[row] += tmp
             
 
         # mortality, and aging into/from neighbouring age brackets
@@ -592,24 +631,24 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     row = self.getIndex(sp, gt, sex, age)
                     ind = row + self.num_populations * row # diagonal entry
                     if self.num_ages > 1:
-                        self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.mu_larvae # mortality
-                        self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.aging_rate # aging to older bracket
+                        self.rhs.data.as_floats[row] -=  (self.mu_larvae + self.aging_rate)*x[row] # mortality + aging to older bracket
+                        
                     for age in range(1, self.num_ages - 1):
                         row = self.getIndex(sp, gt, sex, age)
                         col = self.getIndex(sp, gt, sex, age)
                         ind = col + self.num_populations * row # diagonal entry
-                        self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.mu_larvae - self.aging_rate # mortality and aging to older bracket
+                        self.rhs.data.as_floats[row] -=  (self.mu_larvae + self.aging_rate)*x[col] # mortality + aging to older bracket
                         col = self.getIndex(sp, gt, sex, age - 1)
                         ind = col + self.num_populations * row # below diagonal
-                        self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
+                        self.rhs.data.as_floats[row] +=  self.aging_rate*x[col] # mortality + aging to older bracket
                     age = self.num_ages - 1
                     row = self.getIndex(sp, gt, sex, age)
                     ind = row + self.num_populations * row # diagonal entry
-                    self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] - self.mu_adult # mortality
+                    self.rhs.data.as_floats[row] -= self.mu_adult * x[row]# mortality
                     if self.num_ages > 1:
                         col = self.getIndex(sp, gt, sex, age - 1)
                         ind = col + self.num_populations * row # below diagonal
-                        self.mat.data.as_floats[ind] = self.mat.data.as_floats[ind] + self.aging_rate # contribution from younger age bracket
+                        self.rhs.data.as_floats[row] +=  self.aging_rate*x[col]
 
 
         #for row in range(self.num_populations):
@@ -617,10 +656,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         #        sys.stdout.write(str(self.mat[col + self.num_populations * row]) + " ")
         #    sys.stdout.write("\n")
 
-        array.zero(self.rhs)
-        for row in range(self.num_populations):
-            for col in range(self.num_populations):
-                self.rhs.data.as_floats[row] += self.mat.data.as_floats[col + self.num_populations * row] * x[col]
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
