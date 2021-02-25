@@ -576,7 +576,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         for age_d in range(end_index_for_competition):
                             for sex_d in range(self.num_sexes):
                                 for gt_d in range(self.num_genotypes):
-                                    if self.genotypesPresent[gt_d] == 1:
+                                    if self.genotypePresent[gt_d] == 1:
                                         for sp_d in range(self.num_species):
                                             if self.speciesPresent[sp_d] == 1:
                                                 ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
@@ -587,7 +587,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         age_d = self.num_ages - 1 # adult
                         sex_d = 0 # male
                         for gt_d in range(self.num_genotypes):
-                            if self.genotypesPresent[gt_d] == 1:
+                            if self.genotypePresent[gt_d] == 1:
                                 for sp_d in range(self.num_species):
                                     if self.speciesPresent[sp_d] == 1:
                                         ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
@@ -612,26 +612,26 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     
             # Pre-calculate genotype stuff
             for gtf in range(self.num_genotypes): # female genotype
-                if self.genotypesPresent[gtf] == 1:
+                if self.genotypePresent[gtf] == 1:
                     for gtm in range(self.num_genotypes): # male genotype
-                        if self.genotypesPresent[gtm] == 1:
+                        if self.genotypePresent[gtm] == 1:
                             ind1 = gtf * self.num_genotypes + gtm
                             self.genotypeStuff.data.as_floats[ind1] = self.getFitnessComponent(gtm)
 
             for sex in range(self.num_sexes): # row in M
                 for gtf in range(self.num_genotypes): # female genotype
-                    if self.genotypesPresent[gtf] == 1:
+                    if self.genotypePresent[gtf] == 1:
                         for gtm in range(self.num_genotypes): # male genotype
-                            if self.genotypesPresent[gtm] == 1:
+                            if self.genotypePresent[gtm] == 1:
                                 ind1 = gtf * self.num_genotypes + gtm
                                 self.genotypeStuff.data.as_floats[ind1] *= self.fecundity_proportion(sex, gtf, gtm)
 
             for gt in range(self.num_genotypes): # row in M
-                if self.genotypesPresent[gt] == 1:
+                if self.genotypePresent[gt] == 1:
                     for gtf in range(self.num_genotypes): # female genotype
-                        if self.genotypesPresent[gtf] == 1:
+                        if self.genotypePresent[gtf] == 1:
                             for gtm in range(self.num_genotypes): # male genotype
-                                if self.genotypesPresent[gtm] == 1:
+                                if self.genotypePresent[gtm] == 1:
                                     ind1 = gtf * self.num_genotypes + gtm
                                     self.genotypeStuff.data.as_floats[ind1] *= self.getInheritance(gtm, gtf, gt)
 
@@ -661,18 +661,18 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         
                         for sex in range(self.num_sexes): # row in M
                             for gt in range(self.num_genotypes): # row in M
-                                if self.genotypesPresent[gt] == 1:
+                                if self.genotypePresent[gt] == 1:
                                     row = self.getIndex(sp, gt, sex, age)
                                     # now want to set the column in M corresonding to female adults of genotype gtf and species spf
                                     for gtf in range(self.num_genotypes): # female genotype
-                                        if self.genotypesPresent[gtf] == 1:
+                                        if self.genotypePresent[gtf] == 1:
                                             for spf in range(self.num_species): # female species
                                                 if self.speciesPresent[spf] == 1:
                                                     col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
                                                     tmp = 0.
                                                     ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
                                                     for gtm in range(self.num_genotypes): # male genotype
-                                                        if self.genotypesPresent[gtm] == 1:
+                                                        if self.genotypePresent[gtm] == 1:
                                                             ind1 = gtf * self.num_genotypes + gtm
                                                             for spm in range(self.num_species): # male species
                                                                 if self.speciesPresent[spm] == 1:
@@ -687,7 +687,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
             for gt in range(self.num_genotypes):
-                if self.genotypesPresent[gt] == 1:
+                if self.genotypePresent[gt] == 1:
                     for sp in range(self.num_species):
                         if self.speciesPresent[sp] == 1:
                             age = 0
