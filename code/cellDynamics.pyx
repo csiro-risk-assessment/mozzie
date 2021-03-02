@@ -235,7 +235,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             self.one_over_kk[i] = 1.0
             
         ## size inheritance correctly
-        #self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+        #self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = False)
         #self.setInheritance()
 
         # allocate alpha array correctly, and set to the identity
@@ -462,7 +462,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.num_genotypes = num_genotypes
         self.num_genotypes2 = self.num_genotypes * self.num_genotypes
         # size inheritance correctly
-        self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+        self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = False)
         self.setInheritance()
         self.fitness = array.clone(array.array('f', []), num_genotypes, zero = True)
         for genotype in range(num_genotypes):
@@ -501,7 +501,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # these indices are typically left-hand-side indices
         cdef unsigned age, sex, gt, sp
         # utility indices
-        cdef unsigned ind, ind_c, ind0, ind1, cidx
+        cdef unsigned ind, ind_c, ind0, ind1, ind2, cidx
         # indices into matrix M
         cdef unsigned col, row
         # index into mat
@@ -509,8 +509,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # end of for-loops in newborn larvae competition code
         cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
         # temporary storage for species and genotype stuff
-        self.speciesStuff = array.clone(array.array('f', []), self.num_species * self.num_species, zero = True)
-        self.genotypeStuff = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes, zero = True)
+        self.speciesStuff = array.clone(array.array('f', []), self.num_species * self.num_species * self.num_species, zero = True)
+        self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = True)
+        self.genotypeStuff2 = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = True)
         # indicators whether a given species or genotype is present
         # unsigned char close as can get to boolean
         self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = True) 
@@ -523,8 +524,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # Calculate indicators whether a given species or genotype is present
         # Need tidier/more efficient way to break out of all loops
         array.zero(self.speciesPresent)
+
+        ind_d = 0
         for sp in range(self.num_species):
-            for gt_d in range (self.num_genotypes):
+            for gt_d in range(self.num_genotypes):
                 for sex_d in range(self.num_sexes):
                     for age_d in range(self.num_ages):
                         ind_d = self.getIndex(sp, gt_d, sex_d, age_d)
@@ -535,12 +538,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         break
                 if x[ind_d] > 0:
                     break
-            if x[ind_d] > 0:
-                break
+            #if x[ind_d] > 0:
+                #break
                 
         array.zero(self.genotypePresent)
         for gt in range(self.num_genotypes):
-            for sp_d in range (self.num_species):
+            for sp_d in range(self.num_species):
                 for sex_d in range(self.num_sexes):
                     for age_d in range(self.num_ages):
                         ind_d = self.getIndex(sp_d, gt, sex_d, age_d)
@@ -551,8 +554,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         break
                 if x[ind_d] > 0:
                     break
-            if x[ind_d] > 0:
-                break
+            #if x[ind_d] > 0:
+                #break
 
         # newborn larvae
         cdef unsigned newborn_calcs_needed = 0
@@ -603,37 +606,27 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             # now define competition
 
             # Pre-calculate species stuff
-            for spf in range(self.num_species): # female species
-                if self.speciesPresent[spf] == 1:
+            ind0 = -1
+            for sp in range(self.num_species):
+                for spf in range(self.num_species): # female species
                     for spm in range(self.num_species): # male species
-                        if self.speciesPresent[spm] == 1:
-                            ind0 = spf * self.num_species + spm
-                            self.speciesStuff.data.as_floats[ind0] = self.getMatingComponent(spm, spf)
-                    
+                        ind0 += 1# #spf * self.num_species + spm
+                        self.speciesStuff.data.as_floats[ind0] = self.getHybridisationRate(spm, spf, sp) * self.getMatingComponent(spm, spf) 
+                   
             # Pre-calculate genotype stuff
-            for gtf in range(self.num_genotypes): # female genotype
-                if self.genotypePresent[gtf] == 1:
-                    for gtm in range(self.num_genotypes): # male genotype
-                        if self.genotypePresent[gtm] == 1:
-                            ind1 = gtf * self.num_genotypes + gtm
-                            self.genotypeStuff.data.as_floats[ind1] = self.getFitnessComponent(gtm)
-
+            ind1 = -1
             for sex in range(self.num_sexes): # row in M
                 for gtf in range(self.num_genotypes): # female genotype
-                    if self.genotypePresent[gtf] == 1:
-                        for gtm in range(self.num_genotypes): # male genotype
-                            if self.genotypePresent[gtm] == 1:
-                                ind1 = gtf * self.num_genotypes + gtm
-                                self.genotypeStuff.data.as_floats[ind1] *= self.fecundity_proportion(sex, gtf, gtm)
+                    for gtm in range(self.num_genotypes): # male genotype
+                        ind1 += 1 #= gtf * self.num_genotypes + gtm
+                        self.genotypeStuff1.data.as_floats[ind1] = self.fecundity_proportion(sex, gtf, gtm) * self.getFitnessComponent(gtm)
 
+            ind2 = -1
             for gt in range(self.num_genotypes): # row in M
-                if self.genotypePresent[gt] == 1:
-                    for gtf in range(self.num_genotypes): # female genotype
-                        if self.genotypePresent[gtf] == 1:
-                            for gtm in range(self.num_genotypes): # male genotype
-                                if self.genotypePresent[gtm] == 1:
-                                    ind1 = gtf * self.num_genotypes + gtm
-                                    self.genotypeStuff.data.as_floats[ind1] *= self.getInheritance(gtm, gtf, gt)
+                for gtf in range(self.num_genotypes): # female genotype
+                    for gtm in range(self.num_genotypes): # male genotype
+                        ind2 += 1 # = gtf * self.num_genotypes + gtm
+                        self.genotypeStuff2.data.as_floats[ind2] = self.getInheritance(gtm, gtf, gt)
 
             for sp in range(self.num_species):
                 if self.speciesPresent[sp] == 1:
@@ -651,14 +644,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         age = 0 # only newborn row in M
                         # Note: the species loop above (over sp) is a row in M
                         
-                        # Pre-calculate species stuff
-                        for spf in range(self.num_species): # female species
-                            if self.speciesPresent[spf] == 1:
-                                for spm in range(self.num_species): # male species
-                                    if self.speciesPresent[spm] == 1:
-                                        ind0 = spf * self.num_species + spm
-                                        self.speciesStuff.data.as_floats[ind0] *= self.getHybridisationRate(spm, spf, sp)
-                        
                         for sex in range(self.num_sexes): # row in M
                             for gt in range(self.num_genotypes): # row in M
                                 if self.genotypePresent[gt] == 1:
@@ -673,17 +658,17 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                                     ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
                                                     for gtm in range(self.num_genotypes): # male genotype
                                                         if self.genotypePresent[gtm] == 1:
-                                                            ind1 = gtf * self.num_genotypes + gtm
+                                                            ind1 = sex * self.num_genotypes2 + gtf * self.num_genotypes + gtm
+                                                            ind2 = gt * self.num_genotypes2 + gtf * self.num_genotypes + gtm
                                                             for spm in range(self.num_species): # male species
                                                                 if self.speciesPresent[spm] == 1:
                                                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                                                    ind0 = spf * self.num_species + spm
-                                                                    tmp += self.speciesStuff.data.as_floats[ind0] * self.genotypeStuff.data.as_floats[ind1] * x[ind] * x[col]
+                                                                    ind0 = sp * self.num_species2 + spf * self.num_species + spm
+                                                                    tmp += self.speciesStuff.data.as_floats[ind0] * self.genotypeStuff1.data.as_floats[ind1] * self.genotypeStuff2.data.as_floats[ind2] * x[ind] * x[col]
                                                     # multiply rhs by things that don't depend on gtm or spm
                                                     tmp *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
                                                     self.rhs.data.as_floats[row] += tmp
             
-
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
             for gt in range(self.num_genotypes):

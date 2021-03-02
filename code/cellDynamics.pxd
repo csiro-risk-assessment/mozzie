@@ -210,7 +210,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef array.array rk1, rk2, rk3, rk4
     
     # Arrays to hold intermediate values of sums
-    cdef array.array speciesStuff, genotypeStuff
+    cdef array.array speciesStuff, genotypeStuff1, genotypeStuff2
     
     # Arrays to indicate presence or absence of species or genotype
     cdef array.array speciesPresent, genotypePresent
