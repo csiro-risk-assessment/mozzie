@@ -985,8 +985,8 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.k_c = 0.995
         self.k_j = 0.02
         self.k_ne = 0.0001
-        self.w_prob = 0.5*(1. - self.k_c)
-        self.c_prob = 0.5*(1. + self.k_c*(1. - self.k_j)*(1. - self.k_ne))
+        self.w_prob = 0.5 * (1 - self.k_c)
+        self.c_prob = 0.5 * (1 + self.k_c * (1 - self.k_j) * (1 - self.k_ne))
         self.r_prob = 1. - self.w_prob - self.c_prob
         self.h_e = 0.5
         self.h_n = 0.5
@@ -995,31 +995,26 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         
         self.accuracy = 0.5 # no sex bias
         
-        self.num_species = 2
         self.setNumSpecies(2)
         
-        #self.alpha = array.clone(array.array('f', []), self.num_species * self.num_species, zero = True)
         self.setAlphaComponent(0, 1, 0.4)
         self.setAlphaComponent(1, 0, 0.4)
         
         self.setHybridisationRate(0, 1, 0, 0.5) # cross matings produce 50/50 gambiae + coluzzii
         self.setHybridisationRate(0, 1, 1, 0.5) 
         self.setHybridisationRate(1, 0, 0, 0.5)
-        self.setHybridisationRate(0, 1, 0, 0.5) 
-
-        #self.setHybridisationRate(0, 1, 0, 1.0) # cross matings always produce An. gambiae s.s.
-        #self.setHybridisationRate(1, 0, 0, 1.0)
+        self.setHybridisationRate(1, 0, 1, 0.5) 
 
         self.setMatingComponent(0, 1, 0.01) # relative cross mating w = 0.01
         self.setMatingComponent(1, 0, 0.01)
 
         self.setNumGenotypes(6)
-        #self.setFitnessComponent(0, 1.)
-        self.setFitnessComponent(1, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
-        #self.setFitnessComponent(2, 1.)
-        self.setFitnessComponent(3, (1. - self.s_e)*(1. - self.s_n))
-        self.setFitnessComponent(4, (1. - self.h_e*self.s_e)*(1. - self.h_n*self.s_n))
-        #self.setFitnessComponent(5, 1.)
+        #self.setFitnessComponent(0, 1)
+        self.setFitnessComponent(1, (1 - self.h_e * self.s_e) * (1 - self.h_n * self.s_n))
+        #self.setFitnessComponent(2, 1)
+        self.setFitnessComponent(3, (1 - self.s_e) * (1 - self.s_n))
+        self.setFitnessComponent(4, (1 - self.h_e * self.s_e) * (1 - self.h_n * self.s_n))
+        #self.setFitnessComponent(5, 1)
         self.num_parameters = self.num_species # the only spatially-varying quantities are the carrying capacities, Kx and Ky
 
         #self.num_genotypes = 6 # ww, wc, wr, cc, cr, rr always
