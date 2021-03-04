@@ -14,5 +14,6 @@ python ${DIR}/TestDiffusion_2.py
 python ${DIR}/TestAdvection_1.py
 python ${DIR}/TestAdvection_2.py
 python ${DIR}/TestEvolveCells.py
+python ${DIR}/TestCellDynamicsMosquito26.py
 
 
