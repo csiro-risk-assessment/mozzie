@@ -387,7 +387,25 @@ cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
 
 
 cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
-    """CellDynamicsMosquito23 but with 6 genotypes"""
+    """Solves Mosquito ODE with
+      num_sexes = 2 (cannot be changed)
+      num_genotypes = 6 (should not be changed)
+      num_species = 2 (by default, and should not be changed unless you reinterpret the carrying-capacities)
+    The number of populations is
+    num_ages * num_species * num_genotypes * num_sexes = num_ages * 24
+    For species M, genotype G, sex S and age A, the index into pops_and_params is
+    index = M + G * num_species + S * num_species * num_genotypes + A * num_species * num_genotypes * num_sexes
+    Ages 0, 1, ..., num_ages - 2 are all larval stages.  Age = num_ages - 1 is the adult stage.
+    Sex 0 is male.  Sex 1 is female.
+    Genotypes:
+      0 is ww
+      1 is wc
+      2 is wr
+      3 is cc
+      4 is cr
+      5 is rr
+    There are two spatially-varying parameters, which are the carrying capacities for each species
+    """
 
     cdef float k_c
     cdef float k_j
