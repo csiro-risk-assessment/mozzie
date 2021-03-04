@@ -661,7 +661,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                                         if self.genotypePresent[gtm] == 1:
                                                             tmp_d = gtf * self.num_genotypes + gtm
                                                             ind1 = sex * self.num_genotypes2 + tmp_d
-                                                            ind2 = gt * self.num_genotypes2 + tmp_d
+                                                            ind2 = gt * self.num_genotypes2 + tmp_d                                                            for spm in range(self.num_species): # male species
                                                             for spm in range(self.num_species): # male species
                                                                 if self.speciesPresent[spm] == 1:
                                                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
