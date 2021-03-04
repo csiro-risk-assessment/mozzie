@@ -997,33 +997,33 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.accuracy = 0.5 # no sex bias
         
         self.setNumSpecies(2)
-        
+
+	# setNumSpecies initialises alpha to the identity.  Modify it as follows:
         self.setAlphaComponent(0, 1, 0.4)
         self.setAlphaComponent(1, 0, 0.4)
-        
+
+	# setNumSpecies initialises HybridisationRate(i, i, i) = 1, and all other components zero.  Modify it:
         self.setHybridisationRate(0, 1, 0, 0.5) # cross matings produce 50/50 gambiae + coluzzii
         self.setHybridisationRate(0, 1, 1, 0.5) 
         self.setHybridisationRate(1, 0, 0, 0.5)
         self.setHybridisationRate(1, 0, 1, 0.5) 
 
+	# setNumSpecies initialises MatingComponent(i, i) = 1, and all other components zero.  Modify it:
         self.setMatingComponent(0, 1, 0.01) # relative cross mating w = 0.01
         self.setMatingComponent(1, 0, 0.01)
 
-        self.setNumGenotypes(6)
-        #self.setFitnessComponent(0, 1)
-        self.setFitnessComponent(1, (1 - self.h_e * self.s_e) * (1 - self.h_n * self.s_n))
-        #self.setFitnessComponent(2, 1)
-        self.setFitnessComponent(3, (1 - self.s_e) * (1 - self.s_n))
-        self.setFitnessComponent(4, (1 - self.h_e * self.s_e) * (1 - self.h_n * self.s_n))
-        #self.setFitnessComponent(5, 1)
-        self.num_parameters = self.num_species # the only spatially-varying quantities are the carrying capacities, Kx and Ky
+        self.setNumGenotypes(6)  # ww, wc, wr, cc, cr, rr
 
-        #self.num_genotypes = 6 # ww, wc, wr, cc, cr, rr always
-        #self.num_genotypes2 = self.num_genotypes * self.num_genotypes
-        ## size inheritance correctly
-        #self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes * self.num_genotypes * self.num_genotypes, zero = False)
+	# setNumGenotypes initialises FitnessComponent to 1 for all genotypes.  Modify it:
+        self.setFitnessComponent(1, (1 - self.h_e * self.s_e) * (1 - self.h_n * self.s_n)) # wc
+        self.setFitnessComponent(3, (1 - self.s_e) * (1 - self.s_n)) # cc
+        self.setFitnessComponent(4, (1 - self.h_e * self.s_e) * (1 - self.h_n * self.s_n)) # cr
+
+	# Each species has its own carrying capacity:
+        self.num_parameters = self.num_species
+
         self.setInheritance()
-        
+
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
         
     cdef void setInheritance(self):
@@ -1032,13 +1032,13 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
                              [0.5, 0., 0.5, 0., 0., 0.], # ww x wr
                              [0., 1., 0., 0., 0., 0.], # ww x cc
                              [0., 0.5, 0.5, 0., 0., 0.], # ww x cr
-                             [0., 0., 1., 0., 0., 0.]],# ww x rr
+                             [0., 0., 1., 0., 0., 0.]], # ww x rr
                             [[self.w_prob, self.c_prob, self.r_prob, 0., 0., 0.], # wc x ww
                              [self.w_prob*self.w_prob, 2.*self.w_prob*self.c_prob, 2.*self.w_prob*self.r_prob, self.c_prob*self.c_prob, 2.*self.c_prob*self.r_prob, self.r_prob*self.r_prob], # wc x wc
                              [0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.w_prob + self.r_prob), 0., 0.5*self.c_prob, 0.5*self.r_prob], # wc x wr
                              [0., self.w_prob, 0., self.c_prob, self.r_prob, 0.], # wc x cc
                              [0., 0.5*self.w_prob, 0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.c_prob + self.r_prob), 0.5*self.r_prob], # wc x cr
-                             [0., 0., self.w_prob, 0., self.c_prob, self.r_prob]],# wc x rr
+                             [0., 0., self.w_prob, 0., self.c_prob, self.r_prob]], # wc x rr
                             [[0.5, 0., 0.5, 0., 0., 0.], # wr x ww
                              [0.5*self.w_prob, 0.5*self.c_prob, 0.5*(self.w_prob + self.r_prob), 0., 0.5*self.c_prob, 0.5*self.r_prob], # wr x wc
                              [0.25, 0., 0.5, 0., 0., 0.25], # wr x wr
@@ -1062,7 +1062,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
                              [0., 0., 0.5, 0., 0., 0.5], # rr x wr
                              [0., 0., 0., 0., 1., 0.], # rr x cc
                              [0., 0., 0., 0., 0.5, 0.5], # rr x cr
-                             [0., 0., 0., 0., 0., 1.]]]# rr x rr
+                             [0., 0., 0., 0., 0., 1.]]] # rr x rr
         cdef unsigned gt_father, gt_mother, gt_offspring
         for gt_father in range(self.num_genotypes):
             for gt_mother in range(self.num_genotypes):
