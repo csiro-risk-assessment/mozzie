@@ -414,19 +414,15 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
       mating components
     """
 
-    cdef float k_c
-    cdef float k_j
-    cdef float k_ne
     cdef float w_prob
     cdef float c_prob
     cdef float r_prob
-    cdef float h_e
-    cdef float h_n
-    cdef float s_e
-    cdef float s_n
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""
 
     cpdef setFitnessComponents26(self, float h_e, float h_n, float s_e, float s_n)
     """sets FitnessParams assuming there are 6 genotypes: fitness(0) = fitness(2) = fitness(5) = 1; fitness(1) = fitness(3) = (1 - h_e * s_e) * (1 - h_n * s_n); fitness(4) = (1 - s_e) * (1 - s_n)"""
+
+    cpdef setInheritance26(self, float k_c, float k_j, float k_ne)
+    """sets the inheritance cube based on k_c, k_j and k_ne, assuming there are 6 genotypes"""

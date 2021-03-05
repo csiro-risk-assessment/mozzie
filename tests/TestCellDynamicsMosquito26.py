@@ -137,15 +137,164 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(1, 0)], [0.01], 1E-6))
       self.assertTrue(arrayfuzzyequal([self.c.getMatingComponentFromPython(0, 1)], [0.01], 1E-6))
 
-   def testInheritance(self):
-      # father, mother, offspring
-      # ww, wc, wr, cc, cr, rr
+   def testSetGetInheritance(self):
+
+      # default values in constructor
       k_c = 0.995
       k_j = 0.02
       k_ne = 1E-4
       w = 0.5 - 0.5 * k_c
       c = 0.5 + 0.5 * k_c * (1 - k_j) * (1 - k_ne)
       r = 0.5 * k_c * (k_ne + k_j * (1 - k_ne))
+
+      # father, mother, offspring
+      # ww, wc, wr, cc, cr, rr
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 0)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 0)], [w], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 1)], [c], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 2)], [r], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 1, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 0)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 2)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 2, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 3, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 3, 1)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 3, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 3, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 3, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 3, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 4, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 4, 1)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 4, 2)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 4, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 4, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 4, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 5, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 5, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 5, 2)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 5, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 5, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 5, 5)], [0], 1E-6))
+
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 0)], [w * w], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 1)], [2 * w * c], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 2)], [2 * w * r], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 3)], [c * c], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 4)], [2 * c * r], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 1, 5)], [r * r], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 0)], [0.5 * w], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 1)], [0.5 * c], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 2)], [0.5 * (w + r)], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 4)], [0.5 * c], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 2, 5)], [0.5 * r], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 3, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 3, 1)], [w], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 3, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 3, 3)], [c], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 3, 4)], [r], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 3, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 4, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 4, 1)], [0.5 * w], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 4, 2)], [0.5 * w], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 4, 3)], [0.5 * c], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 4, 4)], [0.5 * (c + r)], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 4, 5)], [0.5 * r], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 5, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 5, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 5, 2)], [w], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 5, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 5, 4)], [c], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(1, 5, 5)], [r], 1E-6))
+
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 0)], [0.25], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 2)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 2, 5)], [0.25], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 3, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 3, 1)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 3, 2)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 3, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 3, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 3, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 4, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 4, 1)], [0.25], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 4, 2)], [0.25], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 4, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 4, 4)], [0.25], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 4, 5)], [0.25], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 5, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 5, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 5, 2)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 5, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 5, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(2, 5, 5)], [0.5], 1E-6))
+
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 3, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 3, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 3, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 3, 3)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 3, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 3, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 4, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 4, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 4, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 4, 3)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 4, 4)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 4, 5)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 5, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 5, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 5, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 5, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 5, 4)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(3, 5, 5)], [0], 1E-6))
+
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 4, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 4, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 4, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 4, 3)], [0.25], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 4, 4)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 4, 5)], [0.25], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 5, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 5, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 5, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 5, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 5, 4)], [0.5], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(4, 5, 5)], [0.5], 1E-6))
+
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(5, 5, 0)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(5, 5, 1)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(5, 5, 2)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(5, 5, 3)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(5, 5, 4)], [0], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(5, 5, 5)], [1], 1E-6))
+
+      # symmetry
+      for male in range(6):
+         for female in range(6):
+            for offspring in range(6):
+               self.assertEqual(self.c.getInheritanceFromPython(male, female, offspring), self.c.getInheritanceFromPython(female, male, offspring))
+
+      # some new values
+      k_c = 0.875
+      k_j = 0.0625
+      k_ne = 0.03125
+      w = 0.5 - 0.5 * k_c
+      c = 0.5 + 0.5 * k_c * (1 - k_j) * (1 - k_ne)
+      r = 0.5 * k_c * (k_ne + k_j * (1 - k_ne))
+      self.c.setInheritance26(k_c, k_j, k_ne)
 
       self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 0)], [1], 1E-6))
       self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(0, 0, 1)], [0], 1E-6))
@@ -279,11 +428,13 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(5, 5, 4)], [0], 1E-6))
       self.assertTrue(arrayfuzzyequal([self.c.getInheritanceFromPython(5, 5, 5)], [1], 1E-6))
 
+      # symmetry
       for male in range(6):
          for female in range(6):
             for offspring in range(6):
                self.assertEqual(self.c.getInheritanceFromPython(male, female, offspring), self.c.getInheritanceFromPython(female, male, offspring))
-            
+
+      # exception testing
       with self.assertRaises(ValueError) as the_err:
          self.c.getInheritanceFromPython(6, 0, 0)
       self.assertEqual(str(the_err.exception), "All genotypes, 6, 0, 0 must be less than the number of genotypes, 6")
@@ -293,6 +444,10 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       with self.assertRaises(ValueError) as the_err:
          self.c.getInheritanceFromPython(0, 0, 6)
       self.assertEqual(str(the_err.exception), "All genotypes, 0, 0, 6 must be less than the number of genotypes, 6")
+      self.c.setNumGenotypes(5)
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setInheritance26(k_c, k_j, k_ne)
+      self.assertEqual(str(the_err.exception), "setInheritance26 can only be used if the number of genotypes is 6")
 
 
 

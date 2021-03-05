@@ -989,13 +989,6 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     def __init__(self):
         super().__init__()
         
-        self.k_c = 0.995
-        self.k_j = 0.02
-        self.k_ne = 0.0001
-        self.w_prob = 0.5 * (1 - self.k_c)
-        self.c_prob = 0.5 * (1 + self.k_c * (1 - self.k_j) * (1 - self.k_ne))
-        self.r_prob = 1. - self.w_prob - self.c_prob
-        
         self.accuracy = 0.5 # no sex bias
         
         self.setNumSpecies(2)
@@ -1014,7 +1007,12 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.setMatingComponent(0, 1, 0.01) # relative cross mating w = 0.01
         self.setMatingComponent(1, 0, 0.01)
 
-        self.setNumGenotypes(6)  # ww, wc, wr, cc, cr, rr
+        # Probabilities used in the Inheritance cube
+        self.w_prob = 0.5 * (1 - 0.995)
+        self.c_prob = 0.5 * (1 + 0.995 * (1 - 0.02) * (1 - 0.0001))
+        self.r_prob = 1. - self.w_prob - self.c_prob
+        
+        self.setNumGenotypes(6)  # ww, wc, wr, cc, cr, rr.  This also initialises the Inheritance cube with the above probabilities
 
 	# setNumGenotypes initialises FitnessComponent to 1 for all genotypes.  Modify it:
         h_e = h_n = 0.5
@@ -1024,8 +1022,6 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
 
 	# Each species has its own carrying capacity:
         self.num_parameters = self.num_species
-
-        self.setInheritance()
 
         self.setInternalParameters(self.num_ages, self.num_species, self.accuracy)
         
@@ -1081,3 +1077,11 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.setFitnessComponent(3, (1 - s_e) * (1 - s_n)) # cc
         self.setFitnessComponent(4, (1 - h_e * s_e) * (1 - h_n * s_n)) # cr
         self.setFitnessComponent(5, 1) # rr
+
+    cpdef setInheritance26(self, float k_c, float k_j, float k_ne):
+        if self.num_genotypes != 6:
+            raise ValueError("setInheritance26 can only be used if the number of genotypes is 6")
+        self.w_prob = 0.5 * (1 - k_c)
+        self.c_prob = 0.5 * (1 + k_c * (1 - k_j) * (1 - k_ne))
+        self.r_prob = 1 - self.w_prob - self.c_prob
+        self.setInheritance()
