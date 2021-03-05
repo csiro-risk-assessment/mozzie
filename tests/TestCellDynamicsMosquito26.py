@@ -89,6 +89,40 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
          self.c.setAlphaComponent(2, 1, 0)
       self.assertEqual(str(the_err.exception), "sp0 2 and sp1 1 must be less than the number of species, 2")
 
+   def testSetGetFitnessComponents(self):
+      h_e = 0.5
+      h_n = 0.5
+      s_e = 0.1
+      s_n = 0.05
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(0)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(1)], [(1 - h_e * s_e) * (1 - h_n * s_n)], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(2)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(3)], [(1 - s_e) * (1 - s_n)], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(4)], [(1 - h_e * s_e) * (1 - h_n * s_n)], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(5)], [1], 1E-6))
+
+      with self.assertRaises(ValueError) as the_err:
+         self.c.getFitnessComponentFromPython(6)
+      self.assertEqual(str(the_err.exception), "Genotype 6 must be less than the number of genotypes, 6")
+
+      h_e = 0.25
+      h_n = 0.625
+      s_e = 0.75
+      s_n = 0.125
+      self.c.setFitnessComponents26(h_e, h_n, s_e, s_n)
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(0)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(1)], [(1 - h_e * s_e) * (1 - h_n * s_n)], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(2)], [1], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(3)], [(1 - s_e) * (1 - s_n)], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(4)], [(1 - h_e * s_e) * (1 - h_n * s_n)], 1E-6))
+      self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(5)], [1], 1E-6))
+
+      self.c.setNumGenotypes(5)
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setFitnessComponents26(h_e, h_n, s_e, s_n)
+      self.assertEqual(str(the_err.exception), "setFitnessComponents26 can only be used if the number of genotypes is 6")
+      
+
    def testSetGetHybridisationRate(self):
       self.assertEqual(self.c.getHybridisationRateFromPython(0, 0, 0), 1.0)
       self.assertEqual(self.c.getHybridisationRateFromPython(1, 1, 1), 1.0)

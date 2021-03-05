@@ -413,6 +413,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             raise ValueError("genotype " + str(genotype) + " must be less than the number of genotypes " + str(self.num_genotypes))
         self.fitness.data.as_floats[genotype] = value
 
+    def getFitnessComponentFromPython(self, unsigned genotype):
+        """Python interface for getting a component of the Fitness vector.  This is a slow interface: use getFitnessComponent from all cython code"""
+        if genotype >= self.num_genotypes:
+            raise ValueError("Genotype " + str(genotype) + " must be less than the number of genotypes, " + str(self.num_genotypes))
+        return self.getFitnessComponent(genotype)
+
     cpdef void setMuLarvae(self, float mu_larvae):
         self.mu_larvae = mu_larvae
 
@@ -988,10 +994,6 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.w_prob = 0.5 * (1 - self.k_c)
         self.c_prob = 0.5 * (1 + self.k_c * (1 - self.k_j) * (1 - self.k_ne))
         self.r_prob = 1. - self.w_prob - self.c_prob
-        self.h_e = 0.5
-        self.h_n = 0.5
-        self.s_e = 0.1
-        self.s_n = 0.05
         
         self.accuracy = 0.5 # no sex bias
         
@@ -1014,9 +1016,10 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.setNumGenotypes(6)  # ww, wc, wr, cc, cr, rr
 
 	# setNumGenotypes initialises FitnessComponent to 1 for all genotypes.  Modify it:
-        self.setFitnessComponent(1, (1 - self.h_e * self.s_e) * (1 - self.h_n * self.s_n)) # wc
-        self.setFitnessComponent(3, (1 - self.s_e) * (1 - self.s_n)) # cc
-        self.setFitnessComponent(4, (1 - self.h_e * self.s_e) * (1 - self.h_n * self.s_n)) # cr
+        h_e = h_n = 0.5
+        s_e = 0.1
+        s_n = 0.05
+        self.setFitnessComponents26(h_e, h_n, s_e, s_n)
 
 	# Each species has its own carrying capacity:
         self.num_parameters = self.num_species
@@ -1065,3 +1068,13 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
             for gt_mother in range(self.num_genotypes):
                 for gt_offspring in range(self.num_genotypes):
                     self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + gt_offspring * self.num_genotypes2] = inheritance_list[gt_father][gt_mother][gt_offspring]
+
+    cpdef setFitnessComponents26(self, float h_e, float h_n, float s_e, float s_n):
+        if self.num_genotypes != 6:
+            raise ValueError("setFitnessComponents26 can only be used if the number of genotypes is 6")
+        self.setFitnessComponent(0, 1) # ww
+        self.setFitnessComponent(1, (1 - h_e * s_e) * (1 - h_n * s_n)) # wc
+        self.setFitnessComponent(2, 1) # wr
+        self.setFitnessComponent(3, (1 - s_e) * (1 - s_n)) # cc
+        self.setFitnessComponent(4, (1 - h_e * s_e) * (1 - h_n * s_n)) # cr
+        self.setFitnessComponent(5, 1) # rr

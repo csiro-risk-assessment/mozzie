@@ -390,7 +390,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     """Solves Mosquito ODE with
       num_sexes = 2 (cannot be changed)
       num_genotypes = 6 (should not be changed)
-      num_species = 2 (by default, and should not be changed unless you reinterpret the carrying-capacities)
+      num_species = 2 (by default.  Should not be changed unless you reinterpret the carrying-capacities)
     The number of populations is
     num_ages * num_species * num_genotypes * num_sexes = num_ages * 24
     For species M, genotype G, sex S and age A, the index into pops_and_params is
@@ -405,6 +405,13 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
       4 is cr
       5 is rr
     There are two spatially-varying parameters, which are the carrying capacities for each species
+    See the constructor for more details such as the default values for:
+      inheritance
+      alpha
+      accuracy
+      fitness
+      hybridisation
+      mating components
     """
 
     cdef float k_c
@@ -420,3 +427,6 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""
+
+    cpdef setFitnessComponents26(self, float h_e, float h_n, float s_e, float s_n)
+    """sets FitnessParams assuming there are 6 genotypes: fitness(0) = fitness(2) = fitness(5) = 1; fitness(1) = fitness(3) = (1 - h_e * s_e) * (1 - h_n * s_n); fitness(4) = (1 - s_e) * (1 - s_n)"""
