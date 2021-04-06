@@ -12,10 +12,10 @@ from cellDynamics import CellDynamicsMosquito23
 from cellDynamics import CellDynamicsMosquito23G
 
 def arrayequal(a, b):
-   return all([a[i] == b[i] for i in range(0, len(a))])
+   return (len(a) == len(b)) and all([a[i] == b[i] for i in range(min(len(a), len(b)))])
 
 def arrayfuzzyequal(a, b, eps):
-   return all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(0, len(a))])
+   return (len(a) == len(b)) and all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(min(len(a), len(b)))])
 
 class TestCellDynamicsMosquito23(unittest.TestCase):
 
@@ -321,7 +321,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setNumSpecies(4)
       self.c.setNumAges(5)
       initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
-      expected_answer = [x * (1 - 0.5 * dt) for x in initial_condition[:(num_ages - 1) * num_species * num_gt * num_sexes]] + [x * (1 - 0.7 * dt) for x in initial_condition[(num_ages - 1) * num_species * num_gt * num_sexes : num_ages * num_species * num_gt * num_sexes]] + [initial_condition[-1]]
+      expected_answer = [x * (1 - 0.5 * dt) for x in initial_condition[:(num_ages - 1) * num_species * num_gt * num_sexes]] + [x * (1 - 0.7 * dt) for x in initial_condition[(num_ages - 1) * num_species * num_gt * num_sexes : num_ages * num_species * num_gt * num_sexes]] + initial_condition[-self.c.getNumberOfParameters():]
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 4E-5))
@@ -379,7 +379,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.setNumSpecies(num_species)
       self.c.setNumAges(num_ages)
       initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
-      expected_answer = [x * (1 - aging_rate * dt) for x in initial_condition[:1 * num_species * num_gt * num_sexes]] + [initial_condition[i] + initial_condition[i - num_species * num_gt * num_sexes] * aging_rate * dt for i in range(1 * num_species * num_gt * num_sexes, num_ages * num_species * num_gt * num_sexes)] + [initial_condition[-1]]
+      expected_answer = [x * (1 - aging_rate * dt) for x in initial_condition[:1 * num_species * num_gt * num_sexes]] + [initial_condition[i] + initial_condition[i - num_species * num_gt * num_sexes] * aging_rate * dt for i in range(1 * num_species * num_gt * num_sexes, num_ages * num_species * num_gt * num_sexes)] + initial_condition[-self.c.getNumberOfParameters():]
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 4E-3))
@@ -586,7 +586,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       for i in range(12):
          initial_condition.append(ic_species0[i])
          initial_condition.append(ic_species1[i])
-      initial_condition.append(carrying_cap)
+      initial_condition += [carrying_cap, carrying_cap]
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
 
@@ -596,7 +596,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       for i in range(12):
          expected_result.append(expected0[i])
          expected_result.append(expected1[i])
-      expected_result.append(carrying_cap)
+      expected_result += [carrying_cap, carrying_cap]
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
 
    def testEvolveTwoAgesTwoSpecies(self):
@@ -710,13 +710,13 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       for i in range(12):
          initial_condition.append(ic_species0[i])
          initial_condition.append(ic_species1[i])
-      initial_condition.append(carrying_cap)
+      initial_condition += [carrying_cap, carrying_cap]
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
 
       # check result
       expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(24)]) for i in range(24)]
-      expected_result.append(carrying_cap)
+      expected_result += [carrying_cap, carrying_cap]
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 6E-6))
 
 

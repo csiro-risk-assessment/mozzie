@@ -9,7 +9,7 @@ sys.path.append(findbin + "/../code")
 from cellDynamics import CellDynamicsStatic15_9_3_2
 
 def arrayequal(a, b):
-   return all([a[i] == b[i] for i in range(0, len(a))])
+   return (len(a) == len(b)) and all([a[i] == b[i] for i in range(min(len(a), len(b)))])
 
 class TestCellDynamicsStatic15_9_3_2(unittest.TestCase):
 

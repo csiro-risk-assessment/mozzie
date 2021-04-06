@@ -12,10 +12,10 @@ from cellDynamics import CellDynamicsStatic15_9_3_2
 from populationsAndParameters import PopulationsAndParameters
 
 def arrayequal(a, b):
-   return all([a[i] == b[i] for i in range(0, len(a))])
+   return (len(a) == len(b)) and all([a[i] == b[i] for i in range(min(len(a), len(b)))])
 
 def arrayfuzzyequal(a, b, eps):
-   return all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(0, len(a))])
+   return (len(a) == len(b)) and all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(min(len(a), len(b)))])
 
 class TestPopulationsAndParameters(unittest.TestCase):
 
@@ -71,26 +71,26 @@ class TestPopulationsAndParameters(unittest.TestCase):
       self.pap.setPopulationAndParameters(0, list(range(17)))
       for i in range(17):
          result[i] = 1.0 * i
-      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result))
+      self.assertTrue(arrayequal(self.pap.getQuantities(), result))
 
       pp = [1.0, -3.0, -33.0, 9.0, 17.0, 1.0, -3.0, -33.0, 9.0, 17.0, 11.0, -19.0, 13.0, -55.0, 15.0, 0.0, 1.0]
       self.pap.setPopulationAndParameters(2, pp)
       for i in range(17):
          result[17 * 2 + i] = pp
-      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result))
+      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result[0:17]))
 
    def testSetPopulationAndParametersFromXY(self):
       result = [0.0] * 8 * 8 * 17
       self.pap.setPopulationAndParametersFromXY(-2.0, -2.0, list(range(17)))
       for i in range(17):
          result[i] = 1.0 * i
-      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result))
+      self.assertTrue(arrayequal(self.pap.getQuantities(), result))
 
       pp = [1.0, -3.0, -33.0, 9.0, 17.0, 1.0, -3.0, -33.0, 9.0, 17.0, 11.0, -19.0, 13.0, -55.0, 15.0, 0.0, 1.0]
       self.pap.setPopulationAndParametersFromXY(-1.5, -2.0, pp)
       for i in range(17):
          result[17 * 2 + i] = pp
-      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result))
+      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result[0:17]))
 
    def testSetOverActiveGrid(self):
       sixtyfour = self.grid.getNumActiveCells()

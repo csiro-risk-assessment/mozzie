@@ -13,7 +13,7 @@ from spatialDynamics import SpatialDynamics
 from populationsAndParameters import PopulationsAndParameters
 
 def arrayfuzzyequal(a, b, eps):
-   return all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(0, len(a))])
+   return (len(a) == len(b)) and all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(min(len(a), len(b)))])
 
 class TestAdvection_1(unittest.TestCase):
 

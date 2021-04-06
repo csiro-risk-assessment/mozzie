@@ -9,7 +9,7 @@ sys.path.append(findbin + "/../code")
 from grid import Grid
 
 def arrayequal(a, b):
-   return all([a[i] == b[i] for i in range(0, len(a))])
+   return (len(a) == len(b)) and all([a[i] == b[i] for i in range(min(len(a), len(b)))])
 
 class TestGrid(unittest.TestCase):
 
