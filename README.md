@@ -9,6 +9,10 @@ The core code is written in `cython`, which is a mix of python (ease of developm
 with `cythonize` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory 
 we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, etc).
 
+### Testing the code
+
+Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `run_all_tests.sh`.
+
 ### Simulating
 
 The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  An example is `example1/runner.py`, and there are other more sophisticated models in the other `example` directories.  Generally, each "runner" python script contains the following.
