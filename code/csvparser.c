@@ -4,7 +4,7 @@
 #include "csvparser.h"
 
 // we read the entire file in one gulp, to attempt to speed I/O
-#define MAX_FILE_LENGTH (300 * 1024 * 1024)
+#define MAX_FILE_LENGTH (200 * 1024 * 1024)
 char file_contents[MAX_FILE_LENGTH];
 
 // initial guess at the maximum length of the header.  the header string gets dynamically resized if the file header is longer than this
@@ -20,6 +20,7 @@ int getHeader(char **header, size_t *header_length)
 {
   // the file is read line-by-line, using strtok_r
   next_line = file_contents;
+  single_line = file_contents;
   // initialise header[0] to MAX_HEADER_LINE_LENGTH
   header[0] = (char*) malloc(MAX_HEADER_LINE_LENGTH * sizeof(char));
   if (header[0] == NULL)
@@ -30,8 +31,9 @@ int getHeader(char **header, size_t *header_length)
   // max number of chars (without the trailing \0) that can be kept in header[0]
   size_t max_chars_in_header0 = MAX_HEADER_LINE_LENGTH - 1;
 
-  while ((single_line = strtok_r(next_line, "\n", &next_line)) && single_line[0] == '#') // only process header lines
+  while (*next_line == '#' && single_line != NULL)
   {
+    single_line = strtok_r(next_line, "\n", &next_line);
     header_length[0] = strlen(header[0]);
     while (strlen(single_line) + 1 + header_length[0] > max_chars_in_header0) // the strcats, below, will overflow header[0]
     {
@@ -99,6 +101,7 @@ int getDataBool(unsigned **uint, size_t header_len, size_t num_in_row, size_t ex
   if (binary == 0)
   {
     // go line-by-line through the file_contents
+    single_line = strtok_r(next_line, "\n", &next_line);
     do
     {
       if (!single_line)
@@ -156,6 +159,7 @@ int getDataFloat(float **float_data, size_t header_len, size_t num_in_row, size_
   if (binary == 0)
   {
     // go line-by-line through the file_contents
+    single_line = strtok_r(next_line, "\n", &next_line);
     do
     {
       if (!single_line)
@@ -210,6 +214,7 @@ int getProcessedWind(unsigned **uint, size_t header_len, float **float_data, siz
   if (binary == 0)
   {
     // go line-by-line through the file_contents
+    single_line = strtok_r(next_line, "\n", &next_line);
     do
     {
       if (!single_line)
