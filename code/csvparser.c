@@ -16,22 +16,42 @@ char * single_line;
 // for splitting the file_contents into lines
 char * next_line;
 
-int getHeader(char **header, size_t *header_length)
+// additional header information written into binary files
+char binary_header[] = "#strlen of remaining header = ";
+
+int getHeader(char **header, size_t *header_length, int binary)
 {
   // the file is read line-by-line, using strtok_r
-  next_line = file_contents;
-  single_line = file_contents;
-  // initialise header[0] to MAX_HEADER_LINE_LENGTH
-  header[0] = (char*) malloc(MAX_HEADER_LINE_LENGTH * sizeof(char));
+
+  size_t max_chars_in_header0 = MAX_HEADER_LINE_LENGTH - 1;   // max number of chars (without the trailing \0) that can be kept in header[0]
+
+  size_t *actual_header_strlen = (size_t*) malloc(sizeof(size_t));
+  if (binary == 0)
+  {
+    // initialise header[0] to MAX_HEADER_LINE_LENGTH
+    header[0] = (char*) malloc(MAX_HEADER_LINE_LENGTH * sizeof(char));
+    max_chars_in_header0 = MAX_HEADER_LINE_LENGTH - 1;
+    // point next_line at the start of the file
+    next_line = file_contents;
+  }
+  else
+  {
+    memcpy(actual_header_strlen, file_contents + strlen(binary_header) * sizeof(char), sizeof(size_t));
+    // initialise header[0] to the length just read from the file
+    header[0] = (char*) malloc(((*actual_header_strlen) + 1) * sizeof(char));
+    max_chars_in_header0 = *actual_header_strlen;
+    // point next_line at the start of the header
+    next_line = file_contents + strlen(binary_header) * sizeof(char) + sizeof(size_t);
+  }
+
   if (header[0] == NULL)
   {
     return 1;
   }
   strcpy(header[0], "");
-  // max number of chars (without the trailing \0) that can be kept in header[0]
-  size_t max_chars_in_header0 = MAX_HEADER_LINE_LENGTH - 1;
 
-  while (*next_line == '#' && single_line != NULL)
+  single_line = next_line;
+  while (*next_line == '#' && single_line != NULL && (binary == 0 || strlen(header[0]) < (*actual_header_strlen)))
   {
     single_line = strtok_r(next_line, "\n", &next_line);
     header_length[0] = strlen(header[0]);
@@ -76,7 +96,7 @@ int read_and_get_header(const char *filename, char **header, size_t *header_leng
     return 1;
   }
   file_contents[num_bytes_read] = '\0';
-  int header_error = getHeader(header, header_length);
+  int header_error = getHeader(header, header_length, binary);
   if (header_error != 0)
   {
     return header_error;
@@ -131,7 +151,7 @@ int getDataBool(unsigned **uint, size_t header_len, size_t num_in_row, size_t ex
   }
   else
   {
-    memcpy(uint[0], file_contents + header_len * sizeof(char), expected_size * sizeof(unsigned));
+    memcpy(uint[0], file_contents + strlen(binary_header) * sizeof(char) + sizeof(size_t) + header_len * sizeof(char), expected_size * sizeof(unsigned));
     num_found = expected_size;
   }
 
@@ -185,7 +205,7 @@ int getDataFloat(float **float_data, size_t header_len, size_t num_in_row, size_
   }
   else
   {
-    memcpy(float_data[0], file_contents + header_len * sizeof(char), expected_size * sizeof(float));
+    memcpy(float_data[0], file_contents + strlen(binary_header) * sizeof(char) + sizeof(size_t) + header_len * sizeof(char), expected_size * sizeof(float));
     num_found = expected_size;
   }
 
@@ -251,9 +271,10 @@ int getProcessedWind(unsigned **uint, size_t header_len, float **float_data, siz
   }
   else
   {
-    memcpy(num_found, file_contents + header_len * sizeof(char), sizeof(size_t));
-    memcpy(uint[0], file_contents + header_len * sizeof(char) + sizeof(size_t), 2 * num_found[0] * sizeof(unsigned));
-    memcpy(float_data[0], file_contents + header_len * sizeof(char) + sizeof(size_t) + 2 * num_found[0] * sizeof(unsigned), num_found[0] * sizeof(float));
+    char * startat = file_contents + strlen(binary_header) * sizeof(char) + sizeof(size_t) + header_len * sizeof(char);
+    memcpy(num_found, startat, sizeof(size_t));
+    memcpy(uint[0], startat + sizeof(size_t), 2 * num_found[0] * sizeof(unsigned));
+    memcpy(float_data[0], startat + sizeof(size_t) + 2 * num_found[0] * sizeof(unsigned), num_found[0] * sizeof(float));
   }
 
   return 0;
@@ -289,6 +310,14 @@ int parseProcessedWind(const char *filename, char **header, size_t *header_lengt
   return getProcessedWind(uint, header_length[0], float_data, num_found, num_in_row, binary);
 }
 
+void writeBinaryHeader(FILE *fptr, const char *header)
+{
+    fwrite(binary_header, sizeof(char), strlen(binary_header), fptr);
+    size_t len_header = strlen(header);
+    size_t * len_ptr = &len_header;
+    fwrite(len_ptr, sizeof(size_t), 1, fptr);
+}
+
 int writeBool(const char *filename, const char *header, const unsigned *uint, size_t num_in_row, size_t u_length, int binary)
 {
   size_t i, row, ind;
@@ -319,6 +348,7 @@ int writeBool(const char *filename, const char *header, const unsigned *uint, si
   }
   else if (binary == 1)
   {
+    writeBinaryHeader(fptr, header);
     fwrite(header, sizeof(char), strlen(header), fptr);
     fwrite(uint, sizeof(unsigned), u_length, fptr);
   }
@@ -359,6 +389,7 @@ int writeFloat(const char *filename, const char *header, const float *float_data
   }
   else if (binary == 1)
   {
+    writeBinaryHeader(fptr, header);
     fwrite(header, sizeof(char), strlen(header), fptr);
     fwrite(float_data, sizeof(float), f_length, fptr);
   }
@@ -392,6 +423,7 @@ int writeProcessedWind(const char *filename, const char *header, const unsigned 
   }
   else if (binary == 1)
   {
+    writeBinaryHeader(fptr, header);
     fwrite(header, sizeof(char), strlen(header), fptr);
     fwrite(&wind_length, sizeof(size_t), 1, fptr);
     fwrite(uint, sizeof(unsigned), 2 * wind_length, fptr);

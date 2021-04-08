@@ -2,7 +2,7 @@
 #define CSVPARSER_H
 
 // Private method.  ASSUMING that read_and_get_header has been called, in order to file the file_contents string, place the header string into header, and return header_length too.  After calling this function, file_contents will have NULL characters in place of \n for all header lines (those at the start of the file that start with '#') and next_line will point to the first byte after the header data.
-int getHeader(char **header, size_t *header_length);
+int getHeader(char **header, size_t *header_length, int binary);
 
 // Private method.  Open file, read all its data into file_contents, close the file, and then call getHeader to populate "header" and "header_length".  After calling this function, file_contents will have NULL characters in place of \n for all header lines (those at the start of the file that start with '#') and next_line will point to the first byte after the header data.
 int read_and_get_header(const char *filename, char **header, size_t *header_length, int binary);
@@ -40,6 +40,9 @@ int parseFloat(const char *filename, char **header, size_t *header_length, float
 // 4: number of data does not equal expected_size
 // 5: each row does not contain num_in_row data
 int parseProcessedWind(const char *filename, char **header, size_t *header_length, unsigned **uint, float **float_data, size_t *num_found, size_t num_in_row, int binary);
+
+// PrivateMethod.  Write information regarding the length of the header into fptr.  This is necessary because in a binary file it is impossible to say when the header ends and data begins
+void writeBinaryHeader(FILE *fptr, const char *header);
 
 // PublicMethod.  Write the active/inactive information in uint to filename, with given header.  num_in_row = number of grid cells in the x direction.  u_length = length of uint.  binary controls whether the output is binary or ascii-CSV
 int writeBool(const char *filename, const char *header, const unsigned *uint, size_t num_in_row, size_t u_length, int binary);
