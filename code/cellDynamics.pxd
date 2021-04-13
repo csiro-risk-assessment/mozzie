@@ -212,6 +212,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # Dummy floats using evolve
     cdef float species_stuff
     cdef float genotype_stuff
+    cdef float tmp_float
+    cdef float xcol
 
     # Array to hold intermediate values of sums, sized to num_sexes * num_genotypes**2
     cdef array.array genotypeStuff1

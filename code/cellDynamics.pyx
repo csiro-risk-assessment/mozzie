@@ -283,9 +283,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.change = array.clone(array.array('f', []), self.num_populations, zero = False)
         self.cchange = self.change
 
-        # provide defaults for some dummy floats
+        # provide defaults for some dummy floats, just to make the constructor fully construct everything
         self.species_stuff = 0.0
         self.genotype_stuff = 0.0
+        self.tmp_float = 0.0
+        self.xcol = 0.0
 
         # size arrays that hold preliminary results during computeRHS
         self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
@@ -531,8 +533,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # end of for-loops in newborn larvae competition code
         cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
 	
-        cdef float tmp
-
         #array.zero(self.mat) # no longer using matrix multiplication, just putting results straight into RHS
         array.zero(self.rhs)
         
@@ -648,7 +648,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                             for spf in range(self.num_species): # female species
                                                 if self.speciesPresent.data.as_uchars[spf] == 1:
                                                     col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
-                                                    tmp = 0.
+                                                    self.xcol = x[col]
+                                                    self.tmp_float = 0.0
                                                     ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
                                                     for gtm in range(self.num_genotypes): # male genotype
                                                         if self.genotypePresent.data.as_uchars[gtm] == 1:
@@ -658,10 +659,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                                                 if self.speciesPresent.data.as_uchars[spm] == 1:
                                                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
                                                                     self.species_stuff = self.getHybridisationRate(spm, spf, sp) * self.getMatingComponent(spm, spf)
-                                                                    tmp += self.species_stuff * self.genotypeStuff1.data.as_floats[ind1] * self.genotype_stuff * x[ind] * x[col]
+                                                                    self.tmp_float += self.species_stuff * self.genotypeStuff1.data.as_floats[ind1] * self.genotype_stuff * x[ind] * self.xcol
                                                     # multiply rhs by things that don't depend on gtm or spm
-                                                    tmp *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
-                                                    self.rhs.data.as_floats[row] += tmp
+                                                    self.tmp_float *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+                                                    self.rhs.data.as_floats[row] += self.tmp_float
             
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
