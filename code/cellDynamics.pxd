@@ -209,11 +209,20 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # Runge-Kutta4 arrays that hold the values of populations (not parameters).  Sized to num_populations.
     cdef array.array rk1, rk2, rk3, rk4
     
-    # Arrays to hold intermediate values of sums
-    cdef array.array speciesStuff, genotypeStuff1, genotypeStuff2
+    # Array to hold intermediate values of sums, sized to num_species**3
+    cdef array.array speciesStuff
+
+    # Array to hold intermediate values of sums, sized to num_sexes * num_genotypes**2
+    cdef array.array genotypeStuff1
+
+    # Array to hold intermediate values of sums, sized to num_genotypes**3
+    cdef array.array genotypeStuff2
     
-    # Arrays to indicate presence or absence of species or genotype
-    cdef array.array speciesPresent, genotypePresent
+    # Array to indicate presence or absence of species, sized to num_species
+    cdef array.array speciesPresent
+
+    # Array to indicate presence or absence of genotype, sized to num_genotypes
+    cdef array.array genotypePresent
 
     # Runge-Kutta "y" array that holds the value of populations and the carrying capacity: the C version is passed to computeRHS.  Sized to num_populations + num_parameters
     cdef array.array rky

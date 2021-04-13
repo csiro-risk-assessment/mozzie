@@ -283,6 +283,15 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.change = array.clone(array.array('f', []), self.num_populations, zero = False)
         self.cchange = self.change
 
+        # size arrays that hold preliminary results during computeRHS
+        self.speciesStuff = array.clone(array.array('f', []), self.num_species**3, zero = False)
+        self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
+        self.genotypeStuff2 = array.clone(array.array('f', []), self.num_genotypes**3, zero = False)
+
+        # allocate the boolean arrays correctly
+        self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = False) 
+        self.genotypePresent = array.clone(array.array('B', []), self.num_genotypes, zero = False)
+
         # default to explicit_euler
         self.time_integration_method = 0
 
@@ -346,6 +355,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.change = array.clone(array.array('f', []), self.num_populations, zero = False)
         self.cchange = self.change
 
+        # size array that holds preliminary results during computeRHS
+        self.speciesStuff = array.clone(array.array('f', []), self.num_species**3, zero = False)
+
+        # allocate the boolean arrays correctly
+        self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = False) 
 
         # set diffusing and advecting information
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species # only adults diffuse
@@ -474,6 +488,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.fitness = array.clone(array.array('f', []), num_genotypes, zero = True)
         for genotype in range(num_genotypes):
             self.setFitnessComponent(genotype, 1.0)
+        self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
+        self.genotypeStuff2 = array.clone(array.array('f', []), num_genotypes**3, zero = False)
+        self.genotypePresent = array.clone(array.array('B', []), num_genotypes, zero = False)
 
     def getAlphaComponentFromPython(self, unsigned sp0, unsigned sp1):
         """Python interface for getting a component of the alpha matrix (inter-specific competition).  This is a slow interface: use getAlphaComponent from all cython code"""
@@ -515,23 +532,14 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         cdef unsigned ind_mat
         # end of for-loops in newborn larvae competition code
         cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
-        # temporary storage for species and genotype stuff
-        self.speciesStuff = array.clone(array.array('f', []), self.num_species * self.num_species * self.num_species, zero = True)
-        self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = True)
-        self.genotypeStuff2 = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = True)
-        # indicators whether a given species or genotype is present
-        # unsigned char close as can get to boolean
-        self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = True) 
-        self.genotypePresent = array.clone(array.array('B', []), self.num_genotypes, zero = True)
+
         cdef float tmp
 
         #array.zero(self.mat) # no longer using matrix multiplication, just putting results straight into RHS
         array.zero(self.rhs)
         
         # Calculate indicators whether a given species or genotype is present
-        # Need tidier/more efficient way to break out of all loops
         array.zero(self.speciesPresent)
-
         ind_d = 0
         for sp in range(self.num_species):
             for gt_d in range(self.num_genotypes):
@@ -539,14 +547,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     for age_d in range(self.num_ages):
                         ind_d = self.getIndex(sp, gt_d, sex_d, age_d)
                         if x[ind_d] > 0:
-                            self.speciesPresent[sp] = 1
+                            self.speciesPresent.data.as_uchars[sp] = 1
                             break
                     if x[ind_d] > 0:
                         break
                 if x[ind_d] > 0:
                     break
-            #if x[ind_d] > 0:
-                #break
                 
         array.zero(self.genotypePresent)
         for gt in range(self.num_genotypes):
@@ -555,14 +561,12 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     for age_d in range(self.num_ages):
                         ind_d = self.getIndex(sp_d, gt, sex_d, age_d)
                         if x[ind_d] > 0:
-                            self.genotypePresent[gt] = 1
+                            self.genotypePresent.data.as_uchars[gt] = 1
                             break
                     if x[ind_d] > 0:
                         break
                 if x[ind_d] > 0:
                     break
-            #if x[ind_d] > 0:
-                #break
 
         # newborn larvae
         cdef unsigned newborn_calcs_needed = 0
@@ -576,7 +580,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
             # first calculate all comp.data and denom.data where needed
             for sp in range(self.num_species):
-                if self.speciesPresent[sp] == 1:
+                if self.speciesPresent.data.as_uchars[sp] == 1:
                     if self.num_parameters == 1: # only using one CC
                         cidx = 0
                     else:
@@ -586,9 +590,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         for age_d in range(end_index_for_competition):
                             for sex_d in range(self.num_sexes):
                                 for gt_d in range(self.num_genotypes):
-                                    if self.genotypePresent[gt_d] == 1:
+                                    if self.genotypePresent.data.as_uchars[gt_d] == 1:
                                         for sp_d in range(self.num_species):
-                                            if self.speciesPresent[sp_d] == 1:
+                                            if self.speciesPresent.data.as_uchars[sp_d] == 1:
                                                 ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                                                 self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
                         self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk[cidx])
@@ -597,9 +601,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         age_d = self.num_ages - 1 # adult
                         sex_d = 0 # male
                         for gt_d in range(self.num_genotypes):
-                            if self.genotypePresent[gt_d] == 1:
+                            if self.genotypePresent.data.as_uchars[gt_d] == 1:
                                 for sp_d in range(self.num_species):
-                                    if self.speciesPresent[sp_d] == 1:
+                                    if self.speciesPresent.data.as_uchars[sp_d] == 1:
                                         ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                                         # note: here sp = female species
                                         self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.getFitnessComponent(gt_d) * x[ind_d]
@@ -636,7 +640,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         self.genotypeStuff2.data.as_floats[ind2] = self.getInheritance(gtm, gtf, gt)
 
             for sp in range(self.num_species):
-                if self.speciesPresent[sp] == 1:
+                if self.speciesPresent.data.as_uchars[sp] == 1:
                     if self.num_parameters == 1: # only using one CC
                         cidx = 0
                     else:
@@ -653,23 +657,23 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         
                         for sex in range(self.num_sexes): # row in M
                             for gt in range(self.num_genotypes): # row in M
-                                if self.genotypePresent[gt] == 1:
+                                if self.genotypePresent.data.as_uchars[gt] == 1:
                                     row = self.getIndex(sp, gt, sex, age)
                                     # now want to set the column in M corresonding to female adults of genotype gtf and species spf
                                     for gtf in range(self.num_genotypes): # female genotype
-                                        if self.genotypePresent[gtf] == 1:
+                                        if self.genotypePresent.data.as_uchars[gtf] == 1:
                                             for spf in range(self.num_species): # female species
-                                                if self.speciesPresent[spf] == 1:
+                                                if self.speciesPresent.data.as_uchars[spf] == 1:
                                                     col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
                                                     tmp = 0.
                                                     ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
                                                     for gtm in range(self.num_genotypes): # male genotype
-                                                        if self.genotypePresent[gtm] == 1:
+                                                        if self.genotypePresent.data.as_uchars[gtm] == 1:
                                                             tmp_d = gtf * self.num_genotypes + gtm
                                                             ind1 = sex * self.num_genotypes2 + tmp_d
                                                             ind2 = gt * self.num_genotypes2 + tmp_d
                                                             for spm in range(self.num_species): # male species
-                                                                if self.speciesPresent[spm] == 1:
+                                                                if self.speciesPresent.data.as_uchars[spm] == 1:
                                                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
                                                                     ind0 = sp * self.num_species2 + spf * self.num_species + spm
                                                                     tmp += self.speciesStuff.data.as_floats[ind0] * self.genotypeStuff1.data.as_floats[ind1] * self.genotypeStuff2.data.as_floats[ind2] * x[ind] * x[col]
@@ -680,9 +684,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
             for gt in range(self.num_genotypes):
-                if self.genotypePresent[gt] == 1:
+                if self.genotypePresent.data.as_uchars[gt] == 1:
                     for sp in range(self.num_species):
-                        if self.speciesPresent[sp] == 1:
+                        if self.speciesPresent.data.as_uchars[sp] == 1:
                             age = 0
                             row = self.getIndex(sp, gt, sex, age)
                             ind = row + self.num_populations * row # diagonal entry
