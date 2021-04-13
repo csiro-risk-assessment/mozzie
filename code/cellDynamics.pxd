@@ -215,9 +215,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     # Array to hold intermediate values of sums, sized to num_sexes * num_genotypes**2
     cdef array.array genotypeStuff1
 
-    # Array to hold intermediate values of sums, sized to num_genotypes**3
-    cdef array.array genotypeStuff2
-    
     # Array to indicate presence or absence of species, sized to num_species
     cdef array.array speciesPresent
 

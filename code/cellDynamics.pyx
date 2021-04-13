@@ -286,7 +286,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # size arrays that hold preliminary results during computeRHS
         self.speciesStuff = array.clone(array.array('f', []), self.num_species**3, zero = False)
         self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
-        self.genotypeStuff2 = array.clone(array.array('f', []), self.num_genotypes**3, zero = False)
 
         # allocate the boolean arrays correctly
         self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = False) 
@@ -489,7 +488,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         for genotype in range(num_genotypes):
             self.setFitnessComponent(genotype, 1.0)
         self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
-        self.genotypeStuff2 = array.clone(array.array('f', []), num_genotypes**3, zero = False)
         self.genotypePresent = array.clone(array.array('B', []), num_genotypes, zero = False)
 
     def getAlphaComponentFromPython(self, unsigned sp0, unsigned sp1):
@@ -532,7 +530,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         cdef unsigned ind_mat
         # end of for-loops in newborn larvae competition code
         cdef unsigned end_index_for_competition = self.num_ages - 1 if self.num_ages > 1 else 1
-
+        # buffer to avoid re-alculation of getInheritance
+        cdef float genotypeStuff2
+	
         cdef float tmp
 
         #array.zero(self.mat) # no longer using matrix multiplication, just putting results straight into RHS
@@ -632,13 +632,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         ind1 += 1 #= gtf * self.num_genotypes + gtm
                         self.genotypeStuff1.data.as_floats[ind1] = self.fecundity_proportion(sex, gtf, gtm) * self.getFitnessComponent(gtm)
 
-            ind2 = -1
-            for gt in range(self.num_genotypes): # row in M
-                for gtf in range(self.num_genotypes): # female genotype
-                    for gtm in range(self.num_genotypes): # male genotype
-                        ind2 += 1 # = gtf * self.num_genotypes + gtm
-                        self.genotypeStuff2.data.as_floats[ind2] = self.getInheritance(gtm, gtf, gt)
-
             for sp in range(self.num_species):
                 if self.speciesPresent.data.as_uchars[sp] == 1:
                     if self.num_parameters == 1: # only using one CC
@@ -669,14 +662,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                                     ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
                                                     for gtm in range(self.num_genotypes): # male genotype
                                                         if self.genotypePresent.data.as_uchars[gtm] == 1:
-                                                            tmp_d = gtf * self.num_genotypes + gtm
-                                                            ind1 = sex * self.num_genotypes2 + tmp_d
-                                                            ind2 = gt * self.num_genotypes2 + tmp_d
+                                                            ind1 = sex * self.num_genotypes2 + gtf * self.num_genotypes + gtm
+                                                            genotypeStuff2 = self.getInheritance(gtm, gtf, gt)
                                                             for spm in range(self.num_species): # male species
                                                                 if self.speciesPresent.data.as_uchars[spm] == 1:
                                                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
                                                                     ind0 = sp * self.num_species2 + spf * self.num_species + spm
-                                                                    tmp += self.speciesStuff.data.as_floats[ind0] * self.genotypeStuff1.data.as_floats[ind1] * self.genotypeStuff2.data.as_floats[ind2] * x[ind] * x[col]
+                                                                    tmp += self.speciesStuff.data.as_floats[ind0] * self.genotypeStuff1.data.as_floats[ind1] * genotypeStuff2 * x[ind] * x[col]
                                                     # multiply rhs by things that don't depend on gtm or spm
                                                     tmp *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
                                                     self.rhs.data.as_floats[row] += tmp
