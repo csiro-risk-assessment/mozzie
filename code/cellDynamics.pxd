@@ -216,7 +216,27 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef float xcol
 
     # Array to hold intermediate values of sums, sized to num_sexes * num_genotypes**2
-    cdef array.array genotypeStuff1
+    ###################################################################################
+    #
+    # NOTE: this array makes the code much more fragile to reorderings of function calls
+    #
+    # genotypeRapidAccess is sized whenever the following functions are called:
+    # setNumGenotypes
+    # during construction (via setNumGenotypes)
+    # Hence, self.num_sexes must be set appropriately before setNumGenotypes in the constructor
+    #
+    # genotypeRapidAccess is computed during construction and whenever the following functions are called:
+    # setInternalParameters
+    # setFitnessComponent
+    # setNumGenotypes (via setFitnessComponent)
+    # during construction (via setNumGenotypes and setInternalParameters)
+    # setNumAges (which calls setInternalParameters)
+    # setNumSpecies (which calls setInternalParameters)
+    # setAccuracy (which calls setInternalParameters)
+    # Hence, before any of these things, self.num_sexes must be set appropriately, and self.accuracy mustn't be zero (setAccuracy and setInternalParameters set self.accuracy before calling setGenotypeRapidAccess
+    #
+    ###################################################################################
+    cdef array.array genotypeRapidAccess
 
     # Array to indicate presence or absence of species, sized to num_species
     cdef array.array speciesPresent
@@ -344,8 +364,11 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef void setNumSpecies(self, unsigned num_species)
     """Set number of species.  This calls setInternalParameters to appropriately set other parameters, given num_species.  It also reinitialises the alpha, hybridisation and mating matrices"""
 
-    cpdef void setNumGenotypes(self, unsigned num_genotypes)
-    """Set number of genotypes. This calls setInheritance and setFitnessComponent to appropriately initialise the inheritance tensor and fitness vector"""
+    cpdef void setNumGenotypes(self, unsigned num_sexes, unsigned num_genotypes)
+    """Set number of genotypes. This calls setInheritance and setFitnessComponent to appropriately initialise the inheritance tensor and fitness vector.  This depends on num_sexes because it also sizes and calculates genotypeRapidAccess, and you should ensure that self.num_sexes is set appropriately before calling setNumGenotypes"""
+
+    cpdef void setGenotypeRapidAccess(self)
+    """Sets the values in self.genotypeRapidAccess.  Before calling this, self.num_sexes should have been set, since self.genotypeRapidAccess depends on that parameter.  Also, self.num_genotypes should have been set using setNumGenotypes(...).  Also, self.accuracy should not be zero.  Please see extended comments associated with the genotypeRapidAccess array"""
 
     cpdef unsigned getNumSpecies(self)
     """Get number of species"""

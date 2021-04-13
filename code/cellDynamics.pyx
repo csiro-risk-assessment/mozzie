@@ -210,13 +210,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     def __init__(self):
         super().__init__()
 
-        # Following quantities are always fixed
-        self.num_sexes = 2 # male, female, always
-        #self.num_genotypes = 3 # ww, Gw, GG, always
-        self.setNumGenotypes(3)
-        self.num_parameters = 1 # the only spatially-varying quantity is the carrying capacity, K
-
-        #self.num_genotypes2 = self.num_genotypes * self.num_genotypes
+        # num_sexes is always fixed to 2: male, female
+        # this needs to be set early in constructor, so arrays (in particular genotypeRapidAccess) are sized correctly
+        self.num_sexes = 2
 
         # Following parameters may be set by user.
         self.mu_larvae = 0.05
@@ -225,9 +221,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.aging_rate = 0.1
         self.num_ages = 2
         self.num_species = 1
-        self.accuracy = 0.95
-
+        self.accuracy = 0.95 # important to set this early in constructor so fecundity_proportion can be used to populate genotypeRapidAccess array
         self.num_species2 = 1
+
+        # number of genotypes defaults to 3, which are: ww, Gw, GG
+        self.setNumGenotypes(self.num_sexes, 3)
+
+        self.num_parameters = 1 # the only spatially-varying quantity is the carrying capacity, K
 
         # Set default carrying capacities
         self.one_over_kk = array.clone(array.array('f', []), self.num_parameters, zero = True)
@@ -250,11 +250,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # allocate hyb array correctly, and set it to the identity
         self.mating = array.clone(array.array('f', []), 1, zero = True)
         self.setMatingComponent(0, 0, 1.0)
-
-        # NICK Q: DO WE NEED THIS? PUTTING IN JUST IN CASE
-        self.fitness = array.clone(array.array('f', []), 3, zero = True)
-        for genotype in range(3):
-            self.setFitnessComponent(genotype, 1.0)
 
         # allocate comp correctly
         self.comp = array.clone(array.array('f', []), self.num_species, zero = False)
@@ -288,9 +283,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.genotype_stuff = 0.0
         self.tmp_float = 0.0
         self.xcol = 0.0
-
-        # size arrays that hold preliminary results during computeRHS
-        self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
 
         # allocate the boolean arrays correctly
         self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = False) 
@@ -333,7 +325,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.num_ages = num_ages # age categories are: larvae0, larvae1, larvae2, ..., larvaeN, adults
         self.num_species = num_species
         self.num_species2 = num_species * num_species
-        self.accuracy = accuracy
+        self.accuracy = accuracy # this must be done before the call to setGenotypeRapidAccess, below
         
         self.num_populations = self.num_ages * self.num_sexes * self.num_genotypes * self.num_species
         self.num_parameters = self.num_species
@@ -377,6 +369,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     self.diffusing_indices.data.as_uints[ind] = offset
                     self.advecting_indices.data.as_uints[ind] = offset
                     ind = ind + 1
+
+        # because genotypeRapidAccess depends on accuracy (through fecundity_proportion), we need to set it:
+        self.setGenotypeRapidAccess()
 
     cpdef setMinimumDt(self, float value):
         self.min_dt = value
@@ -428,6 +423,19 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         if genotype >= self.num_genotypes:
             raise ValueError("genotype " + str(genotype) + " must be less than the number of genotypes " + str(self.num_genotypes))
         self.fitness.data.as_floats[genotype] = value
+        self.setGenotypeRapidAccess()
+
+    cpdef void setGenotypeRapidAccess(self):
+        if len(self.genotypeRapidAccess) != self.num_sexes * self.num_genotypes2:
+            raise ValueError("self.genotypeRapidAccess.size() != self.num_sexes * self.num_genotypes2 in setFitnessComponent.  Perhaps the code does not set num_sexes correctly")
+        cdef unsigned ind1, sex, gtf, gtm
+        ind1 = -1
+        for sex in range(self.num_sexes): # row in M
+            for gtf in range(self.num_genotypes): # female genotype
+                for gtm in range(self.num_genotypes): # male genotype
+                    ind1 += 1 # = sex * self.num_genotypes2 + gtf * self.num_genotypes + gtm
+                    self.genotypeRapidAccess.data.as_floats[ind1] = self.fecundity_proportion(sex, gtf, gtm) * self.getFitnessComponent(gtm)
+
 
     def getFitnessComponentFromPython(self, unsigned genotype):
         """Python interface for getting a component of the Fitness vector.  This is a slow interface: use getFitnessComponent from all cython code"""
@@ -480,17 +488,23 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.comp = array.clone(array.array('f', []), num_species, zero = False)
         self.denom = array.clone(array.array('f', []), num_species, zero = False)
 
-    cpdef void setNumGenotypes(self, unsigned num_genotypes):
+    cpdef void setNumGenotypes(self, unsigned num_sexes, unsigned num_genotypes):
+        if num_sexes != self.num_sexes:
+            raise ValueError("setNumGenotypes: num_sexes != self.num_sexes.  " + str(num_sexes) + "!=" + str(self.num_sexes) + ".  Probably there is a bug in the code")
+
         self.num_genotypes = num_genotypes
         self.num_genotypes2 = self.num_genotypes * self.num_genotypes
-        # size inheritance correctly
+
+        # correctly size arrays that depend on num_genotypes
         self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = False)
-        self.setInheritance()
+        self.genotypeRapidAccess = array.clone(array.array('f', []), num_sexes * self.num_genotypes2, zero = False)
+        self.genotypePresent = array.clone(array.array('B', []), num_genotypes, zero = False)
         self.fitness = array.clone(array.array('f', []), num_genotypes, zero = True)
+
+        # calculate things that depend on num_genotypes
+        self.setInheritance()
         for genotype in range(num_genotypes):
             self.setFitnessComponent(genotype, 1.0)
-        self.genotypeStuff1 = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
-        self.genotypePresent = array.clone(array.array('B', []), num_genotypes, zero = False)
 
     def getAlphaComponentFromPython(self, unsigned sp0, unsigned sp1):
         """Python interface for getting a component of the alpha matrix (inter-specific competition).  This is a slow interface: use getAlphaComponent from all cython code"""
@@ -614,14 +628,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
             # now define competition
 
-            # Pre-calculate genotype stuff
-            ind1 = -1
-            for sex in range(self.num_sexes): # row in M
-                for gtf in range(self.num_genotypes): # female genotype
-                    for gtm in range(self.num_genotypes): # male genotype
-                        ind1 += 1 #= gtf * self.num_genotypes + gtm
-                        self.genotypeStuff1.data.as_floats[ind1] = self.fecundity_proportion(sex, gtf, gtm) * self.getFitnessComponent(gtm)
-
             for sp in range(self.num_species):
                 if self.speciesPresent.data.as_uchars[sp] == 1:
                     if self.num_parameters == 1: # only using one CC
@@ -659,7 +665,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                                                 if self.speciesPresent.data.as_uchars[spm] == 1:
                                                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
                                                                     self.species_stuff = self.getHybridisationRate(spm, spf, sp) * self.getMatingComponent(spm, spf)
-                                                                    self.tmp_float += self.species_stuff * self.genotypeStuff1.data.as_floats[ind1] * self.genotype_stuff * x[ind] * self.xcol
+                                                                    self.tmp_float += self.species_stuff * self.genotypeRapidAccess.data.as_floats[ind1] * self.genotype_stuff * x[ind] * self.xcol
                                                     # multiply rhs by things that don't depend on gtm or spm
                                                     self.tmp_float *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
                                                     self.rhs.data.as_floats[row] += self.tmp_float
@@ -999,7 +1005,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.c_prob = 0.5 * (1 + 0.995 * (1 - 0.02) * (1 - 0.0001))
         self.r_prob = 1. - self.w_prob - self.c_prob
         
-        self.setNumGenotypes(6)  # ww, wc, wr, cc, cr, rr.  This also initialises the Inheritance cube with the above probabilities
+        self.setNumGenotypes(self.num_sexes, 6)  # ww, wc, wr, cc, cr, rr.  This also initialises the Inheritance cube with the above probabilities
 
 	# setNumGenotypes initialises FitnessComponent to 1 for all genotypes.  Modify it:
         h_e = h_n = 0.5
