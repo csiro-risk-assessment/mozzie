@@ -665,10 +665,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                                                 if self.speciesPresent.data.as_uchars[spm] == 1:
                                                                     ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
                                                                     self.species_stuff = self.getHybridisationRate(spm, spf, sp) * self.getMatingComponent(spm, spf)
-                                                                    self.tmp_float += self.species_stuff * self.genotypeRapidAccess.data.as_floats[ind1] * self.genotype_stuff * x[ind] * self.xcol
+                                                                    self.tmp_float = self.tmp_float + self.species_stuff * self.genotypeRapidAccess.data.as_floats[ind1] * self.genotype_stuff * x[ind] * self.xcol
                                                     # multiply rhs by things that don't depend on gtm or spm
                                                     self.tmp_float *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
-                                                    self.rhs.data.as_floats[row] += self.tmp_float
+                                                    self.rhs.data.as_floats[row] = self.rhs.data.as_floats[row] + self.tmp_float
             
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
@@ -680,29 +680,24 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                             row = self.getIndex(sp, gt, sex, age)
                             ind = row + self.num_populations * row # diagonal entry
                             if self.num_ages > 1:
-                                self.rhs.data.as_floats[row] -=  (self.mu_larvae + self.aging_rate)*x[row] # mortality + aging to older bracket
+                                self.rhs.data.as_floats[row] = self.rhs.data.as_floats[row] - (self.mu_larvae + self.aging_rate)*x[row] # mortality + aging to older bracket
                                 
                             for age in range(1, self.num_ages - 1):
                                 row = self.getIndex(sp, gt, sex, age)
                                 ind = row + self.num_populations * row # diagonal entry
-                                self.rhs.data.as_floats[row] -=  (self.mu_larvae + self.aging_rate)*x[row] # mortality + aging to older bracket
+                                self.rhs.data.as_floats[row] = self.rhs.data.as_floats[row] - (self.mu_larvae + self.aging_rate)*x[row] # mortality + aging to older bracket
                                 col = self.getIndex(sp, gt, sex, age - 1)
                                 ind = col + self.num_populations * row # below diagonal
-                                self.rhs.data.as_floats[row] +=  self.aging_rate*x[col] # mortality + aging to older bracket
+                                self.rhs.data.as_floats[row] = self.rhs.data.as_floats[row] + self.aging_rate*x[col] # mortality + aging to older bracket
                             age = self.num_ages - 1
                             row = self.getIndex(sp, gt, sex, age)
                             ind = row + self.num_populations * row # diagonal entry
-                            self.rhs.data.as_floats[row] -= self.mu_adult * x[row]# mortality
+                            self.rhs.data.as_floats[row] = self.rhs.data.as_floats[row] - self.mu_adult * x[row]# mortality
                             if self.num_ages > 1:
                                 col = self.getIndex(sp, gt, sex, age - 1)
                                 ind = col + self.num_populations * row # below diagonal
-                                self.rhs.data.as_floats[row] +=  self.aging_rate*x[col]
+                                self.rhs.data.as_floats[row] = self.rhs.data.as_floats[row] + self.aging_rate*x[col]
 
-
-        #for row in range(self.num_populations):
-        #    for col in range(self.num_populations):
-        #        sys.stdout.write(str(self.mat[col + self.num_populations * row]) + " ")
-        #    sys.stdout.write("\n")
 
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
