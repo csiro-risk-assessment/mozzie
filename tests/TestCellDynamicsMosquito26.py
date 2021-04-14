@@ -117,7 +117,7 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(4)], [(1 - h_e * s_e) * (1 - h_n * s_n)], 1E-6))
       self.assertTrue(arrayfuzzyequal([self.c.getFitnessComponentFromPython(5)], [1], 1E-6))
 
-      self.c.setNumGenotypes(5)
+      self.c.setNumGenotypes(2, 5)
       with self.assertRaises(ValueError) as the_err:
          self.c.setFitnessComponents26(h_e, h_n, s_e, s_n)
       self.assertEqual(str(the_err.exception), "setFitnessComponents26 can only be used if the number of genotypes is 6")
@@ -444,7 +444,7 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       with self.assertRaises(ValueError) as the_err:
          self.c.getInheritanceFromPython(0, 0, 6)
       self.assertEqual(str(the_err.exception), "All genotypes, 0, 0, 6 must be less than the number of genotypes, 6")
-      self.c.setNumGenotypes(5)
+      self.c.setNumGenotypes(2, 5)
       with self.assertRaises(ValueError) as the_err:
          self.c.setInheritance26(k_c, k_j, k_ne)
       self.assertEqual(str(the_err.exception), "setInheritance26 can only be used if the number of genotypes is 6")
