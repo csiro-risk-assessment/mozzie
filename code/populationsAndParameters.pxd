@@ -47,11 +47,11 @@ cdef class PopulationsAndParameters:
     """Sets the populations and parameters at given (x, y) to the numbers given in the list 'pop_and_params'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
-    cpdef array.array getPopulationAndParameters(self, unsigned active_cell_index):
+    cpdef array.array getPopulationAndParameters(self, unsigned active_cell_index)
     """Gets the populations and parameters at active_cell_index and returns the list 'self.quantity'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
-    cpdef array.array getPopulationAndParametersFromXY(self, float x, float y):
+    cpdef array.array getPopulationAndParametersFromXY(self, float x, float y)
     """Gets the populations and parameters at given (x, y) and returns the list 'self.quantity'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
