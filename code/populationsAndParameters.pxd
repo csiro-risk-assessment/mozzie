@@ -47,6 +47,14 @@ cdef class PopulationsAndParameters:
     """Sets the populations and parameters at given (x, y) to the numbers given in the list 'pop_and_params'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
+    cpdef array.array getPopulationAndParameters(self, unsigned active_cell_index):
+    """Gets the populations and parameters at active_cell_index and returns the list 'self.quantity'
+    This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
+
+    cpdef array.array getPopulationAndParametersFromXY(self, float x, float y):
+    """Gets the populations and parameters at given (x, y) and returns the list 'self.quantity'
+    This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
+
     cpdef setOverActiveGrid(self, unsigned pop_and_param_number, array.array pop_or_param_array)
     """pop_or_param_array is a float array defined over the entire active grid.
     The population or parameter with number pop_and_param_number is set to this array"""
