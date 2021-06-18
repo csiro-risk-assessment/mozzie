@@ -29,6 +29,9 @@ cdef class PopulationsAndParameters:
 
     # the array of quantities, which is of length num_quantities
     cdef array.array quantities
+    
+    # the array of quantity (a temporary array to store quantities from a single cell), which is of length num_quantities_per_cell
+    cdef array.array quantity
 
     cpdef array.array getQuantities(self)
     """returns the quantities array"""
