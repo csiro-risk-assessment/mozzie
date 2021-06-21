@@ -673,7 +673,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
             for gt in range(self.num_genotypes):
-                if self.genotypePresent.data.as_uchars[gt] == 1:
+                #if self.genotypePresent.data.as_uchars[gt] == 1: # we WANT to be able to generate new genotypes from existing ones
                     for sp in range(self.num_species):
                         if self.speciesPresent.data.as_uchars[sp] == 1:
                             age = 0
