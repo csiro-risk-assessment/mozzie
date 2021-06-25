@@ -592,7 +592,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
             # first calculate all comp.data and denom.data where needed
             for sp in range(self.num_species):
-                if self.speciesPresent.data.as_uchars[sp] == 1:
+                if self.speciesPresent.data.as_uchars[sp] == 1: # can never generate a species if it does not exist
                     if self.num_parameters == 1: # only using one CC
                         cidx = 0
                     else:
@@ -602,9 +602,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         for age_d in range(end_index_for_competition):
                             for sex_d in range(self.num_sexes):
                                 for gt_d in range(self.num_genotypes):
-                                    if self.genotypePresent.data.as_uchars[gt_d] == 1:
+                                    if self.genotypePresent.data.as_uchars[gt_d] == 1: # if not present then x[ind] = 0
                                         for sp_d in range(self.num_species):
-                                            if self.speciesPresent.data.as_uchars[sp_d] == 1:
+                                            if self.speciesPresent.data.as_uchars[sp_d] == 1:  # if not present then x[ind] = 0
                                                 ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                                                 self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
                         self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk[cidx])
@@ -613,9 +613,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         age_d = self.num_ages - 1 # adult
                         sex_d = 0 # male
                         for gt_d in range(self.num_genotypes):
-                            if self.genotypePresent.data.as_uchars[gt_d] == 1:
+                            if self.genotypePresent.data.as_uchars[gt_d] == 1: # if not present then x[ind] = 0
                                 for sp_d in range(self.num_species):
-                                    if self.speciesPresent.data.as_uchars[sp_d] == 1:
+                                    if self.speciesPresent.data.as_uchars[sp_d] == 1:  # if not present then x[ind] = 0
                                         ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                                         # note: here sp = female species
                                         self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.getFitnessComponent(gt_d) * x[ind_d]
@@ -629,7 +629,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             # now define competition
 
             for sp in range(self.num_species):
-                if self.speciesPresent.data.as_uchars[sp] == 1:
+                if self.speciesPresent.data.as_uchars[sp] == 1: # self.comp[sp] will be zero
                     if self.num_parameters == 1: # only using one CC
                         cidx = 0
                     else:
@@ -646,36 +646,35 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         
                         for sex in range(self.num_sexes): # row in M
                             for gt in range(self.num_genotypes): # row in M
-                                if self.genotypePresent.data.as_uchars[gt] == 1:
-                                    row = self.getIndex(sp, gt, sex, age)
-                                    # now want to set the column in M corresonding to female adults of genotype gtf and species spf
-                                    for gtf in range(self.num_genotypes): # female genotype
-                                        if self.genotypePresent.data.as_uchars[gtf] == 1:
-                                            for spf in range(self.num_species): # female species
-                                                if self.speciesPresent.data.as_uchars[spf] == 1:
-                                                    col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
-                                                    self.xcol = x[col]
-                                                    self.tmp_float = 0.0
-                                                    ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
-                                                    for gtm in range(self.num_genotypes): # male genotype
-                                                        if self.genotypePresent.data.as_uchars[gtm] == 1:
-                                                            ind1 = sex * self.num_genotypes2 + gtf * self.num_genotypes + gtm
-                                                            self.genotype_stuff = self.getInheritance(gtm, gtf, gt)
-                                                            for spm in range(self.num_species): # male species
-                                                                if self.speciesPresent.data.as_uchars[spm] == 1:
-                                                                    ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
-                                                                    self.species_stuff = self.getHybridisationRate(spm, spf, sp) * self.getMatingComponent(spm, spf)
-                                                                    self.tmp_float = self.tmp_float + self.species_stuff * self.genotypeRapidAccess.data.as_floats[ind1] * self.genotype_stuff * x[ind] * self.xcol
-                                                    # multiply rhs by things that don't depend on gtm or spm
-                                                    self.tmp_float *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
-                                                    self.rhs.data.as_floats[row] = self.rhs.data.as_floats[row] + self.tmp_float
+                                row = self.getIndex(sp, gt, sex, age)
+                                # now want to set the column in M corresonding to female adults of genotype gtf and species spf
+                                for gtf in range(self.num_genotypes): # female genotype
+                                    if self.genotypePresent.data.as_uchars[gtf] == 1: # if not present then x[col] will be zero
+                                        for spf in range(self.num_species): # female species
+                                            if self.speciesPresent.data.as_uchars[spf] == 1: # if not present then x[col] will be zero
+                                                col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
+                                                self.xcol = x[col]
+                                                self.tmp_float = 0.0
+                                                ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
+                                                for gtm in range(self.num_genotypes): # male genotype
+                                                    if self.genotypePresent.data.as_uchars[gtm] == 1: # if not present then x[ind] will be zero
+                                                        ind1 = sex * self.num_genotypes2 + gtf * self.num_genotypes + gtm
+                                                        self.genotype_stuff = self.getInheritance(gtm, gtf, gt)
+                                                        for spm in range(self.num_species): # male species
+                                                            if self.speciesPresent.data.as_uchars[spm] == 1:  # if not present then x[ind] will be zero
+                                                                ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
+                                                                self.species_stuff = self.getHybridisationRate(spm, spf, sp) * self.getMatingComponent(spm, spf)
+                                                                self.tmp_float = self.tmp_float + self.species_stuff * self.genotypeRapidAccess.data.as_floats[ind1] * self.genotype_stuff * x[ind] * self.xcol
+                                                # multiply rhs by things that don't depend on gtm or spm
+                                                self.tmp_float *= self.comp.data.as_floats[sp] * self.fecundity * self.denom.data.as_floats[spf]
+                                                self.rhs.data.as_floats[row] = self.rhs.data.as_floats[row] + self.tmp_float
             
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
             for gt in range(self.num_genotypes):
-                #if self.genotypePresent.data.as_uchars[gt] == 1: # we WANT to be able to generate new genotypes from existing ones
+                if self.genotypePresent.data.as_uchars[gt] == 1: # if not present then cannot create the genotype from current x (next timestep there may be juveniles of this gt that can age, but not this timestep)
                     for sp in range(self.num_species):
-                        if self.speciesPresent.data.as_uchars[sp] == 1:
+                        if self.speciesPresent.data.as_uchars[sp] == 1: # if not present then cannot create the species out of nothing
                             age = 0
                             row = self.getIndex(sp, gt, sex, age)
                             ind = row + self.num_populations * row # diagonal entry
