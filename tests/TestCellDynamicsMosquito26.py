@@ -26,15 +26,25 @@ def arrayfuzzyequal(a, b, eps):
             return False
    return True
 
-def Wm(m, mm, mf): # m = offspring mosquito_type, mm = Male mosquito_type, mf = Female mosquito_type
-   if m == mm: # offspring is the male mosquito type
-      if mm == mf:
-         return 1
+def h(m, mm, mf): # m = offspring mosquito_type, mm = Male mosquito_type, mf = Female mosquito_type
+   if mm == mf:
+      if m == mm:
+         return 1 # all same species
       else:
-         return 0.0 # NOTE 0.01 value in "26" constructor, but in the tests below i setMatingComponent=0 for off-diag
+         return 0 # cannot create offspring of different type
+   else:
+      if m == mm:
+         return 0.5
+      elif m == mf:
+         return 0.5
    return 0.0
 
-def Wg(g): # g = genotype
+def Wm(matingcomp, mm, mf): # mm = Male mosquito_type, mf = Female mosquito_type
+   if mm == mf: # offspring is the male mosquito type
+      return 1
+   return matingcomp # 0.01 value in "26" constructor
+
+def Wg(g): # g = genotype of male
    h_e = h_n = 0.5
    s_e = 0.1
    s_n = 0.05
@@ -51,14 +61,14 @@ def Wg(g): # g = genotype
    else: #rr
       return 1.0
 
-def mm(m, g, mM, mF, gM, X): # m=offspring mosquito_type, g=offspring geonotype, mM = Male mosquito_type, mF = Female mosquito_type, gM = Male genotype, X = pap
+def mm(matingcomp, m, g, mM, mF, gM, X): # m=offspring mosquito_type, g=offspring geonotype, mM = Male mosquito_type, mF = Female mosquito_type, gM = Male genotype, X = pap
    denom = 0.0
    for gp in range(6):
       for mp in range(2):
          ind = mp + 2 * (gp + 6 * (0 + 2 * 1))
-         denom += Wm(m, mp, mF) * Wg(gp) * X[ind]
+         denom += Wm(matingcomp, mp, mF) * Wg(gp) * X[ind]
    ind = mM + 2 * (gM + 6 * (0 + 2 * 1))
-   num = Wm(m, mM, mF) * Wg(gM) * X[ind]
+   num = h(m, mM, mF) * Wm(matingcomp, mM, mF) * Wg(gM) * X[ind]
    if denom == 0:
       if num == 0:
          return 0.0
@@ -67,14 +77,14 @@ def mm(m, g, mM, mF, gM, X): # m=offspring mosquito_type, g=offspring geonotype,
          sys.exit(1)
    return num / denom
 
-def bb_no_fecundity(s, g, m, X): # s=sex, g=genotype, m=mosquito_type, X=pap
+def bb_no_fecundity(matingcomp, s, g, m, X): # s=sex, g=genotype, m=mosquito_type, X=pap
    term = 0.0
    for gM in range(6): # male genotype
       for gF in range(6): # female genotype
          for mM in range(2): # male mosquito_type
             for mF in range(2): # female mosquito_type
                ind = mF + 2 * (gF + 6 * (1 + 2 * 1))
-               term += mm(m, g, mM, mF, gM, X) * OO(g, gM, gF) * X[ind]
+               term += mm(matingcomp, m, g, mM, mF, gM, X) * OO(g, gM, gF) * X[ind]
    return term
 
 def OO(g, gM, gF): # g=genotype, gM=Male genotype, gF=Female genotype
@@ -341,14 +351,14 @@ def inher(g, gM, gF): # g=genotype, gM=Male genotype, gF=Female genotype
    sys.stderr.write("Ooops")
    sys.exit(1)
 
-def predict_answer(fecundity, mu_adult, dt, pap):
+def predict_answer(matingcomp, fecundity, mu_adult, dt, pap):
    prediction = [0] * 2 * 6 * 2 * 2
    # juveniles
    for s in range(2): # sex
       for g in range(6): # genotype
          for m in range(2): # mosquito_type
             ind = m + 2 * (g + 6 * s)
-            prediction[ind] = dt * bb_no_fecundity(s, g, m, pap) * fecundity
+            prediction[ind] = dt * bb_no_fecundity(matingcomp, s, g, m, pap) * fecundity
    # adults
    for s in range(2): # sex
       for g in range(6): # genotype
@@ -825,7 +835,7 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       pap = array.array('f', initial_condition)
 
       # predict the answer
-      prediction = predict_answer(fecundity, mu_adult, dt, pap)
+      prediction = predict_answer(0.0, fecundity, mu_adult, dt, pap)
 
       # evolve according to the cython code
       self.c.evolve(dt, pap)
@@ -864,7 +874,7 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       pap = array.array('f', initial_condition)
 
       # predict the answer
-      prediction = predict_answer(fecundity, mu_adult, dt, pap)
+      prediction = predict_answer(0.0, fecundity, mu_adult, dt, pap)
 
       # evolve according to the cython code
       self.c.evolve(dt, pap)
@@ -880,8 +890,9 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       fecundity = 8
       self.c.setFecundity(fecundity)
       carrying_cap = 60.0 # because we start with zero juveniles, this is actually irrelevant
-      self.c.setMatingComponent(0, 1, 0.0)
-      self.c.setMatingComponent(1, 0, 0.0)
+      matingcomp = 0.0
+      self.c.setMatingComponent(0, 1, matingcomp)
+      self.c.setMatingComponent(1, 0, matingcomp)
 
       # start with zero juveniles
       male_juv_ww = male_juv_wc = male_juv_wr = male_juv_cc = male_juv_cr = male_juv_rr = female_juv_ww = female_juv_wc = female_juv_wr = female_juv_cc = female_juv_cr = female_juv_rr = 0.0
@@ -907,7 +918,50 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       pap = array.array('f', initial_condition)
 
       # predict the answer
-      prediction = predict_answer(fecundity, mu_adult, dt, pap)
+      prediction = predict_answer(matingcomp, fecundity, mu_adult, dt, pap)
+
+      # evolve according to the cython code
+      self.c.evolve(dt, pap)
+
+      # check answer
+      self.assertTrue(arrayfuzzyequal(prediction, pap[:48], ep_tol))
+
+   def testEvolveSpecies_bothWW_matingcomp(self):
+      dt = 3.0
+      mu_adult = 0.125
+      self.c.setMuAdult(mu_adult)
+      fecundity = 8
+      self.c.setFecundity(fecundity)
+      carrying_cap = 60.0 # because we start with zero juveniles, this is actually irrelevant
+      matingcomp = 0.5
+      self.c.setMatingComponent(0, 1, matingcomp)
+      self.c.setMatingComponent(1, 0, matingcomp)
+
+      # start with zero juveniles
+      male_juv_ww = male_juv_wc = male_juv_wr = male_juv_cc = male_juv_cr = male_juv_rr = female_juv_ww = female_juv_wc = female_juv_wr = female_juv_cc = female_juv_cr = female_juv_rr = 0.0
+
+      # species0 adults:
+      sp0_male_ad_ww = sp0_male_ad_wc = sp0_male_ad_wr = sp0_male_ad_cc = sp0_male_ad_cr = sp0_male_ad_rr = sp0_female_ad_ww = sp0_female_ad_wc = sp0_female_ad_wr = sp0_female_ad_cc = sp0_female_ad_cr = sp0_female_ad_rr = 0.0
+      sp0_male_ad_ww = 20.0
+      sp0_female_ad_ww = 30.0
+      ic_species0 = [male_juv_ww, male_juv_wc, male_juv_wr, male_juv_cc, male_juv_cr, male_juv_rr, female_juv_ww, female_juv_wc, female_juv_wr, female_juv_cc, female_juv_cr, female_juv_rr, sp0_male_ad_ww, sp0_male_ad_wc, sp0_male_ad_wr, sp0_male_ad_cc, sp0_male_ad_cr, sp0_male_ad_rr, sp0_female_ad_ww, sp0_female_ad_wc, sp0_female_ad_wr, sp0_female_ad_cc, sp0_female_ad_cr, sp0_female_ad_rr]
+
+      # species1 adults:
+      sp1_male_ad_ww = sp1_male_ad_wc = sp1_male_ad_wr = sp1_male_ad_cc = sp1_male_ad_cr = sp1_male_ad_rr = sp1_female_ad_ww = sp1_female_ad_wc = sp1_female_ad_wr = sp1_female_ad_cc = sp1_female_ad_cr = sp1_female_ad_rr = 0.0
+      sp1_male_ad_ww = 10.0
+      sp1_female_ad_ww = 10.0
+      ic_species1 = [male_juv_ww, male_juv_wc, male_juv_wr, male_juv_cc, male_juv_cr, male_juv_rr, female_juv_ww, female_juv_wc, female_juv_wr, female_juv_cc, female_juv_cr, female_juv_rr, sp1_male_ad_ww, sp1_male_ad_wc, sp1_male_ad_wr, sp1_male_ad_cc, sp1_male_ad_cr, sp1_male_ad_rr, sp1_female_ad_ww, sp1_female_ad_wc, sp1_female_ad_wr, sp1_female_ad_cc, sp1_female_ad_cr, sp1_female_ad_rr]
+
+      # build initial condition in the standard form
+      initial_condition = []
+      for i in range(24):
+         initial_condition.append(ic_species0[i])
+         initial_condition.append(ic_species1[i])
+      initial_condition += [carrying_cap, carrying_cap]
+      pap = array.array('f', initial_condition)
+
+      # predict the answer
+      prediction = predict_answer(matingcomp, fecundity, mu_adult, dt, pap)
 
       # evolve according to the cython code
       self.c.evolve(dt, pap)
@@ -922,8 +976,9 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       fecundity = 8
       self.c.setFecundity(fecundity)
       carrying_cap = 60.0 # because we start with zero juveniles, this is actually irrelevant
-      self.c.setMatingComponent(0, 1, 0.0)
-      self.c.setMatingComponent(1, 0, 0.0)
+      matingcomp = 0.0
+      self.c.setMatingComponent(0, 1, matingcomp)
+      self.c.setMatingComponent(1, 0, matingcomp)
 
       # start with zero juveniles
       male_juv_ww = male_juv_wc = male_juv_wr = male_juv_cc = male_juv_cr = male_juv_rr = female_juv_ww = female_juv_wc = female_juv_wr = female_juv_cc = female_juv_cr = female_juv_rr = 0.0
@@ -949,7 +1004,50 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       pap = array.array('f', initial_condition)
 
       # predict the answer
-      prediction = predict_answer(fecundity, mu_adult, dt, pap)
+      prediction = predict_answer(matingcomp, fecundity, mu_adult, dt, pap)
+
+      # evolve according to the cython code
+      self.c.evolve(dt, pap)
+
+      # check answer
+      self.assertTrue(arrayfuzzyequal(prediction, pap[:48], ep_tol))
+
+   def testEvolveSpecies_bothWC_matingcomp(self):
+      dt = 3.0
+      mu_adult = 0.125
+      self.c.setMuAdult(mu_adult)
+      fecundity = 8
+      self.c.setFecundity(fecundity)
+      carrying_cap = 60.0 # because we start with zero juveniles, this is actually irrelevant
+      matingcomp = 0.5
+      self.c.setMatingComponent(0, 1, matingcomp)
+      self.c.setMatingComponent(1, 0, matingcomp)
+
+      # start with zero juveniles
+      male_juv_ww = male_juv_wc = male_juv_wr = male_juv_cc = male_juv_cr = male_juv_rr = female_juv_ww = female_juv_wc = female_juv_wr = female_juv_cc = female_juv_cr = female_juv_rr = 0.0
+
+      # species0 adults:
+      sp0_male_ad_ww = sp0_male_ad_wc = sp0_male_ad_wr = sp0_male_ad_cc = sp0_male_ad_cr = sp0_male_ad_rr = sp0_female_ad_ww = sp0_female_ad_wc = sp0_female_ad_wr = sp0_female_ad_cc = sp0_female_ad_cr = sp0_female_ad_rr = 0.0
+      sp0_male_ad_wc = 20.0
+      sp0_female_ad_wc = 30.0
+      ic_species0 = [male_juv_ww, male_juv_wc, male_juv_wr, male_juv_cc, male_juv_cr, male_juv_rr, female_juv_ww, female_juv_wc, female_juv_wr, female_juv_cc, female_juv_cr, female_juv_rr, sp0_male_ad_ww, sp0_male_ad_wc, sp0_male_ad_wr, sp0_male_ad_cc, sp0_male_ad_cr, sp0_male_ad_rr, sp0_female_ad_ww, sp0_female_ad_wc, sp0_female_ad_wr, sp0_female_ad_cc, sp0_female_ad_cr, sp0_female_ad_rr]
+
+      # species1 adults:
+      sp1_male_ad_ww = sp1_male_ad_wc = sp1_male_ad_wr = sp1_male_ad_cc = sp1_male_ad_cr = sp1_male_ad_rr = sp1_female_ad_ww = sp1_female_ad_wc = sp1_female_ad_wr = sp1_female_ad_cc = sp1_female_ad_cr = sp1_female_ad_rr = 0.0
+      sp1_male_ad_wc = 10.0
+      sp1_female_ad_wc = 10.0
+      ic_species1 = [male_juv_ww, male_juv_wc, male_juv_wr, male_juv_cc, male_juv_cr, male_juv_rr, female_juv_ww, female_juv_wc, female_juv_wr, female_juv_cc, female_juv_cr, female_juv_rr, sp1_male_ad_ww, sp1_male_ad_wc, sp1_male_ad_wr, sp1_male_ad_cc, sp1_male_ad_cr, sp1_male_ad_rr, sp1_female_ad_ww, sp1_female_ad_wc, sp1_female_ad_wr, sp1_female_ad_cc, sp1_female_ad_cr, sp1_female_ad_rr]
+
+      # build initial condition in the standard form
+      initial_condition = []
+      for i in range(24):
+         initial_condition.append(ic_species0[i])
+         initial_condition.append(ic_species1[i])
+      initial_condition += [carrying_cap, carrying_cap]
+      pap = array.array('f', initial_condition)
+
+      # predict the answer
+      prediction = predict_answer(matingcomp, fecundity, mu_adult, dt, pap)
 
       # evolve according to the cython code
       self.c.evolve(dt, pap)
@@ -964,8 +1062,9 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       fecundity = 8
       self.c.setFecundity(fecundity)
       carrying_cap = 60.0 # because we start with zero juveniles, this is actually irrelevant
-      self.c.setMatingComponent(0, 1, 0.0)
-      self.c.setMatingComponent(1, 0, 0.0)
+      matingcomp = 0.0
+      self.c.setMatingComponent(0, 1, matingcomp)
+      self.c.setMatingComponent(1, 0, matingcomp)
 
       # start with zero juveniles
       male_juv_ww = male_juv_wc = male_juv_wr = male_juv_cc = male_juv_cr = male_juv_rr = female_juv_ww = female_juv_wc = female_juv_wr = female_juv_cc = female_juv_cr = female_juv_rr = 0.0
@@ -1009,13 +1108,75 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       pap = array.array('f', initial_condition)
 
       # predict the answer
-      prediction = predict_answer(fecundity, mu_adult, dt, pap)
+      prediction = predict_answer(matingcomp, fecundity, mu_adult, dt, pap)
 
       # evolve according to the cython code
       self.c.evolve(dt, pap)
 
       # check answer
       self.assertTrue(arrayfuzzyequal(prediction, pap[:48], ep_tol))
+
+   def testEvolveSpecies_allGeno_matingcomp(self):
+      dt = 3.0
+      mu_adult = 0.125
+      self.c.setMuAdult(mu_adult)
+      fecundity = 8
+      self.c.setFecundity(fecundity)
+      carrying_cap = 60.0 # because we start with zero juveniles, this is actually irrelevant
+      matingcomp = 0.5
+      self.c.setMatingComponent(0, 1, matingcomp)
+      self.c.setMatingComponent(1, 0, matingcomp)
+
+      # start with zero juveniles
+      male_juv_ww = male_juv_wc = male_juv_wr = male_juv_cc = male_juv_cr = male_juv_rr = female_juv_ww = female_juv_wc = female_juv_wr = female_juv_cc = female_juv_cr = female_juv_rr = 0.0
+
+      # species0 adults:
+      sp0_male_ad_ww = 10.0
+      sp0_male_ad_wc = 12.0
+      sp0_male_ad_wr = 16.0
+      sp0_male_ad_cc = 20.0
+      sp0_male_ad_cr = 4.0
+      sp0_male_ad_rr = 9.0
+      sp0_female_ad_ww = 8.0
+      sp0_female_ad_wc = 12.0
+      sp0_female_ad_wr = 4.0
+      sp0_female_ad_cc = 6.0
+      sp0_female_ad_cr = 13.0
+      sp0_female_ad_rr = 2.0
+      ic_species0 = [male_juv_ww, male_juv_wc, male_juv_wr, male_juv_cc, male_juv_cr, male_juv_rr, female_juv_ww, female_juv_wc, female_juv_wr, female_juv_cc, female_juv_cr, female_juv_rr, sp0_male_ad_ww, sp0_male_ad_wc, sp0_male_ad_wr, sp0_male_ad_cc, sp0_male_ad_cr, sp0_male_ad_rr, sp0_female_ad_ww, sp0_female_ad_wc, sp0_female_ad_wr, sp0_female_ad_cc, sp0_female_ad_cr, sp0_female_ad_rr]
+
+      # species1 adults:
+      sp1_male_ad_ww = 1.0
+      sp1_male_ad_wc = 1.2
+      sp1_male_ad_wr = 1.6
+      sp1_male_ad_cc = 22.0
+      sp1_male_ad_cr = 4.4
+      sp1_male_ad_rr = 9.9
+      sp1_female_ad_ww = 13.0
+      sp1_female_ad_wc = 12.0
+      sp1_female_ad_wr = 14.0
+      sp1_female_ad_cc = 16.0
+      sp1_female_ad_cr = 1.3
+      sp1_female_ad_rr = 0.2
+      ic_species1 = [male_juv_ww, male_juv_wc, male_juv_wr, male_juv_cc, male_juv_cr, male_juv_rr, female_juv_ww, female_juv_wc, female_juv_wr, female_juv_cc, female_juv_cr, female_juv_rr, sp1_male_ad_ww, sp1_male_ad_wc, sp1_male_ad_wr, sp1_male_ad_cc, sp1_male_ad_cr, sp1_male_ad_rr, sp1_female_ad_ww, sp1_female_ad_wc, sp1_female_ad_wr, sp1_female_ad_cc, sp1_female_ad_cr, sp1_female_ad_rr]
+
+      # build initial condition in the standard form
+      initial_condition = []
+      for i in range(24):
+         initial_condition.append(ic_species0[i])
+         initial_condition.append(ic_species1[i])
+      initial_condition += [carrying_cap, carrying_cap]
+      pap = array.array('f', initial_condition)
+
+      # predict the answer
+      prediction = predict_answer(matingcomp, fecundity, mu_adult, dt, pap)
+
+      # evolve according to the cython code
+      self.c.evolve(dt, pap)
+
+      # check answer
+      self.assertTrue(arrayfuzzyequal(prediction, pap[:48], ep_tol))
+
 
 if __name__ == '__main__':
    unittest.main()

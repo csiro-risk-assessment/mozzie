@@ -1,0 +1,113 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage{pdflscape}
+\usepackage{amsmath}
+\usepackage[margin=0.5cm]{geometry}
+
+\DeclareMathOperator*{\Binom}{\textrm{Binom}}
+\DeclareMathOperator*{\Pois}{\textrm{Pois}}
+\DeclareMathOperator*{\sign}{\textrm{sign}}
+
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\dd}[2]{\frac{\mathrm{d} #1}{\mathrm{d} #2}}
+\begin{document}
+
+{\tt Mosquito26} is heavily based on {\tt Mosquito23}.  In fact, in the computer code the ``26'' class is derived from the ``23'' code with only a small number of changes.  Therefore, this documentation can be read in tandem with the {\tt Mosquito23} documentation.
+\begin{itemize}
+\item The ``2'' stands for ``2 sexes'': male and female.
+\item The ``6'' stands for ``6 genotypes''.  There are 3 alleles: wild-type, a genetic construct, and a resistant allele.  This gives 6 genotypes: ww, wc, wr, cc, cr, rr.
+\end{itemize}
+
+{\tt Mosquito26} handles just the mosquito lifecycle, and assumes that diffusion and advection is handled by other parts of the code.  To interface with {\tt Mosquito23}, you need to know the ordering of its vector $X$, which describes the number of mosquitoes of given species, genotype, sex and age within an area (unit cell) of the model.  For species $m$, genotype $g$, sex $s$ and age $a$, this is
+\begin{equation}
+X\left(m + gN_{\mathrm{species}} + sN_{\mathrm{species}}N_{\mathrm{genotypes}} + aN_{\mathrm{species}}N_{\mathrm{genotypes}}N_{\mathrm{sexes}} \right) \ ,
+\end{equation}
+where
+\begin{itemize}
+\item $N_{\mathrm{species}}$ is the number of species;
+\item $N_{\mathrm{genotypes}} = 6$ is the number of genotypes, with ordering $ww=0$, $wc=1$, $wr=2$, $cc=3$, $cr=4$, $rr=5$;
+\item $N_{\mathrm{sexes}} = 2$ is the number of sexes, with ordering male$=0$ and female$=1$;
+\item $N_{\mathrm{ages}}$ is the number of ages, with ordering newborn$=0$ and adult=$N_{\mathrm{ages}}-1$, with intermediate stages in between these.
+\end{itemize}
+
+\section{Adults}
+
+All adult populations are goverend by
+\begin{equation}
+\frac{\mathrm{d}X(N_{\mathrm{ages}}-1, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{adult}}X(N_{\mathrm{ages}}-1, s, g, m) + b X(N_{\mathrm{ages}}-2, s, g, m) \ .
+\end{equation}
+Here $N_{\mathrm{ages}}-1$ indicates the adult age bracket, and the $N_{\mathrm{ages}}-2$ is the eldest juvenile age bracket.  The first term on the right-hand side describes the mortality of adults, while the second term desribes aging from the eldest juveniles.  If $N_{\mathrm{ages}}=1$ then age structure is not modelled, and all populations are governed by the ``Newborn larvae'' equations, below.
+
+\section{Intermediate juveniles}
+
+For $0<a<N_{\mathrm{ages}}-1$, the populations are governed by
+\begin{equation}
+\frac{\mathrm{d}X(a, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{larvae}}X(a, s, g, m) + b \left(X(a-1, s, g, m) - X(a, s, g, m) \right) \ .
+\end{equation}
+The first term on the right-hand side describes the mortality of this age-bracket of juveniles, while the term involving $b$ describes aging to/from older/younger age brackets.  For $N_{\mathrm{ages}}\leq 2$ there are no such intermediate juveniles.  
+
+\section{Newborn larvae}
+
+For $a=0$, the populations are govened by
+\begin{equation}
+\frac{\mathrm{d}X(0, s, g, m)}{\mathrm{d} t} = -d_{\mathrm{larvae}}X(0, s, g, m) - b X(0, s, g, m) + B(s, g, m) \ .
+\end{equation}
+The first term describes mortality of newborns, while the second describes aging into the next age-bracket of juveniles.  The final term describes the birth of newborn larvae.  It is
+\begin{equation}
+B(s, g, m) = L\left(1 -  \frac{C(m)}{K(m)} \right) \sum_{g_{M}, g_{F}, m_{M}, m_{F}}P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) \lambda X(N-1, F, g_{F}, m_{F})
+\end{equation}
+This expressions in this equation are:
+\begin{itemize}
+\item $C(m)$ is the competition that a newborn feels from the rest of the larval populations.  It is
+\begin{equation}
+C(m) = \sum_{m'=0}^{N_{\mathrm{species}} - 1}\alpha_{m, m'} \sum_{a=0}^{\max(N_{\mathrm{ages}} - 2, 0)}\sum_{s=0}^{N_{\mathrm{sexes}} - 1} \sum_{g=0}^{N_{\mathrm{genotypes}} - 1}  X(a, s, g, m')\ .
+\end{equation}
+Notice that this does not include adults $a=N_{\mathrm{ages}} - 1$, but only newborns and juveniles.  The Lotka-Voltera matrix $\alpha$ accounts for inter-specific competition.  It defaults to $a=I$, that is, newborns only feel competition from their own species.
+\item $K(m)$ is the carrying capacity, which may be spatially and temporally varying.  There is one further caveat: if $K(m)<K_{\mathrm{min}}$ for user-defined $K_{\mathrm{min}}$ (which defaults to $10^{-6}$) then $B=0$ for all $s$, $g$.  This helps with numerical stability in the case when $K(m)$ is time-dependent.
+\item The function $L(x)=0$ if $x\leq 0$, while $L(x)=x$ for $x>0$.  This is to ensure that if $C(m)>K(m)$ no newborns of species $m$ are produced.
+\item $X(N_{\mathrm{ages}}-1, F, g_{F}, m_{F})$ is the number of adult ($a=N_{\mathrm{ages}}-1$) females of genotype $g_{F}$ and species $m_{F}$.
+\item $\lambda$ is the baseline fecundity rate, the expected number of larvae per clutch of eggs per female per day (assuming time is measured in days), assumed produced by a mating of wildtype mosquitoes.  Therefore $\lambda X(N_{\mathrm{ages}}-1, F, g_{F}, m_{F})$ is the number of newborns produced by these female per day.  
+\item $P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F})$ is the probability the offspring will have sex $s$, genotype $g$ and species $m$, given the genotypes and species of its parents.  It is a product of terms
+\begin{equation}
+P_{\mathrm{offspring}}(s, g, m | g_{M}, g_{F}, m_{M}, m_{F}) = P_{\mathrm{mating}}(g, m | g_{M}, g_{F}, m_{M}, m_{F}) i(g, g_{M}, g_{F})p(g_{M}, g_{F}, m_{M}, m_{F}, s) \ .
+\end{equation}
+\item $P_{\mathrm{mating}}(g, m, | g_{M}, g_{F}, m_{M}, m_{F})$ is the probability that a male of genotype $g_{M}$ and species $m_{M}$ successfully mates with a female of genotype $g_{F}$ and species $m_{F}$ to produce an offspring of genotype $g$ and species $m$.  In {\tt mosquito26} it does not depend on $g_{F}$, and is
+  \begin{equation}
+    P_{\mathrm{mating}}(g, m | g_{M}, g_{F}, m_{M}, m_{F}) = h(m, m_{M}, m_{F})\frac{d(m_{M}, m_{F})j(g_{M}) X_{N_{\mathrm{ages}} - 1, M, g_{M}, m_{M}}}{\sum_{g'=0}^{N_{\mathrm{genotypes}}}\sum_{m'=0}^{N_{\mathrm{species}}}d(m', m_{F})j(g') X_{N_{\mathrm{ages}} - 1, M, g', m'}}
+  \end{equation}
+  Here:
+  \begin{itemize}
+  \item $h(m, m_{M}, m_{F})$ is the proportion of offspring mosquitoe type $m$ born of a mating of male type $m_{M}$ and female $m_{F}$.  This is $h = 1$ if $m_{M}=m_{F}=m$ (both parents and offspring are same species); while $h=0.5$ if $m = m_{M}\neq m_{F}$ (parents are different, and offspring is same as male parent); and $h=0.5$ if $m = m_{F} \neq m_{M}$ (parents are different, and offspring is same as female parent); and $h=0$ in all other cases.
+  \item $d(m_{M}, m_{F})$ is the relative probability of mating, based on species: $d(m_{M}, m_{F}) = 1$ if $m_{M} = m_{F}$; and $d(m_{M}, m_{F}) = w$ otherwise, where $w$ is a user-defined parameter that is typically small.
+  \item $j(g_{M})$ is the relative probability of mating based on genotype of the male parent:
+    \begin{equation}
+      j(g_{M}) = \left\{
+      \begin{array}{ll}
+        1 & \ \ \mbox{if}\ g\in\{ww, wr, rr\} \\
+        (1 - h_{e}s_{e})(1 - h_{n}s_{n}) & \ \ \mbox{if}\ g\in\{wc, cr\} \\
+        (1 - s_{e})(1 - s_{n})  & \ \ \mbox{if}\ g\in\{cc\}
+      \end{array}
+      \right.
+    \end{equation}
+    Here $h_{e}$, $s_{e}$, $h_{n}$ and $s_{n}$ are user-defined parameters.
+  \item The denominator normalises the result
+  \end{itemize}
+\item $i(g, g_{M}, g_{F})$ describes the probability of an offspring inheriting genotype $g$ given parents of genotypes $g_{M}$ and $g_{F}$, which is defined fully below.  TODO
+\item $p(g_{M}, g_{F}, m_{M}, m_{F}, s)$ describes sex bias of the offspring.  The default is that male and female offspring are equally likely: $p=0.5$.
+\end{itemize}
+
+\section{Time integration}
+
+The ODEs in {\tt Mosquito23} may be integrated in time using one of the following methods.
+\begin{enumerate}
+\item Explicit-Euler, where $X(t + \Delta t) = \Delta t f(X(t))$.  This is fast, but results in the greatest error.
+\item Runge-Kutta4, where $X(t + \Delta t)$ is given by the fourth-order Runge-Kutta formula.  This is approximately 4 times slower than explicit-Euler.
+\item Scipy's {\tt solve\_ivp} method.  This is over 100 times slower than explicit-Euler, but is the most accurate.
+\end{enumerate}
+
+In addition, adaptive time-stepping is the default.  Here, the user defines $\Delta t$, and if the algorithm detects that any $X(t + \Delta t) < 0$, the time-step is solved using a number of smaller sub-time-steps, chosen to guarantee that all $X$ remain non-negative.  This type of behaviour occurs when the time-dependent carrying capacity suddenly reduces, and the explicit-Euler or Runge-Kutta4 methods produce large negative changes in population numbers, which, if allowed, would result in $X<0$.  Solving the problem using smaller sub-time-steps overcomes this problem.  In this algorithm, there is a minimum $\Delta t$ allowed, which defaults to $10^{-12}$, below which the algorithm exits with an error.
+
+Finally, a user-defined cutoff, $c$, is placed on $X(t + \Delta t)$.  If $X(t + \Delta t) < c$ (at the end of a time step) then $X(t + \Delta t)$ is set to zero.  This prevents anomalous round-off and precision errors from accumulating.  The default value of $c$ is $10^{-6}$.
+
+\end{document}
