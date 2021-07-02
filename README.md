@@ -3,19 +3,33 @@ Mosquito lifecycle, diffusion and advection
 
 ## Use
 
+### Prerequisites
+
+The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  Your computer system probably has all the necessary features already installed, but a vanilla system will need various items.  On Ubuntu:
+
+- `sudo apt install python3-dev python3-numpy python3-scipy cython`
+
+(Other things to install that are unrelated to the mosquito modelling but might be useful are `sudo apt install unzip` and `sudo snap install emacs --classic`.)
+
+The commands may be slightly different on other architectures, but you need python3, numpy, scipy and cython.
+
+
 ### Building the code
 
-The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  To our knowledge, all python distributions come 
-with `cythonize` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory 
-we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, etc).
+To our knowledge, all python distributions come with `cython` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, `build_nimbus.sh` etc).  Look at `code/build_nimbus.sh`.  There are two items you will have to change: the `gcc_flags` `include directories` (the paths specified after the -I).  The file `code/build_nimbus.sh` contains hints on how to find those paths.
+
 
 ### Testing the code
 
-Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `run_all_tests.sh`.
+Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python3 TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `run_all_tests.sh`.
 
 ### Simulating
 
-The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  An example is `example1/runner.py`, and there are other more sophisticated models in the other `example` directories.  Generally, each "runner" python script contains the following.
+The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  An example is `example1/runner.py`, and there are other more sophisticated models in the other `example` directories.  Run the simulations using, for example,
+
+`python3 runner.py`
+
+Generally, each "runner" python script contains the following.
 
 - An `import` block in which you import all the core libraries (described below) and any other python libraries you need.
 - A block in which you set up the grid and active cells, defining the spatial extents and discretisation of the model.  You will use `Grid` and `Grid.setActiveAndInactive`.
