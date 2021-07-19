@@ -717,15 +717,21 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             self.popChange(dt, pops_and_params, self.cchange)
             new_dt = timestep # biggest value that ever needs to be used
             for ind in range(self.num_populations):
-                if pops_and_params[ind] + self.cchange[ind] < 0.0:
+                if pops_and_params[ind] + self.cchange[ind] < -self.zero_cutoff:
                     # the change will send the population negative, which is deemed to be erroneous
                     # and due to dt being too big.  Using explicit-Euler timestepping, if we choose
                     # new_dt = dt * pops_and_params[ind] / (-cchange[ind]), then running popChange again
                     # will give exactly cchange[ind] = -pops_and_params[ind].  So multiply this
                     # new_dt by 0.9 to give a factor of safety
                     new_dt = min(new_dt, - 0.9 * dt * pops_and_params[ind] / self.cchange[ind])
+                elif pops_and_params[ind] + self.cchange[ind] < 0.0:
+                    # the change will send the population negative, but only by a tiny amount
+                    # since it is greater than -self.zero_cutoff.
+                    # This is probably due to a precision loss problem in Runge-Kutta.
+                    # So set self.cchange so that pops_and_params[ind] + self.cchange[ind] = 0
+                    self.cchange[ind] = -pops_and_params[ind]
             if self.adaptive == 0 or new_dt == timestep:
-                # not doing adaptivity, or none of the populations went negative, so success:
+                # not doing adaptivity, or none of the populations went negative (less than -self.zero_cutoff), so success:
                 for ind in range(self.num_populations):
                     pops_and_params[ind] = pops_and_params[ind] + self.cchange[ind]
                 time_done = time_done + dt

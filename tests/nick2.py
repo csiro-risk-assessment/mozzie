@@ -14,6 +14,7 @@ dt=1.
 cell.setTimeIntegrationMethod("runge_kutta4")
 cell.setMinCarryingCapacity(1.0)
 cell.setZeroCutoff(1.0)
+cell.setMinimumDt(1.0)
 
 ## mother determines offspring subspecies
 cell.setHybridisationRate(0, 1, 1, 1.0) 
