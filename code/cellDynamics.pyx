@@ -769,21 +769,21 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             # step 2
             for ind in range(self.num_populations):
                 self.crky[ind] = current_pops_and_params[ind] + 0.5 * self.rk1.data.as_floats[ind]
-            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
+            self.crky[self.num_populations:] = current_pops_and_params[self.num_populations:] # the carrying capacities
             self.computeRHS(self.crky)
             for ind in range(self.num_populations):
                 self.rk2.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
             # step 3
             for ind in range(self.num_populations):
                 self.crky[ind] = current_pops_and_params[ind] + 0.5 * self.rk2.data.as_floats[ind]
-            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
+            self.crky[self.num_populations:] = current_pops_and_params[self.num_populations:] # the carrying capacities
             self.computeRHS(self.crky)
             for ind in range(self.num_populations):
                 self.rk3.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
             # step 4
             for ind in range(self.num_populations):
                 self.crky[ind] = current_pops_and_params[ind] + self.rk3.data.as_floats[ind]
-            self.crky[self.num_populations] = current_pops_and_params[self.num_populations] # the carrying capacity
+            self.crky[self.num_populations:] = current_pops_and_params[self.num_populations:] # the carrying capacities
             self.computeRHS(self.crky)
             for ind in range(self.num_populations):
                 self.rk4.data.as_floats[ind] = timestep * self.rhs.data.as_floats[ind]
