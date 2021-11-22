@@ -1078,3 +1078,17 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.c_prob = 0.5 * (1 + k_c * (1 - k_j) * (1 - k_ne))
         self.r_prob = 1 - self.w_prob - self.c_prob
         self.setInheritance()
+
+cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
+    def __init__(self):
+        super().__init__()
+
+        self.delay_time = 0
+        self.current_index = 0
+
+    cpdef void incrementCurrentIndex(self):
+        self.current_index = (self.current_index + 1) % (self.delay_time + 1)
+
+    cpdef unsigned getCurrentIndex(self):
+        return self.current_index
+    
