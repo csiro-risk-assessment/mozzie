@@ -512,14 +512,15 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # square of num_genotypes, viz 9
     cdef unsigned num_genotypes2
 
-    # number of species (set = 3 in constructor)
+    # number of species (set to 3 in constructor)
     cdef unsigned num_species
 
     # square of num_species
     cdef unsigned num_species2
 
     cpdef void setDelayCurrentIndexNumSpecies(self, unsigned delay, unsigned current_index, unsigned num_species)
-    """Sets: delay; current_index, num_species"""
+    """Sets: delay; current_index, num_species.
+    Sets the following appropriately: num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices"""
 
     cpdef unsigned getDelay(self)
     """Returns delay"""
