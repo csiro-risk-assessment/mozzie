@@ -1087,7 +1087,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_genotypes = 6
         self.num_genotypes2 = 6 * 6
         
-        self.setParameters(1, 0, 3, [0.0] * self.num_genotypes * 3)
+        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3)
 
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate):
         self.delay = delay
@@ -1096,6 +1096,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_species2 = num_species * num_species
         self.num_populations = self.num_sexes * self.num_genotypes * self.num_species * (self.delay + 1)
         self.num_parameters = self.num_species # carrying capacities
+        self.new_pop = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
 
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species
         self.num_advecting = self.num_sexes * self.num_genotypes * self.num_species
@@ -1132,8 +1133,34 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef setDeathRate(self, list death_rate):
         if len(death_rate) != self.num_genotypes * self.num_species:
             raise ValueError("size of death_rate, " + str(len(death_rate)) + ", must be equal to " + str(self.num_genotypes) + " * " + str(self.num_species))
+        for dr in death_rate:
+            if dr <= 0.0:
+                raise ValueError("all death rates must be positive")
         self.death_rate = array.array('f', death_rate)
 
     cpdef array.array getDeathRate(self):
         return self.death_rate
                      
+    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+        """This just implements dx/dt = -death_rate * x + bb in a non-optimised way"""
+        cdef float bb = 0.0 # TODO
+
+        cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
+        cdef unsigned delayed_base = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes
+
+        cdef unsigned current_index = 0
+        cdef unsigned delayed_index = 0
+        cdef unsigned ind = 0
+        for sex in range(self.num_sexes):
+            for genotype in range(self.num_genotypes):
+                for species in range(self.num_species):
+                    current_index = adult_base + ind
+                    delayed_index = delayed_base + ind
+                    self.new_pop[ind] = bb / self.death_rate[ind] + (pops_and_params[current_index] - bb / self.death_rate[ind]) * exp(- self.death_rate[ind] / timestep)
+
+        ind = 0
+        for sex in range(self.num_sexes):
+            for genotype in range(self.num_genotypes):
+                for species in range(self.num_species):
+                    delayed_index = delayed_base + ind
+                    pops_and_params[delayed_index] = self.new_pop[ind]

@@ -520,6 +520,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     # death rate of mosquito type M and genotype G has index M + G * num_species (all set to zero in constructor)
     cpdef array.array death_rate
+
+    # this is used in evolve to hold the new population
+    cpdef array.array new_pop
     
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate)
     """Sets: delay; current_index, num_species, death_rate (which must be a list of floats, with length num_genotypes * num_species: see setDeathRate()).
