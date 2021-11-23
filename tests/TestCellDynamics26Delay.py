@@ -91,15 +91,15 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
 
       initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
       pap = array.array('f', initial_condition)
-      dt = 1E-12
+      dt = 1.23E-2
       self.c.evolve(dt, pap)
       self.c.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
 
-      bb = 1.1
+      lambdah = 1.1
       expected_answer = list(initial_condition)
       for i in range(24, 36):
          dr = death_rate[(i - 24) % 6]
-         new_pop = bb / dr + (initial_condition[i] - bb / dr) * exp(- dr * dt)
+         new_pop = lambdah * initial_condition[i + 12] / dr + (initial_condition[i] - lambdah * initial_condition[i + 12] / dr) * exp(- dr * dt)
          expected_answer[i + 12] = new_pop
 
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 1E-6))

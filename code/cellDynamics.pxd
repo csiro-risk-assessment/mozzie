@@ -475,11 +475,11 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     It is initialised to 0 in the constructor.
     Examples:
       - Adults of species M, genotype G, sex S have index = M + G * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes
-      - The adult population at the previous dt has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - 1)%(delay + 1) * num_species * num_genotypes * num_sexes
-      - The adult population at N dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - N)%(delay + 1) * num_species * num_genotypes * num_sexes
-      - The population at delay dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - delay)%(delay + 1) * num_species * num_genotypes * num_sexes = = M + G * num_species + S * num_species * num_genotypes + (adult_index + 1)%(delay + 1) * num_species * num_genotypes * num_sexes
+      - The adult population at the previous dt has index = M + G * num_species + S * num_species * num_genotypes + (current_index - 1)%(delay + 1) * num_species * num_genotypes * num_sexes
+      - The adult population at N dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (current_index - N)%(delay + 1) * num_species * num_genotypes * num_sexes
+      - The population at delay dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (current_index - delay)%(delay + 1) * num_species * num_genotypes * num_sexes = = M + G * num_species + S * num_species * num_genotypes + (current_index + 1)%(delay + 1) * num_species * num_genotypes * num_sexes
 
-    Hence, for the simple process equation of the form dx/dt = x(t - delay * dt), evolve simply sets
+    Hence, for the simple process equation of the form dx/dt = x(t - delay * dt), evolve could simply set:
     delayed_index = (current_index + 1)%(delay + 1)
     new_pop = pops_and_params[current_index] + dt * pops_and_params[delayed_index]
     pops_and_params[delayed_index] = new_pop
