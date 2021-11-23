@@ -1083,11 +1083,47 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     def __init__(self):
         super().__init__()
 
-        self.delay_time = 0
-        self.current_index = 0
+        self.num_sexes = 2
+        self.num_genotypes = 6
+        self.num_genotypes2 = 6 * 6
+        
+        self.setDelayCurrentIndexNumSpecies(1, 0, 3)
+
+    cpdef void setDelayCurrentIndexNumSpecies(self, unsigned delay, unsigned current_index, unsigned num_species):
+        self.delay = delay
+        self.current_index = current_index % (delay + 1)
+        self.num_species = num_species
+        self.num_species2 = num_species * num_species
+        self.num_populations = self.num_sexes * self.num_genotypes * self.num_species * (self.delay + 1)
+        self.num_parameters = self.num_species # carrying capacities
+
+        self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species
+        self.num_advecting = self.num_sexes * self.num_genotypes * self.num_species
+        self.diffusing_indices = array.clone(array.array('I', []), self.num_diffusing, zero = False)
+        self.advecting_indices = array.clone(array.array('I', []), self.num_advecting, zero = False)
+        cdef unsigned ind = 0
+        for sex in range(self.num_sexes):
+            for genotype in range(self.num_genotypes):
+                for species in range(self.num_species):
+                    offset = species + genotype * self.num_species + sex * self.num_species * self.num_genotypes + self.current_index * self.num_species * self.num_genotypes * self.num_sexes
+                    self.diffusing_indices.data.as_uints[ind] = offset
+                    self.advecting_indices.data.as_uints[ind] = offset
+                    ind = ind + 1
+
+
+    cpdef unsigned getDelay(self):
+        return self.delay
 
     cpdef void incrementCurrentIndex(self):
-        self.current_index = (self.current_index + 1) % (self.delay_time + 1)
+        self.current_index = (self.current_index + 1) % (self.delay + 1)
+        cdef unsigned ind = 0
+        for sex in range(self.num_sexes):
+            for genotype in range(self.num_genotypes):
+                for species in range(self.num_species):
+                    offset = species + genotype * self.num_species + sex * self.num_species * self.num_genotypes + self.current_index * self.num_species * self.num_genotypes * self.num_sexes
+                    self.diffusing_indices.data.as_uints[ind] = offset
+                    self.advecting_indices.data.as_uints[ind] = offset
+                    ind = ind + 1
 
     cpdef unsigned getCurrentIndex(self):
         return self.current_index

@@ -462,27 +462,30 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
 cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """Solves Mosquito ODE with 2 sexes, 6 genotypes, using a delay equation
 
-    The number of populations is
-    (delay_time + 1) * num_species * num_geotypes * num_sexes = (delay_time + 1) * num_speces * 12.
-    Here delay_time is the number of dt involved in the process model equations, eg
-    dx/dt = x(t - delay_time * dt)
-    So if delay_time = 0 then the equations just revert to ODEs.
+    An example of a delay equation is
+    dx/dt = x(t - delay * dt)
+    Here "delay" is the number of dt involved in the delay equation
+    So, if delay = 0 then the equations just revert to ODEs.
 
-    An important variable is current_index, which is an integer between 0 and delay_time.
+    The number of populations is
+    (delay + 1) * num_species * num_geotypes * num_sexes = (delay + 1) * num_speces * 12.
+
+    An important variable is current_index, which is an integer between 0 and delay.
     This defines where the current populations are located in pops_and_params.
+    It is initialised to 0 in the constructor.
     Examples:
       - Adults of species M, genotype G, sex S have index = M + G * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes
-      - The population at the previous dt has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - 1)%(delay_time + 1) * num_species * num_genotypes * num_sexes
-      - The population at N dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - N)%(delay_time + 1) * num_species * num_genotypes * num_sexes
-      - The population at delay_time dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - delay_time)%(delay_time + 1) * num_species * num_genotypes * num_sexes = = M + G * num_species + S * num_species * num_genotypes + (adult_index + 1)%(delay_time + 1) * num_species * num_genotypes * num_sexes
+      - The adult population at the previous dt has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - 1)%(delay + 1) * num_species * num_genotypes * num_sexes
+      - The adult population at N dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - N)%(delay + 1) * num_species * num_genotypes * num_sexes
+      - The population at delay dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (adult_index - delay)%(delay + 1) * num_species * num_genotypes * num_sexes = = M + G * num_species + S * num_species * num_genotypes + (adult_index + 1)%(delay + 1) * num_species * num_genotypes * num_sexes
 
-    Hence, for the simple process equation of the form dx/dt = x(t - delay_time * dt), evolve simply sets
-    delayed_index = (current_index + 1)%(delay_time + 1)
+    Hence, for the simple process equation of the form dx/dt = x(t - delay * dt), evolve simply sets
+    delayed_index = (current_index + 1)%(delay + 1)
     new_pop = pops_and_params[current_index] + dt * pops_and_params[delayed_index]
     pops_and_params[delayed_index] = new_pop
 
     !!! IMPORTANT NOTE !!!
-    After evolve is called for all grid cells, current_index must be incremented!!  This is left up to the calling code, for the cellDynamics class has no way of knowing evolve has been called for all grid cells.  (An alternative would be to make current_index one of the spatially-varying parameters, and evolve could update it at every call of evolve, but this would consume memory.)
+    After evolve is called for all grid cells, current_index must be incremented!!  This is the responsibility of the calling code, for the cellDynamics class has no way of knowing evolve has been called for all grid cells.  (An alternative would be to make current_index one of the spatially-varying parameters, and evolve could update it at every call of evolve, but this would consume memory.)
     
     Sex 0 is male.  Sex 1 is female.
     Genotypes:
@@ -494,11 +497,35 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
       5 is rr
     There are num_species spatially-varying parameters, which are the carrying-capacities of each species
     """
-    cdef unsigned delay_time # number of dt in the delay equation
-    cdef unsigned current_index # index of the current adult population
+    # number of dt in the delay equation.  (Set to 1 in constructor)
+    cdef unsigned delay
+
+    # index of the current adult population.  (Set to zero in constructor)
+    cdef unsigned current_index
+
+    # male, female, always.  So num_sexes = 2
+    cdef unsigned num_sexes
+
+    # 0 is ww, 1 is wc, 2 is wr, 3 is cc, 4 is cr, 5 is rr.  So num_genotypes = 3
+    cdef unsigned num_genotypes
+
+    # square of num_genotypes, viz 9
+    cdef unsigned num_genotypes2
+
+    # number of species (set = 3 in constructor)
+    cdef unsigned num_species
+
+    # square of num_species
+    cdef unsigned num_species2
+
+    cpdef void setDelayCurrentIndexNumSpecies(self, unsigned delay, unsigned current_index, unsigned num_species)
+    """Sets: delay; current_index, num_species"""
+
+    cpdef unsigned getDelay(self)
+    """Returns delay"""
 
     cpdef void incrementCurrentIndex(self)
-    """sets current_index = (current_index + 1) % (delay_time + 1)"""
+    """Sets current_index = (current_index + 1) % (delay + 1).  Also updates advecting_indices and diffusing_indices"""
 
     cpdef unsigned getCurrentIndex(self)
     """returns current_index"""
