@@ -524,6 +524,12 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # this is used in evolve to hold the new population
     cpdef array.array new_pop
     
+    cdef float m_w
+    cdef float m_c
+    cdef float w_prob
+    cdef float c_prob
+    cdef float r_prob
+    
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate)
     """Sets: delay; current_index, num_species, death_rate (which must be a list of floats, with length num_genotypes * num_species: see setDeathRate()).
     Sets the following appropriately: num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate"""
@@ -545,4 +551,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef array.array getDeathRate(self)
     """Returns death_rate.
     The death rate of mosquito type M and genotype G has index M + G * num_species"""
+
+    cdef void setInheritance(self)
+    """Version of setInheritance for 6 genotypes"""
 

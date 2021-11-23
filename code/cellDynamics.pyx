@@ -1088,6 +1088,16 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_genotypes2 = 6 * 6
         
         self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3)
+        
+        self.m_w = 1.e-6 # current values in report based on Beighton (assuming spontaneous resistance)
+        self.m_c = 1.e-6
+        
+        # Probabilities used in the Inheritance cube
+        self.w_prob = 0.5 * (1 - self.m_w)
+        self.c_prob = 0.5 * (1 - self.m_c)
+        self.r_prob = 0.5 * (self.m_w + self.m_c)
+        
+        self.setNumGenotypes(self.num_sexes, 6) 
 
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate):
         self.delay = delay
@@ -1170,3 +1180,23 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                     delayed_index = delayed_base + ind
                     pops_and_params[delayed_index] = self.new_pop[ind]
                     ind += 1
+                    
+    cdef void setInheritance(self):
+        # inherited allele frequencies based on parental genotype
+        allele_list = [[2.*self.w_prob, 0., (1 - 2.*self.w_prob)], # allele freqs from ww parent
+        [self.w_prob, self.c_prob, self.r_prob], # wc
+        [self.w_prob, 0., (1. - self.w_prob)], # wr
+        [0., 2. * self.c_prob, (1. - 2. * self.c_prob)], # cc
+        [0., self.c_prob, (1 - self.c_prob)], # cr
+        [0., 0., 1.]] # rr
+        
+        # Mendelian inheritance of parental alleles
+        cdef unsigned gt_father, gt_mother, gt_offspring
+        for gt_father in range(self.num_genotypes):
+            for gt_mother in range(self.num_genotypes):
+                self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 0 * self.num_genotypes2] = allele_list[gt_father][0] * allele_list[gt_mother][0] # ww offspring
+                self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 1 * self.num_genotypes2] = allele_list[gt_father][0] * allele_list[gt_mother][1] +  allele_list[gt_father][1] * allele_list[gt_mother][0] # wc offspring (w from mother, c from father or vice versa)               
+                self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 2 * self.num_genotypes2] = allele_list[gt_father][0] * allele_list[gt_mother][2] + allele_list[gt_father][2] * allele_list[gt_mother][0] # wr offspring                
+                self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 3 * self.num_genotypes2] = allele_list[gt_father][1] * allele_list[gt_mother][1] # cc offspring
+                self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 4 * self.num_genotypes2] = allele_list[gt_father][1] * allele_list[gt_mother][2] + allele_list[gt_father][2] * allele_list[gt_mother][1] # cr offspring
+                self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 5 * self.num_genotypes2] = allele_list[gt_father][2] * allele_list[gt_mother][2] # rr offspring                
