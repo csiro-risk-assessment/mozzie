@@ -1143,7 +1143,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                      
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         """This just implements dx/dt = -death_rate * x + bb in a non-optimised way"""
-        cdef float bb = 0.0 # TODO
+        cdef float bb = 1.1 # TODO
 
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
         cdef unsigned delayed_base = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes
@@ -1151,12 +1151,15 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         cdef unsigned current_index = 0
         cdef unsigned delayed_index = 0
         cdef unsigned ind = 0
+        cdef float dr = 0.0
         for sex in range(self.num_sexes):
             for genotype in range(self.num_genotypes):
                 for species in range(self.num_species):
                     current_index = adult_base + ind
                     delayed_index = delayed_base + ind
-                    self.new_pop[ind] = bb / self.death_rate[ind] + (pops_and_params[current_index] - bb / self.death_rate[ind]) * exp(- self.death_rate[ind] / timestep)
+                    dr = self.death_rate[ind % (self.num_genotypes * self.num_species)]
+                    self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr * exp(- dr * timestep))
+                    ind += 1
 
         ind = 0
         for sex in range(self.num_sexes):
@@ -1164,3 +1167,4 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                 for species in range(self.num_species):
                     delayed_index = delayed_base + ind
                     pops_and_params[delayed_index] = self.new_pop[ind]
+                    ind += 1

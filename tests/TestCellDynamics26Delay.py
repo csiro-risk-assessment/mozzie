@@ -2,6 +2,8 @@ import os
 import sys
 import unittest
 import array
+import random
+from math import exp
 
 # so we can find our ../code no matter how we are called
 findbin = os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -80,6 +82,27 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.c.setParameters(5, 2, 2, list(range(1, 13)))
       self.assertTrue(arrayequal(self.c.getDeathRate(), list(range(1, 13))))
 
+   def testEvolve(self):
+      # This will need to be changed in the future.  Currently it just tests dx/dt = -d * x
+      delay = 5
+      current_index = 2
+      death_rate = list(range(1, 7))
+      self.c.setParameters(delay, current_index, 1, death_rate)
+
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
+      pap = array.array('f', initial_condition)
+      dt = 1E-12
+      self.c.evolve(dt, pap)
+      self.c.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
+
+      bb = 1.1
+      expected_answer = list(initial_condition)
+      for i in range(24, 36):
+         dr = death_rate[(i - 24) % 6]
+         new_pop = bb / dr + (initial_condition[i] - bb / dr) * exp(- dr * dt)
+         expected_answer[i + 12] = new_pop
+
+      self.assertTrue(arrayfuzzyequal(pap, expected_answer, 1E-6))
       
 if __name__ == '__main__':
    unittest.main()
