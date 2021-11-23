@@ -1087,9 +1087,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_genotypes = 6
         self.num_genotypes2 = 6 * 6
         
-        self.setDelayCurrentIndexNumSpecies(1, 0, 3)
+        self.setParameters(1, 0, 3, [0.0] * self.num_genotypes * 3)
 
-    cpdef void setDelayCurrentIndexNumSpecies(self, unsigned delay, unsigned current_index, unsigned num_species):
+    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate):
         self.delay = delay
         self.current_index = current_index % (delay + 1)
         self.num_species = num_species
@@ -1110,6 +1110,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                     self.advecting_indices.data.as_uints[ind] = offset
                     ind = ind + 1
 
+        self.setDeathRate(death_rate)
 
     cpdef unsigned getDelay(self):
         return self.delay
@@ -1128,3 +1129,11 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef unsigned getCurrentIndex(self):
         return self.current_index
     
+    cpdef setDeathRate(self, list death_rate):
+        if len(death_rate) != self.num_genotypes * self.num_species:
+            raise ValueError("size of death_rate, " + str(len(death_rate)) + ", must be equal to " + str(self.num_genotypes) + " * " + str(self.num_species))
+        self.death_rate = array.array('f', death_rate)
+
+    cpdef array.array getDeathRate(self):
+        return self.death_rate
+                     

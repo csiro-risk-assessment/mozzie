@@ -518,9 +518,12 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # square of num_species
     cdef unsigned num_species2
 
-    cpdef void setDelayCurrentIndexNumSpecies(self, unsigned delay, unsigned current_index, unsigned num_species)
-    """Sets: delay; current_index, num_species.
-    Sets the following appropriately: num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices"""
+    # death rate of mosquito type M and genotype G has index M + G * num_species (all set to zero in constructor)
+    cpdef array.array death_rate
+    
+    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate)
+    """Sets: delay; current_index, num_species, death_rate (which must be a list of floats, with length num_genotypes * num_species: see setDeathRate()).
+    Sets the following appropriately: num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate"""
 
     cpdef unsigned getDelay(self)
     """Returns delay"""
@@ -530,4 +533,13 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef unsigned getCurrentIndex(self)
     """returns current_index"""
+
+    cpdef setDeathRate(self, list death_rate)
+    """sets self.death_rate to death_rate.
+    The death_rate list must be num_genotypes * num_species in length, and must be a list of floats.
+    The death rate of mosquito type M and genotype G has index M + G * num_species"""
+
+    cpdef array.array getDeathRate(self)
+    """Returns death_rate.
+    The death rate of mosquito type M and genotype G has index M + G * num_species"""
 
