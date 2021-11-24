@@ -166,6 +166,37 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.c.setFecundityP(0.625, 0.75)
       self.assertEqual(self.c.getFemaleBias(), 0.75)
 
+   def testSetGetFecundityP(self):
+      ww = 0
+      wc = 1
+      wr = 2
+      cc = 3
+      cr = 4
+      rr = 5
+      male = 0
+      female = 1
+      sex_ratio = 0.625
+      female_bias = 0.75
+      p = [[[0.5 for s in range(2)] for gF in range(6)] for gM in range(6)]
+      for gM in range(6):
+         for gF in range(6):
+            for s in range(2):
+               if gM == wc or gM == cc:
+                  if s == male: p[gM][gF][s] = sex_ratio
+                  else: p[gM][gF][s] = 1 - sex_ratio
+               elif gM == ww and (gF == wc or gF == cc):
+                  if s == male: p[gM][gF][s] = 1 - female_bias
+                  else: p[gM][gF][s] = female_bias
+
+      self.c.setFecundityP(sex_ratio, female_bias)
+      for gM in range(6):
+         for gF in range(6):
+            for s in range(2):
+               ind = gM + gF * 6 + s * 6 * 6
+               self.assertEqual(self.c.getFecundityP()[ind], p[gM][gF][s])
+      
+         
+
 
 if __name__ == '__main__':
    unittest.main()

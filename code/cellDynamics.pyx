@@ -1274,14 +1274,46 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 4 * self.num_genotypes2] = allele_list[gt_father][1] * allele_list[gt_mother][2] + allele_list[gt_father][2] * allele_list[gt_mother][1] # cr offspring
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 5 * self.num_genotypes2] = allele_list[gt_father][2] * allele_list[gt_mother][2] # rr offspring                
 
+    cpdef void setFecundityP(self, float sex_ratio, float female_bias):
+        self.sex_ratio = sex_ratio
+        self.female_bias = female_bias
+        self.fecundity_p = array.array('f', [0.5] * self.num_sexes * self.num_genotypes2)
+        cdef unsigned gM, gF, s
+        cdef unsigned ind
+        gM = 1 # wc
+        for gF in range(self.num_genotypes):
+            s = 0 # Male
+            self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.sex_ratio
+            s = 1 # Female
+            self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.sex_ratio
+
+        gM = 3 # cc
+        for gF in range(self.num_genotypes):
+            s = 0 # Male
+            self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.sex_ratio
+            s = 1 # Female
+            self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.sex_ratio
+
+        gM = 0 # ww
+        gF = 1 # wc
+        s = 0 # Male
+        self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.female_bias
+        s = 1 # Female
+        self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.female_bias
+
+        gM = 0 # ww
+        gF = 3 # cc
+        s = 0 # Male
+        self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.female_bias
+        s = 1 # Female
+        self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.female_bias
+
     cpdef float getSexRatio(self):
         return self.sex_ratio
 
     cpdef float getFemaleBias(self):
         return self.female_bias
 
-    cpdef void setFecundityP(self, float sex_ratio, float female_bias):
-        self.sex_ratio = sex_ratio
-        self.female_bias = female_bias
-        self.fecundity_p = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
-        
+    cpdef array.array getFecundityP(self):
+        return self.fecundity_p
+

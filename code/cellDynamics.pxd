@@ -568,7 +568,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     - competition (which must be a list of floats, with length num_species * num_species: see setCompetition())
     - emergence_rate (which must be a list of non-negative floats, with length num_sexes * num_genotypes * num_species: see setEmergenceRate())
     - activity (which must be a list of non-negative floats, with length num_species * num_species: see setActivity())
-    Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, fecundity_p, new_pop, xprimeM, yy"""
+    Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, new_pop, xprimeM, yy"""
 
     cpdef unsigned getDelay(self)
     """Returns delay"""
@@ -631,4 +631,6 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef float getFemaleBias(self)
     """Returns female_bias"""        
 
+    cpdef array.array getFecundityP(self)
+    """Returns fecundity_p"""
     
