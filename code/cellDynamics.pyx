@@ -1184,7 +1184,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef array.array getActivity(self):
         return self.activity
                      
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+    cpdef void evolveTrial(self, float timestep, float[:] pops_and_params):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
         discretises to x[t + dt] = x[t - delay * dt] / death_rate + (x[t] - x[t - delay * dt] / death_rate) * exp(-death_rate * dt)
         This function is not optimised!"""

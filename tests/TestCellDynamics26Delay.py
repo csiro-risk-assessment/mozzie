@@ -82,8 +82,8 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.c.setParameters(5, 2, 2, list(range(1, 13)), [0.0] * 2 * 2, [0.0] * 2 * 6 * 2, [0.0] * 2 * 2)
       self.assertTrue(arrayequal(self.c.getDeathRate(), list(range(1, 13))))
 
-   def testEvolve(self):
-      # This will need to be changed in the future.  Currently it just tests dx/dt = -d * x + lambdah * x(t - delay)
+   def testEvolveTrial(self):
+      # Tests dx/dt = -d * x + lambdah * x(t - delay)
       delay = 5
       current_index = 2
       death_rate = list(range(1, 7))
@@ -92,7 +92,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
       pap = array.array('f', initial_condition)
       dt = 1.23E-2
-      self.c.evolve(dt, pap)
+      self.c.evolveTrial(dt, pap)
       self.c.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
 
       lambdah = 1.1
