@@ -1087,8 +1087,6 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_genotypes = 6
         self.num_genotypes2 = 6 * 6
 
-        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3, [0.0] * 3 * 3)
-        
         self.m_w = 1.e-6 # current values in report based on Beighton (assuming spontaneous resistance)
         self.m_c = 1.e-6
         
@@ -1096,8 +1094,10 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.w_prob = 0.5 * (1 - self.m_w)
         self.c_prob = 0.5 * (1 - self.m_c)
         self.r_prob = 0.5 * (self.m_w + self.m_c)
+
+        self.setInheritance()
         
-        #self.setNumGenotypes(self.num_sexes, 6) 
+        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3, [0.0] * 3 * 3)
 
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate, list activity):
         self.delay = delay
@@ -1107,7 +1107,8 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_populations = self.num_sexes * self.num_genotypes * self.num_species * (self.delay + 1)
         self.num_parameters = self.num_species # carrying capacities
         self.new_pop = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
-        self.xprime = array.clone(array.array('f', []), self.num_species * self.num_genotypes * self.num_species, zero = False)
+        self.xprimeM = array.clone(array.array('f', []), self.num_species * self.num_genotypes * self.num_species, zero = False)
+        self.yy = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes, zero = False)
 
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species
         self.num_advecting = self.num_sexes * self.num_genotypes * self.num_species
@@ -1217,33 +1218,40 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         """This function is not optimised"""
-        cdef float lambdah = 1.1
+        cdef unsigned mF, mM, gM, gF, mprime, gprime, sex, ind, s, g
+        cdef unsigned current_index, delayed_index, yy_ind, f_ind
+        cdef float denom
 
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
         cdef unsigned delayed_base = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes
 
-        cdef unsigned current_index = 0
-        cdef unsigned delayed_index = 0
-        cdef unsigned ind = 0
-        cdef float dr = 0.0
-        for sex in range(self.num_sexes):
-            for genotype in range(self.num_genotypes):
-                for species in range(self.num_species):
-                    current_index = adult_base + ind
-                    delayed_index = delayed_base + ind
-                    dr = self.death_rate[ind % (self.num_genotypes * self.num_species)]
-                    self.new_pop[ind] = lambdah * pops_and_params[delayed_index] / dr + (pops_and_params[current_index] - lambdah * pops_and_params[delayed_index] / dr) * exp(- dr * timestep)
-                    ind += 1
+        for mF in range(self.num_species):
+            denom = 0.0
+            sex = 0 # male
+            for gprime in range(self.num_genotypes):
+                for mprime in range(self.num_species):
+                    delayed_index = mprime + gprime * self.num_species + delayed_base # + sex * num_species * num_genotypes
+                    denom += self.activity[mF + mprime * self.num_species] * pops_and_params[delayed_index]
+            for gM in range(self.num_genotypes):
+                for mM in range(self.num_species):
+                    delayed_index = mM + gM * self.num_species + delayed_base # + sex * num_species * num_genotypes
+                    ind = mF + gM * self.num_species + mM * self.num_species * self.num_genotypes
+                    self.xprime[ind] = self.activity[mF + mM * self.num_species] * pops_and_params[delayed_index] / denom
 
-        ind = 0
-        for sex in range(self.num_sexes):
-            for genotype in range(self.num_genotypes):
-                for species in range(self.num_species):
-                    delayed_index = delayed_base + ind
-                    pops_and_params[delayed_index] = self.new_pop[ind]
-                    ind += 1
+        array.zero(self.yy)
+
+        for s in range(self.num_sexes):
+            for g in range(self.num_genotypes):
+                yy_ind = s + g * self.num_sexes
+                for mF in range(self.num_species):
+                    for gF in range(self.num_genotypes):
+                        f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_index
+            
+                    
                     
     cdef void setInheritance(self):
+        self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = False)
+
         # inherited allele frequencies based on parental genotype
         allele_list = [[2.*self.w_prob, 0., (1 - 2.*self.w_prob)], # allele freqs from ww parent
         [self.w_prob, self.c_prob, self.r_prob], # wc

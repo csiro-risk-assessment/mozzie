@@ -512,6 +512,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # square of num_genotypes, viz 9
     cdef unsigned num_genotypes2
 
+    # inheritance_cube[i, j, k] = probability of mother genotype i, father genotype j producing offspring genotype k.  This is arranged as a vector with index = j + i * num_genotypes + k * num_genotypes * num_genotypes
+    cdef array.array inheritance_cube
+
     # number of species (set to 3 in constructor)
     cdef unsigned num_species
 
@@ -519,23 +522,27 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cdef unsigned num_species2
 
     # death rate of mosquito type M and genotype G has index M + G * num_species (all set to 1.0 in constructor)
-    cpdef array.array death_rate
+    cdef array.array death_rate
 
     # competition (alpha) between mosquito type M and type M' has index M + M' * num_species (all set to zero in constructor) 
-    cpdef array.array competition
+    cdef array.array competition
 
     # emergence rate (lambda) of type M and genotype G and sex S has index M + G * num_species + S * num_species * num_genotypes (all set to 1.0 in constructor)
-    cpdef array.array emergence_rate
+    cdef array.array emergence_rate
 
     # activity level (a) of female type mF and male type mM has index mF + mM * num_species (all set to 1.0 in constructor
-    cpdef array.array activity
+    cdef array.array activity
 
     # this is used in evolve to hold the new population
-    cpdef array.array new_pop
+    cdef array.array new_pop
     
-    # this is used in evolve to hold xprime (proportionate mixing quantity)
-    cpdef array.array xprime
-    
+    # this is used in evolve to hold xprimeM (proportionate mixing quantity).  xprimeM[mF, gM, mM] has index mF + gM * num_species + mM * num_species * num_genotypes
+    cdef array.array xprimeM
+
+    # Y used in evolve.  yy[sex, genotype] has index sex + genotype * num_sexes
+    cdef array.array yy
+
+    # parameters involved in the inheritance cube (set in the constructor)
     cdef float m_w
     cdef float m_c
     cdef float w_prob
@@ -551,7 +558,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     - competition (which must be a list of floats, with length num_species * num_species: see setCompetition())
     - emergence_rate (which must be a list of non-negative floats, with length num_sexes * num_genotypes * num_species: see setEmergenceRate())
     - activity (which must be a list of non-negative floats, with length num_species * num_species: see setActivity())
-    Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, new_pop, xprime"""
+    Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, new_pop, xprimeM, yy"""
 
     cpdef unsigned getDelay(self)
     """Returns delay"""
