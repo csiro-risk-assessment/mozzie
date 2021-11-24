@@ -1107,6 +1107,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_populations = self.num_sexes * self.num_genotypes * self.num_species * (self.delay + 1)
         self.num_parameters = self.num_species # carrying capacities
         self.new_pop = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
+        self.xprime = array.clone(array.array('f', []), self.num_species * self.num_genotypes * self.num_species, zero = False)
 
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species
         self.num_advecting = self.num_sexes * self.num_genotypes * self.num_species
@@ -1188,6 +1189,34 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
         discretises to x[t + dt] = x[t - delay * dt] / death_rate + (x[t] - x[t - delay * dt] / death_rate) * exp(-death_rate * dt)
         This function is not optimised!"""
+        cdef float lambdah = 1.1
+
+        cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
+        cdef unsigned delayed_base = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes
+
+        cdef unsigned current_index = 0
+        cdef unsigned delayed_index = 0
+        cdef unsigned ind = 0
+        cdef float dr = 0.0
+        for sex in range(self.num_sexes):
+            for genotype in range(self.num_genotypes):
+                for species in range(self.num_species):
+                    current_index = adult_base + ind
+                    delayed_index = delayed_base + ind
+                    dr = self.death_rate[ind % (self.num_genotypes * self.num_species)]
+                    self.new_pop[ind] = lambdah * pops_and_params[delayed_index] / dr + (pops_and_params[current_index] - lambdah * pops_and_params[delayed_index] / dr) * exp(- dr * timestep)
+                    ind += 1
+
+        ind = 0
+        for sex in range(self.num_sexes):
+            for genotype in range(self.num_genotypes):
+                for species in range(self.num_species):
+                    delayed_index = delayed_base + ind
+                    pops_and_params[delayed_index] = self.new_pop[ind]
+                    ind += 1
+
+    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+        """This function is not optimised"""
         cdef float lambdah = 1.1
 
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
