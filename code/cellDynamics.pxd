@@ -548,9 +548,19 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cdef float w_prob
     cdef float c_prob
     cdef float r_prob
+
+    # probability that offspring of wc or cc fathers are male (paternal male bias has sex_ratio > 0.5)
+    cdef float sex_ratio
+
+    # probability that offspring of (mother wc or cc + father ww) is female (usually female_bias > 0.5)
+    cdef float female_bias
+
+    # fecundity[gM, gF, s] = proportion (male gM + female gF) producing offspring of sex s.  This is a vector with index = gM + gF * num_genotypes + s * num_genotypes * num_genotypes
+    cdef array.array fecundity_p
     
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate, list activity)
-    """Sets:
+    """This sets delay-related things, as well as things that depend on num_species.
+    Sets:
     - delay
     - current_index
     - num_species
@@ -558,7 +568,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     - competition (which must be a list of floats, with length num_species * num_species: see setCompetition())
     - emergence_rate (which must be a list of non-negative floats, with length num_sexes * num_genotypes * num_species: see setEmergenceRate())
     - activity (which must be a list of non-negative floats, with length num_species * num_species: see setActivity())
-    Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, new_pop, xprimeM, yy"""
+    Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, fecundity_p, new_pop, xprimeM, yy"""
 
     cpdef unsigned getDelay(self)
     """Returns delay"""
@@ -611,3 +621,14 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef void evolveTrial(self, float timestep, float[:] pops_and_params)
     """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt]: used for testing
     If desired, it can be removed in production code"""
+
+    cpdef void setFecundityP(self, float sex_ratio, float female_bias)
+    """Sets sex_ratio, female_bias and fecundity_p"""
+
+    cpdef float getSexRatio(self)
+    """Returns sex_ratio"""
+
+    cpdef float getFemaleBias(self)
+    """Returns female_bias"""        
+
+    

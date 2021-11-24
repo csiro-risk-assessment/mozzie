@@ -158,6 +158,14 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.c.setParameters(5, 2, 2, list(range(1, 13)), [0.0] * 2 * 2, list(range(2 * 6 * 2)), list(range(2 * 2)))
       self.assertTrue(arrayequal(self.c.getActivity(), list(range(2 * 2))))
 
+   def testSetGetSexRatio(self):
+      self.c.setFecundityP(0.625, 0.75)
+      self.assertEqual(self.c.getSexRatio(), 0.625)
+
+   def testSetGetFemaleBias(self):
+      self.c.setFecundityP(0.625, 0.75)
+      self.assertEqual(self.c.getFemaleBias(), 0.75)
+
 
 if __name__ == '__main__':
    unittest.main()

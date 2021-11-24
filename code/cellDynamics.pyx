@@ -1096,6 +1096,8 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.r_prob = 0.5 * (self.m_w + self.m_c)
 
         self.setInheritance()
+
+        self.setFecundityP(0.5, 0.5)
         
         self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3, [0.0] * 3 * 3)
 
@@ -1127,6 +1129,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.setCompetition(competition)
         self.setEmergenceRate(emergence_rate)
         self.setActivity(activity)
+
 
     cpdef unsigned getDelay(self):
         return self.delay
@@ -1270,3 +1273,15 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 3 * self.num_genotypes2] = allele_list[gt_father][1] * allele_list[gt_mother][1] # cc offspring
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 4 * self.num_genotypes2] = allele_list[gt_father][1] * allele_list[gt_mother][2] + allele_list[gt_father][2] * allele_list[gt_mother][1] # cr offspring
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 5 * self.num_genotypes2] = allele_list[gt_father][2] * allele_list[gt_mother][2] # rr offspring                
+
+    cpdef float getSexRatio(self):
+        return self.sex_ratio
+
+    cpdef float getFemaleBias(self):
+        return self.female_bias
+
+    cpdef void setFecundityP(self, float sex_ratio, float female_bias):
+        self.sex_ratio = sex_ratio
+        self.female_bias = female_bias
+        self.fecundity_p = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2, zero = False)
+        
