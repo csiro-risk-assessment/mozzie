@@ -1087,7 +1087,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_genotypes = 6
         self.num_genotypes2 = 6 * 6
         
-        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3)
+        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3)
         
         self.m_w = 1.e-6 # current values in report based on Beighton (assuming spontaneous resistance)
         self.m_c = 1.e-6
@@ -1099,7 +1099,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         
         #self.setNumGenotypes(self.num_sexes, 6) 
 
-    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition):
+    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate):
         self.delay = delay
         self.current_index = current_index % (delay + 1)
         self.num_species = num_species
@@ -1121,8 +1121,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                     self.advecting_indices.data.as_uints[ind] = offset
                     ind = ind + 1
 
-        self.setCompetition(competition)
         self.setDeathRate(death_rate)
+        self.setCompetition(competition)
+        self.setEmergenceRate(emergence_rate)
 
     cpdef unsigned getDelay(self):
         return self.delay
@@ -1160,6 +1161,17 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef array.array getCompetition(self):
         return self.competition
 
+    cpdef setEmergenceRate(self, list emergence_rate):
+        if len(emergence_rate) != self.num_sexes * self.num_genotypes * self.num_species:
+            raise ValueError("size of emergence_rate, " + str(len(emergence_rate)) + ", must be equal to " + str(self.num_sexes) + " * " + str(self.num_genotypes) + " * " + str(self.num_species))
+        for dr in emergence_rate:
+            if dr < 0.0:
+                raise ValueError("all emergence rates must be non-negative")
+        self.emergence_rate = array.array('f', emergence_rate)
+
+    cpdef array.array getEmergenceRate(self):
+        return self.emergence_rate
+                     
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
         discretises to x[t + dt] = x[t - delay * dt] / death_rate + (x[t] - x[t - delay * dt] / death_rate) * exp(-death_rate * dt)
