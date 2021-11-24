@@ -23,33 +23,33 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.c = CellDynamicsMosquito26Delay()
 
    def testSetGetDelay(self):
-      self.c.setParameters(22, 0, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4)
+      self.c.setParameters(22, 0, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4, [0.0] * 4 * 4)
       self.assertEqual(self.c.getDelay(), 22)
 
    def testGetNumberOfPopulations(self):
-      self.c.setParameters(22, 123, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4)
+      self.c.setParameters(22, 123, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4, [0.0] * 4 * 4)
       self.assertEqual(self.c.getNumberOfPopulations(), 12 * 23 * 4)
 
    def testGetNumberOfDiffusingPopulations(self):
-      self.c.setParameters(11, 123, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4)
+      self.c.setParameters(11, 123, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4, [0.0] * 4 * 4)
       self.assertEqual(self.c.getNumberOfDiffusingPopulations(), 12 * 4)
 
    def testGetNumberOfAdvectingPopulations(self):
-      self.c.setParameters(11, 123, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4)
+      self.c.setParameters(11, 123, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4, [0.0] * 4 * 4)
       self.assertEqual(self.c.getNumberOfAdvectingPopulations(), 12 * 4)
 
    def testGetAdvectingIndices(self):
-      self.c.setParameters(11, 7, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4)
+      self.c.setParameters(11, 7, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4, [0.0] * 4 * 4)
       gold = list(range(12 * 4 * 7, 12 * 4 * (7 + 1)))
       self.assertTrue(arrayequal(self.c.getAdvectingIndices(), gold))
 
    def testGetDiffusingIndices(self):
-      self.c.setParameters(11, 7, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4)
+      self.c.setParameters(11, 7, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4, [0.0] * 4 * 4)
       gold = list(range(12 * 4 * 7, 12 * 4 * (7 + 1)))
       self.assertTrue(arrayequal(self.c.getDiffusingIndices(), gold))
 
    def testGetIncrementCurrentIndex(self):
-      self.c.setParameters(5, 2, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4)
+      self.c.setParameters(5, 2, 4, [1.0] * 4 * 6, [0.0] * 4 * 4, [0.0] * 2 * 6 * 4, [0.0] * 4 * 4)
       for i in range(13):
          current_index = self.c.getCurrentIndex()
          self.c.incrementCurrentIndex()
@@ -59,18 +59,18 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
          self.assertTrue(arrayequal(self.c.getDiffusingIndices(), gold))
 
    def testGetNumberOfParameters(self):
-      self.c.setParameters(5, 2, 14, [1.0] * 14 * 6, [0.0] * 14 * 14, [0.0] * 2 * 6 * 14)
+      self.c.setParameters(5, 2, 14, [1.0] * 14 * 6, [0.0] * 14 * 14, [0.0] * 2 * 6 * 14, [0.0] * 14 * 14)
       self.assertEqual(self.c.getNumberOfParameters(), 14)
 
    def testBadSetDeathRate(self):
       with self.assertRaises(ValueError) as the_err:
-         self.c.setParameters(5, 2, 14, [3, 1, 2], [0.0] * 14 * 14, [0.0] * 2 * 6 * 14)
+         self.c.setParameters(5, 2, 14, [3, 1, 2], [0.0] * 14 * 14, [0.0] * 2 * 6 * 14, [0.0] * 14 * 14)
       self.assertEqual(str(the_err.exception), "size of death_rate, 3, must be equal to 6 * 14")
       with self.assertRaises(ValueError) as the_err:
-         self.c.setParameters(5, 2, 22, list(range(-1, 22 * 6 - 1)), [0.0] * 22 * 22, [0.0] * 2 * 6 * 22)
+         self.c.setParameters(5, 2, 22, list(range(-1, 22 * 6 - 1)), [0.0] * 22 * 22, [0.0] * 2 * 6 * 22, [0.0] * 22 * 22)
       self.assertEqual(str(the_err.exception), "all death rates must be positive")
 
-      self.c.setParameters(5, 2, 9, [2.0] * 6 * 9, [0.0] * 9 * 9, [0.0] * 2 * 6 * 9)
+      self.c.setParameters(5, 2, 9, [2.0] * 6 * 9, [0.0] * 9 * 9, [0.0] * 2 * 6 * 9, [0.0] * 9 * 9)
       with self.assertRaises(ValueError) as the_err:
          self.c.setDeathRate([2, 3, 4, 5])
       self.assertEqual(str(the_err.exception), "size of death_rate, 4, must be equal to 6 * 9")
@@ -79,7 +79,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.assertEqual(str(the_err.exception), "all death rates must be positive")
 
    def testSetGetDeathRate(self):
-      self.c.setParameters(5, 2, 2, list(range(1, 13)), [0.0] * 2 * 2, [0.0] * 2 * 6 * 2)
+      self.c.setParameters(5, 2, 2, list(range(1, 13)), [0.0] * 2 * 2, [0.0] * 2 * 6 * 2, [0.0] * 2 * 2)
       self.assertTrue(arrayequal(self.c.getDeathRate(), list(range(1, 13))))
 
    def testEvolve(self):
@@ -87,7 +87,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       delay = 5
       current_index = 2
       death_rate = list(range(1, 7))
-      self.c.setParameters(delay, current_index, 1, death_rate, [0.0], [0.0] * 2 * 6 * 1)
+      self.c.setParameters(delay, current_index, 1, death_rate, [0.0], [0.0] * 2 * 6 * 1, [0.0] * 1 * 1)
 
       initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
       pap = array.array('f', initial_condition)
@@ -106,27 +106,27 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       
    def testBadSetCompetition(self):
       with self.assertRaises(ValueError) as the_err:
-         self.c.setParameters(5, 2, 2, list(range(1, 13)), list(range(3)), [0.0] * 2 * 6 * 2)
+         self.c.setParameters(5, 2, 2, list(range(1, 13)), list(range(3)), [0.0] * 2 * 6 * 2, [0.0] * 2 * 2)
       self.assertEqual(str(the_err.exception), "size of competition, 3, must be equal to 2 * 2")
 
-      self.c.setParameters(5, 2, 9, [2.0] * 6 * 9, [0.0] * 9 * 9, [0.0] * 2 * 6 * 9)
+      self.c.setParameters(5, 2, 9, [2.0] * 6 * 9, [0.0] * 9 * 9, [0.0] * 2 * 6 * 9, [0.0] * 9 * 9)
       with self.assertRaises(ValueError) as the_err:
          self.c.setCompetition([2, 3, 4, 5])
       self.assertEqual(str(the_err.exception), "size of competition, 4, must be equal to 9 * 9")
 
    def testSetGetCompetition(self):
-      self.c.setParameters(5, 2, 2, list(range(1, 13)), list(range(4)), [0.0] * 2 * 6 * 2)
+      self.c.setParameters(5, 2, 2, list(range(1, 13)), list(range(4)), [0.0] * 2 * 6 * 2, [0.0] * 2 * 2)
       self.assertTrue(arrayequal(self.c.getCompetition(), list(range(4))))
 
    def testBadSetEmergenceRate(self):
       with self.assertRaises(ValueError) as the_err:
-         self.c.setParameters(5, 2, 14, [3] * 6 * 14, [0.0] * 14 * 14, [0.0] * 4)
+         self.c.setParameters(5, 2, 14, [3] * 6 * 14, [0.0] * 14 * 14, [0.0] * 4, [0.0] * 14 * 14)
       self.assertEqual(str(the_err.exception), "size of emergence_rate, 4, must be equal to 2 * 6 * 14")
       with self.assertRaises(ValueError) as the_err:
-         self.c.setParameters(5, 2, 22, [3] * 6 * 22, [0.0] * 22 * 22, [-1.0] * 2 * 6 * 22)
+         self.c.setParameters(5, 2, 22, [3] * 6 * 22, [0.0] * 22 * 22, [-1.0] * 2 * 6 * 22, [0.0] * 22 * 22)
       self.assertEqual(str(the_err.exception), "all emergence rates must be non-negative")
 
-      self.c.setParameters(5, 2, 9, [2.0] * 6 * 9, [0.0] * 9 * 9, [0.0] * 2 * 6 * 9)
+      self.c.setParameters(5, 2, 9, [2.0] * 6 * 9, [0.0] * 9 * 9, [0.0] * 2 * 6 * 9, [0.0] * 9 * 9)
       with self.assertRaises(ValueError) as the_err:
          self.c.setEmergenceRate([2, 3, 4, 5])
       self.assertEqual(str(the_err.exception), "size of emergence_rate, 4, must be equal to 2 * 6 * 9")
@@ -135,8 +135,28 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.assertEqual(str(the_err.exception), "all emergence rates must be non-negative")
 
    def testSetGetEmergenceRate(self):
-      self.c.setParameters(5, 2, 2, list(range(1, 13)), [0.0] * 2 * 2, list(range(2 * 6 * 2)))
+      self.c.setParameters(5, 2, 2, list(range(1, 13)), [0.0] * 2 * 2, list(range(2 * 6 * 2)), [0.0] * 2 * 2)
       self.assertTrue(arrayequal(self.c.getEmergenceRate(), list(range(2 * 6 * 2))))
+
+   def testBadSetActivity(self):
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setParameters(5, 2, 14, [3] * 6 * 14, [0.0] * 14 * 14, [0.0] * 2 * 6 * 14, [0.0] * 4)
+      self.assertEqual(str(the_err.exception), "size of activity, 4, must be equal to 14 * 14")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setParameters(5, 2, 22, [3] * 6 * 22, [0.0] * 22 * 22, [0.0] * 2 * 6 * 22, [-1] * 22 * 22)
+      self.assertEqual(str(the_err.exception), "all activity values must be non-negative")
+
+      self.c.setParameters(5, 2, 9, [2.0] * 6 * 9, [0.0] * 9 * 9, [0.0] * 2 * 6 * 9, [0.0] * 9 * 9)
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setActivity([2, 3, 4, 5])
+      self.assertEqual(str(the_err.exception), "size of activity, 4, must be equal to 9 * 9")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setActivity(list(range(-1, 9 * 9 - 1)))
+      self.assertEqual(str(the_err.exception), "all activity values must be non-negative")
+
+   def testSetGetActivity(self):
+      self.c.setParameters(5, 2, 2, list(range(1, 13)), [0.0] * 2 * 2, list(range(2 * 6 * 2)), list(range(2 * 2)))
+      self.assertTrue(arrayequal(self.c.getActivity(), list(range(2 * 2))))
 
 
 if __name__ == '__main__':

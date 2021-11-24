@@ -1086,8 +1086,8 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_sexes = 2
         self.num_genotypes = 6
         self.num_genotypes2 = 6 * 6
-        
-        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3)
+
+        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3, [0.0] * 3 * 3)
         
         self.m_w = 1.e-6 # current values in report based on Beighton (assuming spontaneous resistance)
         self.m_c = 1.e-6
@@ -1099,7 +1099,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         
         #self.setNumGenotypes(self.num_sexes, 6) 
 
-    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate):
+    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate, list activity):
         self.delay = delay
         self.current_index = current_index % (delay + 1)
         self.num_species = num_species
@@ -1124,6 +1124,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.setDeathRate(death_rate)
         self.setCompetition(competition)
         self.setEmergenceRate(emergence_rate)
+        self.setActivity(activity)
 
     cpdef unsigned getDelay(self):
         return self.delay
@@ -1171,6 +1172,17 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef array.array getEmergenceRate(self):
         return self.emergence_rate
+                     
+    cpdef setActivity(self, list activity):
+        if len(activity) != self.num_species * self.num_species:
+            raise ValueError("size of activity, " + str(len(activity)) + ", must be equal to " + str(self.num_species) + " * " + str(self.num_species))
+        for a in activity:
+            if a < 0.0:
+                raise ValueError("all activity values must be non-negative")
+        self.activity = array.array('f', activity)
+
+    cpdef array.array getActivity(self):
+        return self.activity
                      
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
