@@ -518,8 +518,11 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # square of num_species
     cdef unsigned num_species2
 
-    # death rate of mosquito type M and genotype G has index M + G * num_species (all set to zero in constructor)
+    # death rate of mosquito type M and genotype G has index M + G * num_species (all set to 1.0 in constructor)
     cpdef array.array death_rate
+
+    # competition (alpha) between mosquito type M and type M' has index M + M' * num_species (all set to zero in constructor) 
+    cpdef array.array competition
 
     # this is used in evolve to hold the new population
     cpdef array.array new_pop
@@ -530,8 +533,13 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cdef float c_prob
     cdef float r_prob
     
-    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate)
-    """Sets: delay; current_index, num_species, death_rate (which must be a list of floats, with length num_genotypes * num_species: see setDeathRate()).
+    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition)
+    """Sets:
+    - delay
+    - current_index
+    - num_species
+    - death_rate (which must be a list of floats, with length num_genotypes * num_species: see setDeathRate()).
+    - competition (which must be a list of floats, with length num_species * num_species: see setCompetition())
     Sets the following appropriately: num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate"""
 
     cpdef unsigned getDelay(self)
@@ -545,12 +553,21 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef setDeathRate(self, list death_rate)
     """sets self.death_rate to death_rate.
-    The death_rate list must be num_genotypes * num_species in length, and must be a list of floats.
+    The death_rate list must be num_genotypes * num_species in length, and must be a list of non-negative floats.
     The death rate of mosquito type M and genotype G has index M + G * num_species"""
 
     cpdef array.array getDeathRate(self)
     """Returns death_rate.
     The death rate of mosquito type M and genotype G has index M + G * num_species"""
+
+    cpdef setCompetition(self, list competition)
+    """sets self.competition to competition.  This is called "alpha" is the documentation
+    The competition list must be num_species * num_species in length, and must be a list of floats.
+    The competition between mosquito type M and type M' has index M + M' * num_species"""
+
+    cpdef array.array getCompetition(self)
+    """Returns competition.  This is called "alpha" is the documentation
+    The competition between mosquito type M and type M' has index M + M' * num_species"""
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""

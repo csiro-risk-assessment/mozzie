@@ -1087,7 +1087,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_genotypes = 6
         self.num_genotypes2 = 6 * 6
         
-        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3)
+        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3)
         
         self.m_w = 1.e-6 # current values in report based on Beighton (assuming spontaneous resistance)
         self.m_c = 1.e-6
@@ -1097,9 +1097,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.c_prob = 0.5 * (1 - self.m_c)
         self.r_prob = 0.5 * (self.m_w + self.m_c)
         
-        self.setNumGenotypes(self.num_sexes, 6) 
+        #self.setNumGenotypes(self.num_sexes, 6) 
 
-    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate):
+    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition):
         self.delay = delay
         self.current_index = current_index % (delay + 1)
         self.num_species = num_species
@@ -1121,6 +1121,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                     self.advecting_indices.data.as_uints[ind] = offset
                     ind = ind + 1
 
+        self.setCompetition(competition)
         self.setDeathRate(death_rate)
 
     cpdef unsigned getDelay(self):
@@ -1151,6 +1152,14 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef array.array getDeathRate(self):
         return self.death_rate
                      
+    cpdef setCompetition(self, list competition):
+        if len(competition) != self.num_species * self.num_species:
+            raise ValueError("size of competition, " + str(len(competition)) + ", must be equal to " + str(self.num_species) + " * " + str(self.num_species))
+        self.competition = array.array('f', competition)
+
+    cpdef array.array getCompetition(self):
+        return self.competition
+
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
         discretises to x[t + dt] = x[t - delay * dt] / death_rate + (x[t] - x[t - delay * dt] / death_rate) * exp(-death_rate * dt)
