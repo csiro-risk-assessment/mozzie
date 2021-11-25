@@ -530,7 +530,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # emergence rate (lambda) of type M
     cdef array.array emergence_rate
 
-    # activity level (a) of female type mF and male type mM has index mF + mM * num_species (all set to 1.0 in constructor
+    # activity level (a) of female type mF and male type mM has index mM + mF * num_species
     cdef array.array activity
 
     # this is used in evolve to hold the new population
@@ -567,7 +567,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     - death_rate (which must be a list of positive floats, with length num_genotypes * num_species: see setDeathRate()).
     - competition (which must be a list of floats, with length num_species * num_species: see setCompetition())
     - emergence_rate 
-    - activity (which must be a list of non-negative floats, with length num_species * num_species: see setActivity())
+    - activity 
     Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, new_pop, xprimeM, yy"""
 
     cpdef unsigned getDelay(self)
@@ -601,14 +601,12 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef list getEmergenceRate(self)
     """Returns emergence_rate[species]"""
 
-    cpdef setActivity(self, list activity_rate)
-    """sets self.activity_rate to activity_rate.
-    The activity_rate list must be num_species * num_species in length, and must be a list of non-negative floats.
-    The activity rate female type mF and male type mM has index mF + mM * num_species"""
+    cpdef setActivity(self, list activity)
+    """sets self.activity to activity[speciesFemale][speciesMale].
+    Each element must be a list of non-negative floats."""
 
-    cpdef array.array getActivity(self)
-    """Returns activity_rate.
-    The activity rate female type mF and male type mM has index mF + mM * num_species"""
+    cpdef list getActivity(self)
+    """Returns activity[speciesFemale][speciesMale]"""
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""

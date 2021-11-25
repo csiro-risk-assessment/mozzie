@@ -1091,7 +1091,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
 cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], m_w = 1E-6, m_c = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1133,7 +1133,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
         self.setFecundityP(0.5, 0.5)
         
-        self.setParameters(delay, current_index, num_species, death_rate, competition, emergence_rate, [0.0] * 3 * 3)
+        self.setParameters(delay, current_index, num_species, death_rate, competition, emergence_rate, activity)
 
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate, list activity):
         self.delay = delay
@@ -1222,15 +1222,19 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         return [self.emergence_rate[i] for i in range(self.num_species)]
                      
     cpdef setActivity(self, list activity):
-        if len(activity) != self.num_species * self.num_species:
-            raise ValueError("size of activity, " + str(len(activity)) + ", must be equal to " + str(self.num_species) + " * " + str(self.num_species))
-        for a in activity:
-            if a < 0.0:
-                raise ValueError("all activity values must be non-negative")
-        self.activity = array.array('f', activity)
+        self.activity = array.clone(array.array('f', []), self.num_species * self.num_species, zero = False)
+        if len(activity) != self.num_species:
+            raise ValueError("size of activity, " + str(len(activity)) + ", must be equal to " + str(self.num_species))
+        for mF in range(self.num_species):
+            if len(activity[mF]) != self.num_species:
+                raise ValueError("size of activity[" + str(mF) + "], " + str(len(activity[mF])) + ", must be equal to " + str(self.num_species))
+            for mM in range(self.num_species):
+                if activity[mF][mM] < 0.0:
+                    raise ValueError("all activity values must be non-negative")
+                self.activity[mM + mF * self.num_species] = activity[mF][mM]
 
-    cpdef array.array getActivity(self):
-        return self.activity
+    cpdef list getActivity(self):
+        return [[self.activity[mM + mF * self.num_species] for mM in range(self.num_species)] for mF in range(self.num_species)]
                      
     cpdef void evolveTrial(self, float timestep, float[:] pops_and_params):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
