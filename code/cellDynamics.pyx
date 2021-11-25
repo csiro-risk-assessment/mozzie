@@ -1091,7 +1091,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
 cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1113,6 +1113,8 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
             activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing (default = identity)
         reduction: list
             reduction[gM][gF] is the reduction in adults due to the construct (default = 1.0)
+        hybridisation: list
+            hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF (default = delta_{m, mF})
         sex_ratio : float
             probability that offspring of wc or cc fathers are male (paternal male bias has sex_ratio > 0.5) (default = 0.5)
         female_bias : float
@@ -1169,6 +1171,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.setEmergenceRate(emergence_rate)
         self.setActivity(activity)
         self.setReduction(reduction)
+        self.setHybridisation(hybridisation)
 
     cpdef unsigned getDelay(self):
         return self.delay
@@ -1384,5 +1387,23 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef list getReduction(self):
         return [[self.reduction[gF + gM * self.num_genotypes] for gF in range(self.num_genotypes)] for gM in range(self.num_genotypes)]
+
+    cpdef setHybridisation(self, list hybridisation):
+        self.hybridisation = array.clone(array.array('f', []), self.num_species2 * self.num_species, zero = False)
+        if len(hybridisation) != self.num_species:
+            raise ValueError("size of hybridisation, " + str(len(hybridisation)) + ", must be equal to " + str(self.num_species))
+        for mM in range(self.num_species):
+            if len(hybridisation[mM]) != self.num_species:
+                raise ValueError("size of hybridisation[" + str(mM) + "], " + str(len(hybridisation[mM])) + ", must be equal to " + str(self.num_species))
+            for mF in range(self.num_species):
+                if len(hybridisation[mM][mF]) != self.num_species:
+                    raise ValueError("size of hybridisation[" + str(mM) + "][" + str(mF) + "], " + str(len(hybridisation[mM][mF])) + ", must be equal to " + str(self.num_species))
+                for m in range(self.num_species):
+                    self.hybridisation[m + mF * self.num_species + mM * self.num_species2] = hybridisation[mM][mF][m]
+
+    cpdef list getHybridisation(self):
+        return [[[self.hybridisation[m + mF * self.num_species + mM * self.num_species * self.num_species] for m in range(self.num_species)] for mF in range(self.num_species)] for mM in range(self.num_species)]
+
+
 
     

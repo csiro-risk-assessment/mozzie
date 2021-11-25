@@ -560,6 +560,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     # reduction[gM][gF] = reduced number of adults because of construct.  This is a vector with index = gF + gM * num_genotypes
     cdef array.array reduction
+
+    # hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF.  This is a vector with index m + mF * num_species + mM * num_species * num_species
+    cdef array.array hybridisation
     
     cpdef unsigned getDelay(self)
     """Returns delay"""
@@ -603,7 +606,13 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """sets self.reduction to reduction[gM][gF]"""
 
     cpdef list getReduction(self)
-    """reduction reduction[gM][gF]"""
+    """returns reduction[gM][gF]"""
+
+    cpdef setHybridisation(self, list hybridisation)
+    """sets self.hybridisation to hybridisation[mM][mF][m]"""
+
+    cpdef list getHybridisation(self)
+    """returns hybridisation[mM][mF][m]"""
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""
