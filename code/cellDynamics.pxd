@@ -588,13 +588,11 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """Returns death_rate[genotype][mosquito_species]"""
 
     cpdef setCompetition(self, list competition)
-    """sets self.competition to competition.  This is called "alpha" is the documentation
-    The competition list must be num_species * num_species in length, and must be a list of floats.
-    The competition between mosquito type M and type M' has index M + M' * num_species"""
+    """sets self.competition to competition[species][species_prime].
+    This is called "alpha" is the documentation"""
 
-    cpdef array.array getCompetition(self)
-    """Returns competition.  This is called "alpha" is the documentation
-    The competition between mosquito type M and type M' has index M + M' * num_species"""
+    cpdef list getCompetition(self)
+    """Returns competition[species][species_prime].  This is called "alpha" is the documentation"""
 
     cpdef setEmergenceRate(self, list emergence_rate)
     """sets self.emergence_rate to emergence_rate.

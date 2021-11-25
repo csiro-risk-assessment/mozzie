@@ -1091,7 +1091,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
 cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[0.0] * 3] * 3, m_w = 1E-6, m_c = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1103,6 +1103,10 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
             number of timesteps involved in the delay, so the total lag = delay * dt (default = 1)
         current_index: unsigned
             defines the generation that have most recently emerged as adults.  0 <= current_index <= delay.  (default = 0)
+        death_rate: list
+            death_rate[genotype][mosquito_species].  All elements must be positive (default = 1.0)
+        competition: list
+            competition[species1][species2].  This is called alpha in the documentation (default = 0.0)
         m_w : float
             description.  Default value in report based on Beighton assuming spontaneous resistance (default = 1E-6)
         m_c : float
@@ -1127,7 +1131,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
         self.setFecundityP(0.5, 0.5)
         
-        self.setParameters(delay, current_index, num_species, death_rate, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3, [0.0] * 3 * 3)
+        self.setParameters(delay, current_index, num_species, death_rate, competition, [1.0] * self.num_sexes * self.num_genotypes * 3, [0.0] * 3 * 3)
 
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate, list activity):
         self.delay = delay
@@ -1192,12 +1196,17 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         return [[self.death_rate[m + g * self.num_species] for m in range(self.num_species)] for g in range(self.num_genotypes)]
                      
     cpdef setCompetition(self, list competition):
-        if len(competition) != self.num_species * self.num_species:
-            raise ValueError("size of competition, " + str(len(competition)) + ", must be equal to " + str(self.num_species) + " * " + str(self.num_species))
-        self.competition = array.array('f', competition)
-
-    cpdef array.array getCompetition(self):
-        return self.competition
+        self.competition = array.clone(array.array('f', []), self.num_species * self.num_species, zero = False)
+        if len(competition) != self.num_species:
+            raise ValueError("size of competition, " + str(len(competition)) + ", must be equal to " + str(self.num_species))
+        for m in range(self.num_species):
+            if len(competition[m]) != self.num_species:
+                raise ValueError("size of competition[" + str(m) + "], " + str(len(competition[m])) + ", must be equal to " + str(self.num_species))
+            for mprime in range(self.num_species):
+                self.competition[mprime + m * self.num_species] = competition[m][mprime]
+            
+    cpdef list getCompetition(self):
+        return [[self.competition[mprime + m * self.num_species] for mprime in range(self.num_species)] for m in range(self.num_species)]
 
     cpdef setEmergenceRate(self, list emergence_rate):
         if len(emergence_rate) != self.num_sexes * self.num_genotypes * self.num_species:
