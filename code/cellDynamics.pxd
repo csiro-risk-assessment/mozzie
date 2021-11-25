@@ -524,10 +524,10 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # death rate of mosquito type M and genotype G has index M + G * num_species (all set to 1.0 in constructor)
     cdef array.array death_rate
 
-    # competition (alpha) between mosquito type M and type M' has index M + M' * num_species (all set to zero in constructor) 
+    # competition (alpha) between mosquito type M and type M' has index M' + M * num_species
     cdef array.array competition
 
-    # emergence rate (lambda) of type M and genotype G and sex S has index M + G * num_species + S * num_species * num_genotypes (all set to 1.0 in constructor)
+    # emergence rate (lambda) of type M
     cdef array.array emergence_rate
 
     # activity level (a) of female type mF and male type mM has index mF + mM * num_species (all set to 1.0 in constructor
@@ -566,7 +566,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     - num_species
     - death_rate (which must be a list of positive floats, with length num_genotypes * num_species: see setDeathRate()).
     - competition (which must be a list of floats, with length num_species * num_species: see setCompetition())
-    - emergence_rate (which must be a list of non-negative floats, with length num_sexes * num_genotypes * num_species: see setEmergenceRate())
+    - emergence_rate 
     - activity (which must be a list of non-negative floats, with length num_species * num_species: see setActivity())
     Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, new_pop, xprimeM, yy"""
 
@@ -588,7 +588,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """Returns death_rate[genotype][mosquito_species]"""
 
     cpdef setCompetition(self, list competition)
-    """sets self.competition to competition[species][species_prime].
+    """sets self.competition to competition[species][species_prime]
     This is called "alpha" is the documentation"""
 
     cpdef list getCompetition(self)
@@ -596,12 +596,10 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef setEmergenceRate(self, list emergence_rate)
     """sets self.emergence_rate to emergence_rate.
-    The emergence_rate list must be num_sexes * num_genotypes * num_species in length, and must be a list of non-negative floats.
-    The emergence rate mosquito type M, genotype G and sex S has index M + G * num_species + S * num_species * num_genotypes"""
+    The emergence_rate list must be num_species in length, and must be a list of non-negative floats."""
 
-    cpdef array.array getEmergenceRate(self)
-    """Returns emergence_rate.
-    The emergence rate mosquito type M, genotype G and sex S has index M + G * num_species + S * num_species * num_genotypes"""
+    cpdef list getEmergenceRate(self)
+    """Returns emergence_rate[species]"""
 
     cpdef setActivity(self, list activity_rate)
     """sets self.activity_rate to activity_rate.
