@@ -52,6 +52,7 @@ cdef class CellDynamicsBase:
 
     def __init__(self):
         """Initialise the Cell with zeroes"""
+        
         self.num_populations = 0
         self.num_diffusing = 0
         self.diffusing_indices = array.array('I', [])
@@ -84,6 +85,7 @@ cdef class CellDynamicsBase:
 cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
     """No dynamics within the cell (all populations are static as far as the cell is concerned)
     15 populations, 9 of them are diffusing and 3 advecting, with 2 parameters"""
+    
     def __init__(self):
         super().__init__()
         self.num_populations = 15
@@ -95,6 +97,7 @@ cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         """No dynamics here"""
+        
         return
     
 
@@ -410,6 +413,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     def getHybridisationRateFromPython(self, unsigned species_father, unsigned species_mother, unsigned species_offspring):
         """Returns the hybridisation rate for given father, mother and offspring.  This is a slow interface: use getAlphaComponent from all cython code"""
+        
         if species_father >= self.num_species or species_mother >= self.num_species or species_offspring >= self.num_species:
             raise ValueError("All species numbers, " + str(species_father) + ", " + str(species_mother) + ", " + str(species_offspring) + " must be less than the number of species, " + str(self.num_species))
         return self.getHybridisationRate(species_father, species_mother, species_offspring)
@@ -439,6 +443,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     def getFitnessComponentFromPython(self, unsigned genotype):
         """Python interface for getting a component of the Fitness vector.  This is a slow interface: use getFitnessComponent from all cython code"""
+        
         if genotype >= self.num_genotypes:
             raise ValueError("Genotype " + str(genotype) + " must be less than the number of genotypes, " + str(self.num_genotypes))
         return self.getFitnessComponent(genotype)
@@ -508,14 +513,17 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
     def getAlphaComponentFromPython(self, unsigned sp0, unsigned sp1):
         """Python interface for getting a component of the alpha matrix (inter-specific competition).  This is a slow interface: use getAlphaComponent from all cython code"""
+        
         return self.getAlphaComponent(sp0, sp1)
 
     def getMatingComponentFromPython(self, unsigned species_father, unsigned species_mother):
         """Python interface for getting a component of the mating matrix (relative probability of male mating with female).  This is a slow interface: use getMatingComponent from all cython code"""
+        
         return self.getMatingComponent(species_father, species_mother)
 
     def getInheritanceFromPython(self, unsigned gt_father, unsigned gt_mother, unsigned gt_offspring):
         """Python interface for getting a component of the inheritance cube.  This is a slow interface: use getInheritance from all cython code"""
+        
         if gt_father >= self.num_genotypes or gt_mother >= self.num_genotypes or gt_offspring >= self.num_genotypes:
             raise ValueError("All genotypes, " + str(gt_father) + ", " + str(gt_mother) + ", " + str(gt_offspring) + " must be less than the number of genotypes, " + str(self.num_genotypes))
         return self.getInheritance(gt_father, gt_mother, gt_offspring)
@@ -814,6 +822,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     
     def fun_for_scipy(self, t, y):
         """Evaluates d(populations)/dt"""
+        
         # size cXarray correctly
         self.cXarray = self.Xarray
         # copy the "y" data into cXarray and then call computeRHS
@@ -1080,15 +1089,34 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.setInheritance()
 
 cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
-    def __init__(self):
+    """Mosquito lifecycle dynamics as governed by a delay differential equation"""
+    
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, m_w = 1E-6, m_c = 1E-6):
+        """Constructor
+        Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
+
+        Parameters
+        ----------
+        num_species : unsigned
+            number of mosquito subspecies (default = 3)
+        delay : unsigned
+            number of timesteps involved in the delay, so the total lag = delay * dt (default = 1)
+        current_index: unsigned
+            defines the generation that have most recently emerged as adults.  0 <= current_index <= delay.  (default = 0)
+        m_w : float
+            description.  Default value in report based on Beighton assuming spontaneous resistance (default = 1E-6)
+        m_c : float
+            description.  Default value in report based on Beighton assuming spontaneous resistance (default = 1E-6)
+        """
+        
         super().__init__()
 
         self.num_sexes = 2
         self.num_genotypes = 6
         self.num_genotypes2 = 6 * 6
 
-        self.m_w = 1.e-6 # current values in report based on Beighton (assuming spontaneous resistance)
-        self.m_c = 1.e-6
+        self.m_w = m_w
+        self.m_c = m_c
         
         # Probabilities used in the Inheritance cube
         self.w_prob = 0.5 * (1 - self.m_w)
@@ -1099,7 +1127,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
         self.setFecundityP(0.5, 0.5)
         
-        self.setParameters(1, 0, 3, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3, [0.0] * 3 * 3)
+        self.setParameters(delay, current_index, num_species, [1.0] * self.num_genotypes * 3, [0.0] * 3 * 3, [1.0] * self.num_sexes * self.num_genotypes * 3, [0.0] * 3 * 3)
 
     cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate, list activity):
         self.delay = delay
@@ -1193,6 +1221,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
         discretises to x[t + dt] = x[t - delay * dt] / death_rate + (x[t] - x[t - delay * dt] / death_rate) * exp(-death_rate * dt)
         This function is not optimised!"""
+        
         cdef float lambdah = 1.1
 
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
@@ -1221,6 +1250,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         """This function is not optimised"""
+        
         cdef unsigned mF, mM, gM, gF, mprime, gprime, sex, ind, s, g
         cdef unsigned current_index, delayed_index, yy_ind, f_ind
         cdef float denom
@@ -1317,3 +1347,14 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef array.array getFecundityP(self):
         return self.fecundity_p
 
+
+cdef class WithArgs(CellDynamicsBase):
+    def __init__(self, in_f, an_array = [[0, 0, 0], [1, 1, 1]]):
+        super().__init__()
+        self.f = in_f
+        print("self.f = ", self.f)
+        vec = array.clone(array.array('f', []), 2 * 3, zero = False)
+        for i in range(len(an_array)):
+            for j in range(len(an_array[i])):
+                vec[i * 2 + j] = float(an_array[i][j])
+                print(i, j, an_array[i][j], vec[i * 2 + j])

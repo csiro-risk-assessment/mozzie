@@ -634,3 +634,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef array.array getFecundityP(self)
     """Returns fecundity_p"""
     
+
+cdef class WithArgs(CellDynamicsBase):
+    cdef float f
+    cdef array.array vec
