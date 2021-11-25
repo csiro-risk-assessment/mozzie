@@ -624,10 +624,6 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef float getFemaleBias(self)
     """Returns female_bias"""        
 
-    cpdef array.array getFecundityP(self)
-    """Returns fecundity_p"""
-    
-
-cdef class WithArgs(CellDynamicsBase):
-    cdef float f
-    cdef array.array vec
+    cpdef list getFecundityP(self)
+    """Returns fecundity[gM][gF][s] = proportion (male gM + female gF) producing offspring of sex s.  This is a vector with index = gM + gF * num_genotypes + s * num_genotypes * num_genotypes
+"""

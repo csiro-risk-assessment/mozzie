@@ -1091,7 +1091,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
 cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1106,9 +1106,15 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         death_rate: list
             death_rate[genotype][mosquito_species].  All elements must be positive (default = 1.0)
         competition: list
-            competition[species1][species2].  This is called alpha in the documentation (default = 0.0)
+            competition[species1][species2].  This is called alpha in the documentation (default = identity)
         emergence_rate: list
             emergence_rate[species].  Adult emergence rate (default = 0.0)
+        activity: list
+            activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing (default = identity)
+        sex_ratio : float
+            probability that offspring of wc or cc fathers are male (paternal male bias has sex_ratio > 0.5) (default = 0.5)
+        female_bias : float
+            probability that offspring of (mother wc or cc + father ww) is female (usually female_bias > 0.5) (default = 0.5)
         m_w : float
             description.  Default value in report based on Beighton assuming spontaneous resistance (default = 1E-6)
         m_c : float
@@ -1124,14 +1130,14 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.m_w = m_w
         self.m_c = m_c
         
-        # Probabilities used in the Inheritance cube
+        # Probabilities used in the inheritance cube
         self.w_prob = 0.5 * (1 - self.m_w)
         self.c_prob = 0.5 * (1 - self.m_c)
         self.r_prob = 0.5 * (self.m_w + self.m_c)
-
+        # create the inheritance cube
         self.setInheritance()
 
-        self.setFecundityP(0.5, 0.5)
+        self.setFecundityP(sex_ratio, female_bias)
         
         self.setParameters(delay, current_index, num_species, death_rate, competition, emergence_rate, activity)
 
@@ -1363,17 +1369,5 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef float getFemaleBias(self):
         return self.female_bias
 
-    cpdef array.array getFecundityP(self):
-        return self.fecundity_p
-
-
-cdef class WithArgs(CellDynamicsBase):
-    def __init__(self, in_f, an_array = [[0, 0, 0], [1, 1, 1]]):
-        super().__init__()
-        self.f = in_f
-        print("self.f = ", self.f)
-        vec = array.clone(array.array('f', []), 2 * 3, zero = False)
-        for i in range(len(an_array)):
-            for j in range(len(an_array[i])):
-                vec[i * 2 + j] = float(an_array[i][j])
-                print(i, j, an_array[i][j], vec[i * 2 + j])
+    cpdef list getFecundityP(self):
+        return [[[self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes * self.num_genotypes] for s in range(self.num_sexes)] for gF in range(self.num_genotypes)] for gM in range(self.num_genotypes)]

@@ -204,11 +204,12 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
                   else: p[gM][gF][s] = female_bias
 
       self.c.setFecundityP(sex_ratio, female_bias)
-      for gM in range(6):
-         for gF in range(6):
-            for s in range(2):
-               ind = gM + gF * 6 + s * 6 * 6
-               self.assertEqual(self.c.getFecundityP()[ind], p[gM][gF][s])
+      self.assertEqual(self.c.getFecundityP(), p)
+      #for gM in range(6):
+      #   for gF in range(6):
+      #      for s in range(2):
+      #         ind = gM + gF * 6 + s * 6 * 6
+      #         self.assertEqual(self.c.getFecundityP()[ind], p[gM][gF][s])
       
          
 
