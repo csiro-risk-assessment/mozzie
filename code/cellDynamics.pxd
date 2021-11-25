@@ -555,8 +555,11 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # probability that offspring of (mother wc or cc + father ww) is female (usually female_bias > 0.5)
     cdef float female_bias
 
-    # fecundity[gM, gF, s] = proportion (male gM + female gF) producing offspring of sex s.  This is a vector with index = gM + gF * num_genotypes + s * num_genotypes * num_genotypes
+    # fecundity[gM][gF][s] = proportion (male gM + female gF) producing offspring of sex s.  This is a vector with index = gM + gF * num_genotypes + s * num_genotypes * num_genotypes
     cdef array.array fecundity_p
+
+    # reduction[gM][gF] = reduced number of adults because of construct.  This is a vector with index = gF + gM * num_genotypes
+    cdef array.array reduction
     
     cpdef unsigned getDelay(self)
     """Returns delay"""
@@ -595,6 +598,12 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef list getActivity(self)
     """Returns activity[speciesFemale][speciesMale]"""
+
+    cpdef setReduction(self, list reduction)
+    """sets self.reduction to reduction[gM][gF]"""
+
+    cpdef list getReduction(self)
+    """reduction reduction[gM][gF]"""
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""

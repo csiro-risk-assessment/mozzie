@@ -22,7 +22,8 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
    def setUp(self):
       self.c = CellDynamicsMosquito26Delay()
       self.ide4 = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
-      self.d = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [[1.0] * 4] * 6, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4)
+      self.red = [list(range(1, 7)), list(range(2, 8)), [1] * 6, list(range(4, 10)), [2] * 6, [1, 2, 1, 2, 1, 2]]
+      self.d = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [[1.0] * 4] * 6, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red)
 
    def testSetGetDelay(self):
       self.assertEqual(self.d.getDelay(), 17)
@@ -203,8 +204,26 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.c.setFecundityP(sex_ratio, female_bias)
       self.assertEqual(self.c.getFecundityP(), p)
       
-         
+   def testBadSetReduction(self):
+      with self.assertRaises(ValueError) as the_err:
+         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[1.0] * 14] * 6, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 5)
+      self.assertEqual(str(the_err.exception), "size of reduction, 5, must be equal to 6")
+      with self.assertRaises(ValueError) as the_err:
+         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[1.0] * 2] * 6, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(5))] * 6)
+      self.assertEqual(str(the_err.exception), "size of reduction[0], 5, must be equal to 6")
 
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setReduction([2, 3, 4, 5])
+      self.assertEqual(str(the_err.exception), "size of reduction, 4, must be equal to 6")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setReduction([[0] * 6, [1], [2], [3], [4], [5]])
+      self.assertEqual(str(the_err.exception), "size of reduction[1], 1, must be equal to 6")
+
+   def testSetGetReduction(self):
+      self.assertTrue(arrayequal(self.d.getReduction(), self.red))
+      a = [[3, 4, 5, 1, 2, 3], [1, 5, 6, 6, 5, 1], [8, 8, 1, 9, 3, 1], list(range(1, 7)), [4, 5, 6, 4, 4, 4], [3, 6, 1, 7, 4, 6]]
+      self.c.setReduction(a)
+      self.assertTrue(arrayequal(self.c.getReduction(), a))
 
 if __name__ == '__main__':
    unittest.main()
