@@ -1139,9 +1139,6 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
         self.setFecundityP(sex_ratio, female_bias)
         
-        self.setParameters(delay, current_index, num_species, death_rate, competition, emergence_rate, activity)
-
-    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate, list activity):
         self.delay = delay
         self.current_index = current_index % (delay + 1)
         self.num_species = num_species
@@ -1169,7 +1166,6 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.setCompetition(competition)
         self.setEmergenceRate(emergence_rate)
         self.setActivity(activity)
-
 
     cpdef unsigned getDelay(self):
         return self.delay

@@ -558,18 +558,6 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # fecundity[gM, gF, s] = proportion (male gM + female gF) producing offspring of sex s.  This is a vector with index = gM + gF * num_genotypes + s * num_genotypes * num_genotypes
     cdef array.array fecundity_p
     
-    cpdef setParameters(self, unsigned delay, unsigned current_index, unsigned num_species, list death_rate, list competition, list emergence_rate, list activity)
-    """This sets delay-related things, as well as things that depend on num_species.
-    Sets:
-    - delay
-    - current_index
-    - num_species
-    - death_rate (which must be a list of positive floats, with length num_genotypes * num_species: see setDeathRate()).
-    - competition (which must be a list of floats, with length num_species * num_species: see setCompetition())
-    - emergence_rate 
-    - activity 
-    Sets the following appropriately: delay, current_index, num_species, num_species2, num_populations, num_parameters, num_diffusing, num_advecting, diffusing_indices, advecting_indices, death_rate, competition, emergence_rate, activity, new_pop, xprimeM, yy"""
-
     cpdef unsigned getDelay(self)
     """Returns delay"""
 
