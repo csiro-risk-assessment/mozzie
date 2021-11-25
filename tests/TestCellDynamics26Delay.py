@@ -250,6 +250,17 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.c.setHybridisation(a)
       self.assertTrue(arrayequal(self.c.getHybridisation(), a))
 
+   def testEvolve1(self):
+      # Tests evolve doesn't crash
+
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
+      pap = array.array('f', initial_condition)
+      dt = 1.23E-2
+      self.c.evolve(dt, pap)
+      self.c.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
+
+      self.assertTrue(True)
+      
 if __name__ == '__main__':
    unittest.main()
 

@@ -1151,7 +1151,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.num_parameters = self.num_species # carrying capacities
         self.new_pop = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
         self.xprimeM = array.clone(array.array('f', []), self.num_species * self.num_genotypes * self.num_species, zero = False)
-        self.yy = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes, zero = False)
+        self.yy = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
+        self.precalc = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2 * self.num_genotypes * self.num_species2 * self.num_species, zero = False)
+        self.comp = array.clone(array.array('f', []), self.num_species, zero = False)
 
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species
         self.num_advecting = self.num_sexes * self.num_genotypes * self.num_species
@@ -1278,9 +1280,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         """This function is not optimised"""
         
-        cdef unsigned mF, mM, gM, gF, mprime, gprime, sex, ind, s, g
-        cdef unsigned current_index, delayed_index, yy_ind, f_ind
-        cdef float denom
+        cdef unsigned mF, mM, gM, gF, mprime, gprime, sex, ind, s, g, m
+        cdef unsigned current_index, delayed_index, yy_ind, f_ind, precalc_ind
+        cdef float denom, xF, bb
 
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
         cdef unsigned delayed_base = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes
@@ -1291,21 +1293,71 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
             for gprime in range(self.num_genotypes):
                 for mprime in range(self.num_species):
                     delayed_index = mprime + gprime * self.num_species + delayed_base # + sex * num_species * num_genotypes
-                    denom += self.activity[mF + mprime * self.num_species] * pops_and_params[delayed_index]
+                    denom += self.activity[mprime + mF * self.num_species] * pops_and_params[delayed_index]
             for gM in range(self.num_genotypes):
                 for mM in range(self.num_species):
                     delayed_index = mM + gM * self.num_species + delayed_base # + sex * num_species * num_genotypes
-                    ind = mF + gM * self.num_species + mM * self.num_species * self.num_genotypes
-                    self.xprime[ind] = self.activity[mF + mM * self.num_species] * pops_and_params[delayed_index] / denom
+                    ind = mF + mM * self.num_species + gM * self.num_species2
+                    self.xprimeM[ind] = self.activity[mM + mF * self.num_species] * pops_and_params[delayed_index] / denom
 
+        # this should be precalculated since it is independent of pops_and_params
+        array.zero(self.precalc)
+        for mM in range(self.num_species):
+            for mF in range(self.num_species):
+                for m in range(self.num_species):
+                    for gM in range(self.num_genotypes):
+                        for gF in range(self.num_genotypes):
+                            for g in range(self.num_genotypes):
+                                for s in range(self.num_sexes):
+                                    ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
+                                    self.precalc[ind] += self.hybridisation[m + mF * self.num_species + mM + self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    
         array.zero(self.yy)
 
         for s in range(self.num_sexes):
             for g in range(self.num_genotypes):
-                yy_ind = s + g * self.num_sexes
-                for mF in range(self.num_species):
-                    for gF in range(self.num_genotypes):
-                        f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_index
+                for m in range(self.num_species):
+                    yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                    for mF in range(self.num_species):
+                        for gF in range(self.num_genotypes):
+                            f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_base
+                            xF = pops_and_params[f_ind]
+                            for mM in range(self.num_species):
+                                for gM in range(self.num_genotypes):
+                                    xprime_ind = mF + mM * self.num_species + gM * self.num_species2
+                                    precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
+                                    self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
+
+        array.zero(self.comp)
+        for m in range(self.num_species):
+            for mprime in range(self.num_species):
+                alpha_ind = mprime + m * self.num_species
+                alpha = self.competition[alpha_ind]
+                for s in range(self.num_sexes):
+                    for g in range(self.num_genotypes):
+                        yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                        self.comp[m] += alpha * self.yy[yy_ind]
+        # calculate max(0, 1 - comp/carrying_capacity) and shove into self.comp[m]
+        for m in range(self.num_species):
+            self.comp[m] = max(0.0, 1.0 - self.comp[m] / pops_and_params[self.num_populations + m])
+
+        for g in range(self.num_genotypes):
+            for m in range(self.num_species):
+                dr = self.death_rate[m + g * self.num_species]
+                for s in range(self.num_sexes):
+                    ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                    bb = self.comp[m] * self.yy[ind]
+                    current_index = adult_base + ind
+                    self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr) * exp(- dr * timestep)
+        
+        for g in range(self.num_genotypes):
+            for m in range(self.num_species):
+                for s in range(self.num_sexes):
+                    ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                    delayed_ind = delayed_base + ind
+                    pops_and_params[delayed_index] = self.new_pop[ind]
+
+            
             
                     
                     

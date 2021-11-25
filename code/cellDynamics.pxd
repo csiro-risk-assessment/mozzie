@@ -512,7 +512,7 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # square of num_genotypes, viz 9
     cdef unsigned num_genotypes2
 
-    # inheritance_cube[i, j, k] = probability of mother genotype i, father genotype j producing offspring genotype k.  This is arranged as a vector with index = j + i * num_genotypes + k * num_genotypes * num_genotypes
+    # inheritance_cube[gF, gM, g] = probability of mother genotype gF, father genotype gM producing offspring genotype g.  This is arranged as a vector with index = gM + gF * num_genotypes + g * num_genotypes * num_genotypes
     cdef array.array inheritance_cube
 
     # number of species (set to 3 in constructor)
@@ -527,20 +527,26 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # competition (alpha) between mosquito type M and type M' has index M' + M * num_species
     cdef array.array competition
 
-    # emergence rate (lambda) of type M
+    # emergence rate[mF] (lambda) of type mF
     cdef array.array emergence_rate
 
     # activity level (a) of female type mF and male type mM has index mM + mF * num_species
     cdef array.array activity
 
-    # this is used in evolve to hold the new population
+    # this is used in evolve to hold the new population, new_pop[s, g, m] with index m + g * self.num_species + s * self.num_species * self.num_genotypes
     cdef array.array new_pop
     
-    # this is used in evolve to hold xprimeM (proportionate mixing quantity).  xprimeM[mF, gM, mM] has index mF + gM * num_species + mM * num_species * num_genotypes
+    # this is used in evolve to hold xprimeM (proportionate mixing quantity).  xprimeM[gM][mM][mF] has index mF + mM * num_species + gM * num_species * num_species
     cdef array.array xprimeM
 
-    # Y used in evolve.  yy[sex, genotype] has index sex + genotype * num_sexes
+    # Y used in evolve.  yy[sex][genotype][m] has index m + genotype * num_species + sex * num_species * num_genotypes
     cdef array.array yy
+
+    # comp used in evolve.  comp[m]
+    cdef array.array comp
+
+    # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, but it is not currently
+    cdef array.array precalc
 
     # parameters involved in the inheritance cube (set in the constructor)
     cdef float m_w
