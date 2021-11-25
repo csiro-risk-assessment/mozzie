@@ -581,12 +581,11 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef setDeathRate(self, list death_rate)
     """sets self.death_rate to death_rate.
-    The death_rate list must be num_genotypes * num_species in length, and must be a list of positive floats.
-    The death rate of mosquito type M and genotype G has index M + G * num_species"""
+    The death_rate list must be of the form death_rate[genotype][mosquito_species]
+    All elements must be positive"""
 
-    cpdef array.array getDeathRate(self)
-    """Returns death_rate.
-    The death rate of mosquito type M and genotype G has index M + G * num_species"""
+    cpdef list getDeathRate(self)
+    """Returns death_rate[genotype][mosquito_species]"""
 
     cpdef setCompetition(self, list competition)
     """sets self.competition to competition.  This is called "alpha" is the documentation
