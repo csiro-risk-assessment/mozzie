@@ -1091,7 +1091,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
 cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6, min_cc = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1123,6 +1123,8 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
             description.  Default value in report based on Beighton assuming spontaneous resistance (default = 1E-6)
         m_c : float
             description.  Default value in report based on Beighton assuming spontaneous resistance (default = 1E-6)
+        min_cc : float
+            minimum carrying capacity.  If carrying capacity in pops_and_params is less than this quantity, no births will occur
         """
         
         super().__init__()
@@ -1174,6 +1176,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
         self.setActivity(activity)
         self.setReduction(reduction)
         self.setHybridisation(hybridisation)
+
+        self.min_cc = min_cc
+
 
     cpdef unsigned getDelay(self):
         return self.delay
@@ -1454,6 +1459,12 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cpdef list getHybridisation(self):
         return [[[self.hybridisation[m + mF * self.num_species + mM * self.num_species * self.num_species] for m in range(self.num_species)] for mF in range(self.num_species)] for mM in range(self.num_species)]
+
+    cpdef void setMinCarryingCapacity(self, float value):
+        self.min_cc = value
+
+    cpdef float getMinCarryingCapacity(self):
+        return self.min_cc
 
 
 

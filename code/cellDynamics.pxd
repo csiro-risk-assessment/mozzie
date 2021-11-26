@@ -569,7 +569,15 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     # hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF.  This is a vector with index m + mF * num_species + mM * num_species * num_species
     cdef array.array hybridisation
+
+    cdef float min_cc
     
+    cpdef void setMinCarryingCapacity(self, float value)
+    """Sets min_cc to value.  If the carrying capacity is less than this value, no new larvae are produced"""
+
+    cpdef float getMinCarryingCapacity(self)
+    """Gets the value of min_cc"""
+
     cpdef unsigned getDelay(self)
     """Returns delay"""
 
