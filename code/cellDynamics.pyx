@@ -1353,13 +1353,14 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                     bb = self.comp[m] * self.yy[ind]
                     current_index = adult_base + ind
                     self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr) * exp(- dr * timestep)
-        
+
+        # put the new_pop in the correct slots in pops_and_params in readyness for incrementCurrentIndex
         for g in range(self.num_genotypes):
             for m in range(self.num_species):
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                     delayed_ind = delayed_base + ind
-                    pops_and_params[delayed_index] = self.new_pop[ind]
+                    pops_and_params[delayed_ind] = self.new_pop[ind]
 
     cdef void setInheritance(self):
         self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = False)
