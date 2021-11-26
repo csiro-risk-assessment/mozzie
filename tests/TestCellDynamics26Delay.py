@@ -357,6 +357,43 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
 
          self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
       
+   def testEvolve3(self):
+      # Test emergence = 0 case, where the ODE is just deaths-only
+      delay = 3
+      cd = CellDynamicsMosquito26Delay(delay = delay, emergence_rate = [0, 0, 0])
+      cd.setMinCarryingCapacity(1E-12)
+
+      # initialise populations and carrying capacities
+      initial_condition = [random.random() for i in range(cd.getNumberOfPopulations())] + [1E4, 2E4, 3E4] # last 3 are carryin capacities that are definitely above min_cc
+      pap = array.array('f', initial_condition)
+      # set the death rates
+      dr = [[random.random() for species in range(3)] for genotype in range(6)]
+      cd.setDeathRate(dr)
+
+      dt = 1.23E-2
+      for timestep in range(4):
+         # form the expected answer, and put in "gold"
+         gold = list(pap) # result from previous timestep
+         current_index = cd.getCurrentIndex()
+         current_base = current_index * 3 * 6 * 2
+         new_adults = [0 for i in range(3 * 6 * 2)]
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(3):
+                  ind = species + genotype * 3 + sex * 3 * 6
+                  new_adults[ind] = gold[current_base + ind] * exp(- dr[genotype][species] * dt)
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(3):
+                  ind = species + genotype * 3 + sex * 3 * 6
+                  gold[(current_index + 1) % (delay + 1) * 3 * 6 * 2 + ind] = new_adults[ind]
+
+         # get the code to evolve and check answer is gold
+         cd.evolve(dt, pap)
+         cd.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
+
+         self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
+      
 if __name__ == '__main__':
    unittest.main()
 
