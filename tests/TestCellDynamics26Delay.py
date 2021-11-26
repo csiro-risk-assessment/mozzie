@@ -544,6 +544,89 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
 
          self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
       
+   def testEvolve_onlyWild(self):
+      # Test that when there are only wild-types and m_w=0, no wild-types are produced
+      num_species = 4
+      wild = CellDynamicsMosquito26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[1.0] * 4] * 6, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 1E-12, m_w = 0)
+
+      # initialise populations and carrying capacities
+      carrying_cap = 10 + random.random()
+      initial_condition = [random.random() for i in range(wild.getNumberOfPopulations())] + [10 + random.random() for i in range(wild.getNumberOfParameters())]
+      for delay in range(wild.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  if genotype != 0:
+                     initial_condition[ind] = 0.0 # zero non-wildtype
+      pap = array.array('f', initial_condition)
+      
+      dt = 1.23
+      for timestep in range(11):
+         wild.evolve(dt, pap)
+         wild.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
+         for delay in range(wild.getDelay() + 1):
+            for species in range(num_species):
+               for genotype in range(6):
+                  for sex in range(2):
+                     ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                     if genotype != 0:
+                        self.assertEqual(pap[ind], 0.0)
+      
+      
+   def testEvolve_oneSpeciesWW(self):
+      # Test long-term behaviour where there is just one species and wild-type
+      num_species = 1
+      delay = 1
+      current_index = 0
+      death_rate = [[random.random()] for i in range(6)]
+      death_rate[0][0] = 0.75 # to ensure good timestepping and nonzero steady-state
+      competition = random.random()
+      emergence_rate = 11 + random.random()
+      activity = random.random()
+      reduction = [[random.random() for i in range(6)] for j in range(6)]
+      reduction[0][0] = 1.0 + random.random() # to ensure a nonzero steady-state
+      hybridisation = 1.0 + random.random() # to ensure a nonzero steady-state
+      sex_ratio = random.random()
+      female_bias = random.random()
+      m_w = 0.0 # so only ww mosquitos
+      m_c = random.random()
+      tiny = CellDynamicsMosquito26Delay(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = [[competition]], emergence_rate = [emergence_rate], activity = [[activity]], reduction = reduction, hybridisation = [[[hybridisation]]], sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c, min_cc = 1E-12)
+      carrying_cap = 10 + random.random()
+
+      # calculate steady-state adult population
+      ic = 1
+      pp = 0.5
+      rr = reduction[0][0]
+      lambdah = emergence_rate
+      hh = hybridisation
+      beta = hh * lambdah * ic * pp * rr
+      #y = beta * xF
+      #bb = max(0, 1 - 2 * competition * beta * XF / carrying_cap) * y
+      steady_state = carrying_cap * (beta - death_rate[0][0]) / 2.0 / competition / beta**2
+
+
+      # initialise populations and carrying capacities
+      initial_condition = [random.random() for i in range(tiny.getNumberOfPopulations())] + [carrying_cap]
+      for delay in range(tiny.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  if genotype != 0:
+                     initial_condition[ind] = 0.0 # zero non-wildtype
+      pap = array.array('f', initial_condition)
+
+      dt = 1E-2
+      for timestep in range(10000):
+         # get the code to evolve and check answer is gold
+         tiny.evolve(dt, pap)
+         tiny.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
+         error = abs(steady_state - pap[6])
+         if error < 1E-6:
+            break
+      self.assertTrue(error < 1E-6)
+
 if __name__ == '__main__':
    unittest.main()
 
