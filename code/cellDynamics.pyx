@@ -1311,7 +1311,10 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                 for mM in range(self.num_species):
                     delayed_index = mM + gM * self.num_species + delayed_base # + sex * num_species * num_genotypes
                     ind = mF + mM * self.num_species + gM * self.num_species2
-                    self.xprimeM[ind] = self.activity[mM + mF * self.num_species] * pops_and_params[delayed_index] / denom
+                    if denom <= 0.0:
+                        self.xprimeM[ind] = 0.0
+                    else:
+                        self.xprimeM[ind] = self.activity[mM + mF * self.num_species] * pops_and_params[delayed_index] / denom
 
         array.zero(self.yy)
 
