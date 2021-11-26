@@ -314,7 +314,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
 
       initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
       pap = array.array('f', initial_condition)
-      dt = 1.23E-2
+      dt = 1.23
       self.c.evolve(dt, pap)
       self.c.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
 
@@ -333,7 +333,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       dr = [[random.random() for species in range(3)] for genotype in range(6)]
       cd.setDeathRate(dr)
 
-      dt = 1.23E-2
+      dt = 1.23
       for timestep in range(13):
          # form the expected answer, and put in "gold"
          gold = list(pap) # result from previous timestep
@@ -370,7 +370,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       dr = [[random.random() for species in range(3)] for genotype in range(6)]
       cd.setDeathRate(dr)
 
-      dt = 1.23E-2
+      dt = 1.23
       for timestep in range(4):
          # form the expected answer, and put in "gold"
          gold = list(pap) # result from previous timestep
@@ -411,7 +411,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
                   initial_condition[ind] = 0.0 # zero males
       pap = array.array('f', initial_condition)
 
-      dt = 1.23E-2
+      dt = 1.23
       for timestep in range(1):
          # form the expected answer, and put in "gold"
          gold = list(pap) # result from previous timestep
@@ -452,7 +452,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
                   initial_condition[ind] = 0.0 # zero females
       pap = array.array('f', initial_condition)
 
-      dt = 1.23E-2
+      dt = 1.23
       for timestep in range(11):
          # form the expected answer, and put in "gold"
          gold = list(pap) # result from previous timestep
@@ -473,6 +473,74 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
          # get the code to evolve and check answer is gold
          self.d.evolve(dt, pap)
          self.d.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
+
+         self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
+      
+   def testEvolve_oneSpecies(self):
+      # Test case where there is just one species
+      num_species = 1
+      delay = 5
+      current_index = 2
+      death_rate = [[random.random()] for i in range(6)]
+      competition = random.random()
+      emergence_rate = random.random()
+      activity = random.random()
+      reduction = [[random.random() for i in range(6)] for j in range(6)]
+      hybridisation = random.random()
+      sex_ratio = random.random()
+      female_bias = random.random()
+      m_w = random.random()
+      m_c = random.random()
+      tiny = CellDynamicsMosquito26Delay(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = [[competition]], emergence_rate = [emergence_rate], activity = [[activity]], reduction = reduction, hybridisation = [[[hybridisation]]], sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c, min_cc = 1E-12)
+
+      # precalculate O * R.  Since other tests have shown inheritance, fecundity and reduction are OK, just use them here
+      ic = [[[tiny.getInheritance()[gM + gF * 6 + g * 36] for g in range(6)] for gF in range(6)] for gM in range(6)]
+      pp = tiny.getFecundityP()
+      rr = tiny.getReduction()
+      o_times_r = [[[[ic[gM][gF][g] * pp[gM][gF][s] * rr[gM][gF] for s in range(2)] for g in range(6)] for gF in range(6)] for gM in range(6)]
+
+      # initialise populations and carrying capacities
+      carrying_cap = 10 + random.random()
+      initial_condition = [random.random() for i in range(tiny.getNumberOfPopulations())] + [carrying_cap]
+      pap = array.array('f', initial_condition)
+
+      dt = 1.23
+      for timestep in range(11):
+         # form the expected answer, and put in "gold"
+         gold = list(pap) # result from previous timestep
+         current_index = tiny.getCurrentIndex()
+         current_base = current_index * num_species * 6 * 2
+         delayed_base = (current_index + 1) % (delay + 1) * num_species * 6 * 2
+
+         # for num_species = 1, the proportinate-mixing is just:
+         denom = sum([gold[delayed_base + gprime] for gprime in range(6)])
+         xprimeM = [gold[delayed_base + g] / denom for g in range(6)]
+
+         # compute y[s][g] and C
+         y = [[sum([sum([hybridisation * emergence_rate * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
+         cc = competition * sum([sum(y[s]) for s in range(2)])
+
+         # compute B[s][g]
+         bb = [[max(0, 1.0 - cc / carrying_cap) * y[s][g] for g in range(6)] for s in range(2)]
+
+         # compute the new adult populations
+         new_adults = [0 for i in range(num_species * 6 * 2)]
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(num_species):
+                  ind = species + genotype * num_species + sex * num_species * 6
+                  new_adults[ind] = bb[sex][genotype] / death_rate[genotype][species] + (gold[current_base + ind] - bb[sex][genotype] / death_rate[genotype][species]) * exp(- death_rate[genotype][species] * dt)
+
+         # put the result into the correct slots in pops_and_params
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(num_species):
+                  ind = species + genotype * num_species + sex * num_species * 6
+                  gold[delayed_base + ind] = new_adults[ind]
+
+         # get the code to evolve and check answer is gold
+         tiny.evolve(dt, pap)
+         tiny.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
 
          self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
       
