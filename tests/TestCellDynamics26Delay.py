@@ -435,6 +435,47 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
 
          self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
       
+   def testEvolve_zeroFemales(self):
+      # Test case where the are zero females, where the ODE reduces to just deaths-only
+      num_species = 4
+      dr = [[random.random() for species in range(num_species)] for genotype in range(6)]
+      self.d.setDeathRate(dr)
+      self.d.setMinCarryingCapacity(1E-12)
+
+      # initialise populations and carrying capacities
+      initial_condition = [random.random() for i in range(self.d.getNumberOfPopulations())] + [1E4, 2E4, 3E4, 4E4] # last num_species are carrying capacities that are definitely above min_cc
+      for delay in range(self.d.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in [1]: # females only
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  initial_condition[ind] = 0.0 # zero females
+      pap = array.array('f', initial_condition)
+
+      dt = 1.23E-2
+      for timestep in range(11):
+         # form the expected answer, and put in "gold"
+         gold = list(pap) # result from previous timestep
+         current_index = self.d.getCurrentIndex()
+         current_base = current_index * num_species * 6 * 2
+         new_adults = [0 for i in range(num_species * 6 * 2)]
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(num_species):
+                  ind = species + genotype * num_species + sex * num_species * 6
+                  new_adults[ind] = gold[current_base + ind] * exp(- dr[genotype][species] * dt)
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(num_species):
+                  ind = species + genotype * num_species + sex * num_species * 6
+                  gold[(current_index + 1) % (delay + 1) * num_species * 6 * 2 + ind] = new_adults[ind]
+
+         # get the code to evolve and check answer is gold
+         self.d.evolve(dt, pap)
+         self.d.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
+
+         self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
+      
 if __name__ == '__main__':
    unittest.main()
 
