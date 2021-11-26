@@ -623,6 +623,9 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""
 
+    cpdef array.array getInheritance(self)
+    """returns inheritance_cube"""
+
     cpdef void evolveTrial(self, float timestep, float[:] pops_and_params)
     """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt]: used for testing
     If desired, it can be removed in production code"""

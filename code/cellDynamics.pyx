@@ -1357,10 +1357,6 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                     delayed_ind = delayed_base + ind
                     pops_and_params[delayed_index] = self.new_pop[ind]
 
-            
-            
-                    
-                    
     cdef void setInheritance(self):
         self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = False)
 
@@ -1381,7 +1377,10 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 2 * self.num_genotypes2] = allele_list[gt_father][0] * allele_list[gt_mother][2] + allele_list[gt_father][2] * allele_list[gt_mother][0] # wr offspring                
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 3 * self.num_genotypes2] = allele_list[gt_father][1] * allele_list[gt_mother][1] # cc offspring
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 4 * self.num_genotypes2] = allele_list[gt_father][1] * allele_list[gt_mother][2] + allele_list[gt_father][2] * allele_list[gt_mother][1] # cr offspring
-                self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 5 * self.num_genotypes2] = allele_list[gt_father][2] * allele_list[gt_mother][2] # rr offspring                
+                self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 5 * self.num_genotypes2] = allele_list[gt_father][2] * allele_list[gt_mother][2] # rr offspring
+
+    cpdef array.array getInheritance(self):
+        return self.inheritance_cube
 
     cpdef void setFecundityP(self, float sex_ratio, float female_bias):
         self.sex_ratio = sex_ratio

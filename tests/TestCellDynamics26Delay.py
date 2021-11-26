@@ -250,6 +250,61 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.c.setHybridisation(a)
       self.assertTrue(arrayequal(self.c.getHybridisation(), a))
 
+   def testGetInheritance(self):
+      m_w = 0.125
+      m_c = 0.3
+      d = CellDynamicsMosquito26Delay(m_w = m_w, m_c = m_c)
+      ic = self.c.getInheritance()
+      ic = d.getInheritance()
+
+      w = 0.5 * (1 - m_w)
+      c = 0.5 * (1 - m_c)
+      r = 0.5 * (m_w + m_c)
+      gold = [[[4*w**2,0,4*(1-2*w)*w,0,0,(1-2*w)**2],
+               [2*w**2,2*c*w,(1+2*r-2*w)*w,0,c-2*c*w,r-2*r*w],
+               [2*w**2,0,(3-4*w)*w,0,0,(-1+w)*(-1+2*w)],
+               [0,4*c*w,2*(1-2*c)*w,0,2*c*(1-2*w),(-1+2*c)*(-1+2*w)],
+               [0,2*c*w,-2*(-1+c)*w,0,c-2*c*w,(-1+c)*(-1+2*w)],
+               [0,0,2*w,0,0,1-2*w]],
+              [[2*w**2,2*c*w,(1+2*r-2*w)*w,0,c-2*c*w,r-2*r*w],
+               [w**2,2*c*w,2*r*w,c**2,2*c*r,r**2],
+               [w**2,c*w,(1+r-w)*w,0,c-c*w,r-r*w],
+               [0,2*c*w,w-2*c*w,2*c**2,c*(1-2*c+2*r),r-2*c*r],
+               [0,c*w,w-c*w,c**2,c*(1-c+r),r-c*r],
+               [0,0,w,0,c,r]],
+              [[2*w**2,0,(3-4*w)*w,0,0,(-1+w)*(-1+2*w)],
+               [w**2,c*w,(1+r-w)*w,0,c-c*w,r-r*w],
+               [w**2,0,-2*(-1+w)*w,0,0,(-1+w)**2],
+               [0,2*c*w,w-2*c*w,0,-2*c*(-1+w),(-1+2*c)*(-1+w)],
+               [0,c*w,w-c*w,0,c-c*w,(-1+c)*(-1+w)],
+               [0,0,w,0,0,1-w]],
+              [[0,4*c*w,2*(1-2*c)*w,0,2*c*(1-2*w),(-1+2*c)*(-1+2*w)],
+               [0,2*c*w,w-2*c*w,2*c**2,c*(1-2*c+2*r),r-2*c*r],
+               [0,2*c*w,w-2*c*w,0,-2*c*(-1+w),(-1+2*c)*(-1+w)],
+               [0,0,0,4*c**2,4*(1-2*c)*c,(1-2*c)**2],
+               [0,0,0,2*c**2,(3-4*c)*c,(-1+c)*(-1+2*c)],
+               [0,0,0,0,2*c,1-2*c]],
+              [[0,2*c*w,-2*(-1+c)*w,0,c-2*c*w,(-1+c)*(-1+2*w)],
+               [0,c*w,w-c*w,c**2,c*(1-c+r),r-c*r],
+               [0,c*w,w-c*w,0,c-c*w,(-1+c)*(-1+w)],
+               [0,0,0,2*c**2,(3-4*c)*c,(-1+c)*(-1+2*c)],
+               [0,0,0,c**2,-2*(-1+c)*c,(-1+c)**2],
+               [0,0,0,0,c,1-c]],
+              [[0,0,2*w,0,0,1-2*w],
+               [0,0,w,0,c,r],
+               [0,0,w,0,0,1-w],
+               [0,0,0,0,2*c,1-2*c],
+               [0,0,0,0,c,1-c],
+               [0,0,0,0,0,1]]]
+      for gM in range(6):
+         for gF in range(6):
+            for g in range(6):
+               self.assertTrue(abs(gold[gM][gF][g] - ic[gM + gF * 6 + g * 36]) < 1E-6)
+ 
+ 
+
+      
+
    def testEvolve1(self):
       # Tests evolve doesn't crash
 
