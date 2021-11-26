@@ -545,8 +545,11 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     # comp used in evolve.  comp[m]
     cdef array.array comp
 
-    # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, but it is not currently
+    # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] = hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
     cdef array.array precalc
+
+    # whether precalculate() has been called with the most up-to-date information (have_precalculated = 0 means precalculate() has not been called with the most up-to-date information)
+    cdef int have_precalculated
 
     # parameters involved in the inheritance cube (set in the constructor)
     cdef float m_w
@@ -572,12 +575,6 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
 
     cdef float min_cc
     
-    cpdef void setMinCarryingCapacity(self, float value)
-    """Sets min_cc to value.  If the carrying capacity is less than this value, no new larvae are produced"""
-
-    cpdef float getMinCarryingCapacity(self)
-    """Gets the value of min_cc"""
-
     cpdef unsigned getDelay(self)
     """Returns delay"""
 
@@ -650,3 +647,13 @@ cdef class CellDynamicsMosquito26Delay(CellDynamicsBase):
     cpdef list getFecundityP(self)
     """Returns fecundity[gM][gF][s] = proportion (male gM + female gF) producing offspring of sex s.  This is a vector with index = gM + gF * num_genotypes + s * num_genotypes * num_genotypes
 """
+
+    cpdef void setMinCarryingCapacity(self, float value)
+    """Sets min_cc to value.  If the carrying capacity is less than this value, no new larvae are produced"""
+
+    cpdef float getMinCarryingCapacity(self)
+    """Gets the value of min_cc"""
+
+    cpdef precalculate(self)
+    """Calculates precalc"""
+
