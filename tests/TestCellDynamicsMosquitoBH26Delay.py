@@ -342,7 +342,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
          self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
       
    def testEvolve_oneSpecies(self):
-      # Test case where there is just one species
+      # Test case where there is just one species, and random parameters and random initial conditions
       num_species = 1
       delay = 5
       current_index = 2
@@ -414,8 +414,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       num_species = 4
       wild = CellDynamicsMosquitoBH26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[1.0] * 4] * 6, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, m_w = 0)
 
-      # initialise populations and carrying capacities
-      carrying_cap = 10 + random.random()
+      # initialise populations and qm values
       initial_condition = [random.random() for i in range(wild.getNumberOfPopulations())] + [10 + random.random() for i in range(wild.getNumberOfParameters())]
       for delay in range(wild.getDelay() + 1):
          for species in range(num_species):
