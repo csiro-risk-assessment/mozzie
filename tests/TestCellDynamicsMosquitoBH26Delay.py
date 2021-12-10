@@ -439,17 +439,14 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       
       
    def testEvolve_oneSpeciesWW(self):
-      # Do not do the test, in preparation for BevertonHolt evolve
-      self.assertTrue(True)
-      return
       # Test long-term behaviour where there is just one species and wild-type
       num_species = 1
-      delay = 1
+      delay = 3
       current_index = 0
       death_rate = [[random.random()] for i in range(6)]
-      death_rate[0][0] = 0.75 # to ensure good timestepping and nonzero steady-state
+      #death_rate[0][0] = 0.75
       competition = random.random()
-      emergence_rate = 11 + random.random()
+      emergence_rate = 2.01 + random.random() # to ensure a nonzero steady-state
       activity = random.random()
       reduction = [[random.random() for i in range(6)] for j in range(6)]
       reduction[0][0] = 1.0 + random.random() # to ensure a nonzero steady-state
@@ -459,22 +456,22 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       m_w = 0.0 # so only ww mosquitos
       m_c = random.random()
       tiny = CellDynamicsMosquitoBH26Delay(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = [[competition]], emergence_rate = [emergence_rate], activity = [[activity]], reduction = reduction, hybridisation = [[[hybridisation]]], sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c)
-      carrying_cap = 10 + random.random()
+      qm = 1.0 + random.random()
 
       # calculate steady-state adult population
       ic = 1
       pp = 0.5
-      rr = reduction[0][0]
-      lambdah = emergence_rate
-      hh = hybridisation
-      tilde_la = hh * lambdah * ic * pp * rr
-      #y = tilde_la * xF
-      #bb = max(0, 1 - 2 * competition * tilde_la * XF / carrying_cap) * y
-      steady_state = carrying_cap * (tilde_la - death_rate[0][0]) / 2.0 / competition / tilde_la**2
+      rr = reduction[0][0] # >= 1
+      hh = hybridisation # >= 1
+      HORXprimeM = hh * ic * pp * rr # >= 1/2
+      lambda_m = emergence_rate # > 2
+      # note that because lambda_m > 2 and death_rate <= 1, the steady_state is positive
+      num_sexes = 2
+      steady_state = (1.0 / (num_sexes * competition) / HORXprimeM) * qm * (HORXprimeM * lambda_m / death_rate[0][0] - 1)
 
 
-      # initialise populations and carrying capacities
-      initial_condition = [random.random() for i in range(tiny.getNumberOfPopulations())] + [carrying_cap]
+      # initialise very small populations
+      initial_condition = [1E-6 * random.random() * steady_state for i in range(tiny.getNumberOfPopulations())] + [qm]
       for delay in range(tiny.getDelay() + 1):
          for species in range(num_species):
             for genotype in range(6):
@@ -484,17 +481,36 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
                      initial_condition[ind] = 0.0 # zero non-wildtype
       pap = array.array('f', initial_condition)
 
-      dt = 0.01
+      dt = 1.23
       for timestep in range(10000):
          # get the code to evolve and check answer is gold
          tiny.evolve(dt, pap)
          tiny.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
-         print(pap[6])
-         error = abs(steady_state - pap[6])
-         if error < 1E-6:
+         error = abs(1 - pap[6] / steady_state)
+         if error < 1E-3:
             break
-      print("\n should be less than 3:", tilde_la / death_rate[0][0] + exp(-death_rate[0][0] * dt) * (1.0 - tilde_la / death_rate[0][0]))
-      self.assertTrue(error < 1E-6)
+      self.assertTrue(error < 1E-3)
+
+      # initialise very large populations
+      initial_condition = [1E6 * (1 + random.random()) * steady_state for i in range(tiny.getNumberOfPopulations())] + [qm]
+      for delay in range(tiny.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  if genotype != 0:
+                     initial_condition[ind] = 0.0 # zero non-wildtype
+      pap = array.array('f', initial_condition)
+
+      dt = 1.23
+      for timestep in range(10000):
+         # get the code to evolve and check answer is gold
+         tiny.evolve(dt, pap)
+         tiny.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
+         error = abs(1 - pap[6] / steady_state)
+         if error < 1E-3:
+            break
+      self.assertTrue(error < 1E-3)
 
 if __name__ == '__main__':
    unittest.main()
