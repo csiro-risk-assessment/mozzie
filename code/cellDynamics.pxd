@@ -725,3 +725,57 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
 
     cpdef float getMinCarryingCapacity(self)
     """Gets the value of min_cc"""
+
+cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
+    """Solves Mosquito ODE with 2 sexes, 6 genotypes, using a Beverton-Holt delay equation
+
+    An example of a delay equation is
+    dx/dt = x(t - delay * dt)
+    Here "delay" is the number of dt involved in the delay equation
+    So, if delay = 0 then the equations just revert to ODEs.
+
+    The number of populations is
+    (delay + 1) * num_species * num_geotypes * num_sexes = (delay + 1) * num_speces * 12.
+
+    An important variable is current_index, which is an integer between 0 and delay.
+    This defines where the current populations are located in pops_and_params.
+    It is initialised to 0 in the constructor.
+    Examples:
+      - Adults of species M, genotype G, sex S have index = M + G * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes
+      - The adult population at the previous dt has index = M + G * num_species + S * num_species * num_genotypes + (current_index - 1)%(delay + 1) * num_species * num_genotypes * num_sexes
+      - The adult population at N dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (current_index - N)%(delay + 1) * num_species * num_genotypes * num_sexes
+      - The population at delay dt-steps ago has index = M + G * num_species + S * num_species * num_genotypes + (current_index - delay)%(delay + 1) * num_species * num_genotypes * num_sexes = = M + G * num_species + S * num_species * num_genotypes + (current_index + 1)%(delay + 1) * num_species * num_genotypes * num_sexes
+
+    Hence, for the simple process equation of the form dx/dt = x(t - delay * dt), evolve could simply set:
+    delayed_index = (current_index + 1)%(delay + 1)
+    new_pop = pops_and_params[current_index] + dt * pops_and_params[delayed_index]
+    pops_and_params[delayed_index] = new_pop
+
+    !!! IMPORTANT NOTE !!!
+    After evolve is called for all grid cells, current_index must be incremented!!  This is the responsibility of the calling code, for the cellDynamics class has no way of knowing evolve has been called for all grid cells.  (An alternative would be to make current_index one of the spatially-varying parameters, and evolve could update it at every call of evolve, but this would consume memory.)
+    
+    Sex 0 is male.  Sex 1 is female.
+    Genotypes:
+      0 is ww
+      1 is wc
+      2 is wr
+      3 is cc
+      4 is cr
+      5 is rr
+    There are num_species spatially-varying parameters, which are the carrying-capacities of each species
+    """
+
+    # this is used in evolve to hold the new population, new_pop[s, g, m] with index m + g * self.num_species + s * self.num_species * self.num_genotypes
+    cdef array.array new_pop
+    
+    # this is used in evolve to hold xprimeM (proportionate mixing quantity).  xprimeM[gM][mM][mF] has index mF + mM * num_species + gM * num_species * num_species
+    cdef array.array xprimeM
+
+    # Y used in evolve.  yy[sex][genotype][m] has index m + genotype * num_species + sex * num_species * num_genotypes
+    cdef array.array yy
+
+    # comp used in evolve.  comp[m]
+    cdef array.array comp
+
+    # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] = hybridisation[mM, mF, m] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
+    cdef array.array precalc

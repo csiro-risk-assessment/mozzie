@@ -18,6 +18,7 @@ python3 ${DIR}/TestCellDynamicsMosquito26.py
 python3 ${DIR}/TestCellDynamicsDelayBase.py
 python3 ${DIR}/TestCellDynamics26DelayBase.py
 python3 ${DIR}/TestCellDynamicsMosquitoLogistic26Delay.py
+python3 ${DIR}/TestCellDynamicsMosquitoBH26Delay.py
 
 
 
