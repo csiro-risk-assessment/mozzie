@@ -1665,7 +1665,10 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                 qm = pops_and_params[self.num_populations + m]
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
-                    bb = qm * self.emergence_rate[m] * self.yy[ind] / (qm + self.comp[m])
+                    if self.yy[ind] <= 0.0:
+                        bb = 0 # this accounts for qm + self.comp[m] = 0 too
+                    else:
+                        bb = qm * self.emergence_rate[m] * self.yy[ind] / (qm + self.comp[m])
                     current_index = adult_base + ind
                     self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr) * exp(- dr * timestep)
 
