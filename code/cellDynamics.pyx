@@ -3,8 +3,9 @@ import array
 cimport cpython.array as array
 import numpy as np
 from scipy.integrate import solve_ivp
-from math import exp, ceil, log, cos, sqrt
+from math import ceil, log, cos, sqrt
 from libc.stdlib cimport rand, RAND_MAX
+from libc.math cimport exp
 
 cdef int binomial(int N, float p):
     cdef int count, wait
@@ -1604,14 +1605,14 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.precalculate()
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
-        """This function is not optimised"""
 
         if self.have_precalculated == 0:
             self.precalculate()
         
-        cdef unsigned mF, mM, gM, gF, mprime, gprime, sex, ind, s, g, m
+        cdef unsigned mF, mM, gM, gF, mprime, gprime, sex, ind, inda, s, g, m
         cdef unsigned current_index, delayed_index, yy_ind, f_ind, precalc_ind
-        cdef float denom, xF, bb, dr, qm
+        cdef unsigned some_males = 0 # zero if there are no delayed males whatsoever
+        cdef float denom, one_over_denom, xF, bb, one_over_dr, expdrdt, qm, alpha
 
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
         cdef unsigned delayed_base = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes
@@ -1623,55 +1624,93 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
             for gprime in range(self.num_genotypes):
                 for mprime in range(self.num_species):
                     delayed_index = mprime + gprime * self.num_species + delayed_base # + sex * num_species * num_genotypes
-                    denom += self.activity[mprime + mF * self.num_species] * pops_and_params[delayed_index]
+                    # unoptimised:
+                    # denom += self.activity[mprime + mF * self.num_species] * pops_and_params[delayed_index]
+                    # better:
+                    ind = mprime + mF * self.num_species
+                    denom = denom + self.activity.data.as_floats[ind] * pops_and_params[delayed_index]
+            if denom <= 0.0:
+                one_over_denom = 0.0 # this ensures self.xprimeM = 0 below
+            else:
+                one_over_denom = 1.0 / denom
+                some_males = 1
             for gM in range(self.num_genotypes):
                 for mM in range(self.num_species):
                     delayed_index = mM + gM * self.num_species + delayed_base # + sex * num_species * num_genotypes
                     ind = mF + mM * self.num_species + gM * self.num_species2
-                    if denom <= 0.0:
-                        self.xprimeM[ind] = 0.0
-                    else:
-                        self.xprimeM[ind] = self.activity[mM + mF * self.num_species] * pops_and_params[delayed_index] / denom
+                    # unoptimised:
+                    #self.xprimeM[ind] = self.activity[mM + mF * self.num_species] * pops_and_params[delayed_index] / denom
+                    # better:
+                    inda = mM + mF * self.num_species
+                    self.xprimeM.data.as_floats[ind] = self.activity.data.as_floats[inda] * pops_and_params[delayed_index] * one_over_denom
 
         # calculate Y
         array.zero(self.yy)
-        for s in range(self.num_sexes):
-            for g in range(self.num_genotypes):
-                for m in range(self.num_species):
-                    yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
-                    for mF in range(self.num_species):
-                        for gF in range(self.num_genotypes):
-                            f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_base
-                            xF = pops_and_params[f_ind]
-                            for mM in range(self.num_species):
-                                for gM in range(self.num_genotypes):
-                                    xprime_ind = mF + mM * self.num_species + gM * self.num_species2
-                                    precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
-                                    self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
+        if some_males > 0:
+            for s in range(self.num_sexes):
+                for g in range(self.num_genotypes):
+                    for m in range(self.num_species):
+                        yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                        for mF in range(self.num_species):
+                            for gF in range(self.num_genotypes):
+                                f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_base
+                                xF = pops_and_params[f_ind]
+                                for mM in range(self.num_species):
+                                    for gM in range(self.num_genotypes):
+                                        xprime_ind = mF + mM * self.num_species + gM * self.num_species2
+                                        precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
+                                        # unoptimised:
+                                        #self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
+                                        # better:
+                                        self.yy.data.as_floats[yy_ind] = self.yy.data.as_floats[yy_ind] + self.precalc.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
 
         # calculate C
         array.zero(self.comp)
-        for m in range(self.num_species):
-            for mprime in range(self.num_species):
-                alpha_ind = mprime + m * self.num_species
-                alpha = self.competition[alpha_ind]
-                for s in range(self.num_sexes):
-                    for g in range(self.num_genotypes):
-                        yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
-                        self.comp[m] += alpha * self.yy[yy_ind]
+        if some_males > 0:
+            for m in range(self.num_species):
+                for mprime in range(self.num_species):
+                    alpha_ind = mprime + m * self.num_species
+                    # unoptimised:
+                    #alpha = self.competition[alpha_ind]
+                    # better:
+                    alpha = self.competition.data.as_floats[alpha_ind]
+                    for s in range(self.num_sexes):
+                        for g in range(self.num_genotypes):
+                            yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                            # unoptimised:
+                            #self.comp[m] += alpha * self.yy[yy_ind]
+                            # better:
+                            self.comp.data.as_floats[m] = self.comp.data.as_floats[m] + alpha * self.yy.data.as_floats[yy_ind]
 
+        # calculate birth rate and new populations
         for g in range(self.num_genotypes):
             for m in range(self.num_species):
-                dr = self.death_rate[m + g * self.num_species]
-                qm = pops_and_params[self.num_populations + m]
+                ind = m + g * self.num_species
+                # note that death_rate > 0 by the constructor and setter
+                # unoptimised:
+                #one_over_dr = self.death_rate[ind]
+                #expdrdt = exp(- self.death_rate[ind] * timestep)
+                # better:
+                one_over_dr = 1.0 / self.death_rate.data.as_floats[ind]
+                expdrdt = exp(- self.death_rate.data.as_floats[ind] * timestep)
+                ind = self.num_populations + m
+                qm = pops_and_params[ind]
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
-                    if self.yy[ind] <= 0.0:
+                    # unoptimised:
+                    #if self.yy[ind] <= 0.0:
+                    #    bb = 0 # this accounts for qm + self.comp[m] = 0 too
+                    #else:
+                    #    bb = qm * self.emergence_rate[m] * self.yy[ind] / (qm + self.comp[m])
+                    #current_index = adult_base + ind
+                    #self.new_pop[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
+                    # better:
+                    if self.yy.data.as_floats[ind] <= 0.0:
                         bb = 0 # this accounts for qm + self.comp[m] = 0 too
                     else:
-                        bb = qm * self.emergence_rate[m] * self.yy[ind] / (qm + self.comp[m])
+                        bb = qm * self.emergence_rate.data.as_floats[m] * self.yy.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
                     current_index = adult_base + ind
-                    self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr) * exp(- dr * timestep)
+                    self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
 
         # put the new_pop in the correct slots in pops_and_params in readyness for incrementCurrentIndex
         for g in range(self.num_genotypes):
@@ -1679,7 +1718,10 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                     delayed_ind = delayed_base + ind
-                    pops_and_params[delayed_ind] = self.new_pop[ind]
+                    # unoptimised:
+                    #pops_and_params[delayed_ind] = self.new_pop[ind]
+                    # better:
+                    pops_and_params[delayed_ind] = self.new_pop.data.as_floats[ind]
 
     cpdef precalculate(self):
         cdef unsigned mM, mF, m, gM, gF, g, s, ind
