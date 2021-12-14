@@ -1200,6 +1200,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     cpdef void incrementCurrentIndex(self):
         # don't know why i can't super().incrementCurrentIndex()
         self.current_index = (self.current_index + 1) % (self.delay + 1)
+        cdef unsigned sex, genotype, species, offset
         cdef unsigned ind = 0
         for sex in range(self.num_sexes):
             for genotype in range(self.num_genotypes):
