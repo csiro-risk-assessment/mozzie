@@ -298,6 +298,11 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
             for g in range(6):
                self.assertTrue(abs(gold[gM][gF][g] - ic[gM + gF * 6 + g * 36]) < 1E-6)
  
+   def testGetSetSmallValue(self):
+      self.assertEqual(self.c.getSmallValue(), 0.0)
+      self.c.setSmallValue(1.0)
+      self.assertEqual(self.c.getSmallValue(), 1.0)
+
 if __name__ == '__main__':
    unittest.main()
 

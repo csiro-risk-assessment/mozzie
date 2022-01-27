@@ -269,16 +269,18 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
 
       # initialise populations and carrying capacities
       initial_condition = [random.random() for i in range(self.d.getNumberOfPopulations())] + [1E4, 2E4, 3E4, 4E4] # last num_species are the "qm"
+      small_value = 0.004
+      self.d.setSmallValue(small_value) # any population less than this will be zeroed
       for delay in range(self.d.getDelay() + 1):
          for species in range(num_species):
             for genotype in range(6):
                for sex in [0]: # males only
                   ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
-                  initial_condition[ind] = 0.0 # zero males
+                  initial_condition[ind] = small_value * 1E-5  # this is zero males because of SmallValue
       pap = array.array('f', initial_condition)
 
       dt = 1.23
-      for timestep in range(1):
+      for timestep in range(2):
          # form the expected answer, and put in "gold"
          gold = list(pap) # result from previous timestep
          current_index = self.d.getCurrentIndex()
@@ -293,7 +295,10 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
             for genotype in range(6):
                for species in range(num_species):
                   ind = species + genotype * num_species + sex * num_species * 6
-                  gold[(current_index + 1) % (delay + 1) * num_species * 6 * 2 + ind] = new_adults[ind]
+                  if new_adults[ind] > small_value:
+                     gold[(current_index + 1) % (delay + 1) * num_species * 6 * 2 + ind] = new_adults[ind]
+                  else:
+                     gold[(current_index + 1) % (delay + 1) * num_species * 6 * 2 + ind] = 0.0
 
          # get the code to evolve and check answer is gold
          self.d.evolve(dt, pap)
@@ -309,12 +314,14 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
 
       # initialise populations and carrying capacities
       initial_condition = [random.random() for i in range(self.d.getNumberOfPopulations())] + [1E4, 2E4, 3E4, 4E4] # last num_species are the "qm"
+      small_value = 1E-3
+      self.d.setSmallValue(small_value) # any population much less than this gets zeroed
       for delay in range(self.d.getDelay() + 1):
          for species in range(num_species):
             for genotype in range(6):
                for sex in [1]: # females only
                   ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
-                  initial_condition[ind] = 0.0 # zero females
+                  initial_condition[ind] = 1E-10 # zero females (value is less than small_value)
       pap = array.array('f', initial_condition)
 
       dt = 1.23
@@ -333,7 +340,10 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
             for genotype in range(6):
                for species in range(num_species):
                   ind = species + genotype * num_species + sex * num_species * 6
-                  gold[(current_index + 1) % (delay + 1) * num_species * 6 * 2 + ind] = new_adults[ind]
+                  if new_adults[ind] > small_value:
+                     gold[(current_index + 1) % (delay + 1) * num_species * 6 * 2 + ind] = new_adults[ind]
+                  else:
+                     gold[(current_index + 1) % (delay + 1) * num_species * 6 * 2 + ind] = 0.0
 
          # get the code to evolve and check answer is gold
          self.d.evolve(dt, pap)
@@ -511,6 +521,11 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
          if error < 1E-3:
             break
       self.assertTrue(error < 1E-3)
+
+   def testGetSetSmallValue(self):
+      self.assertEqual(self.c.getSmallValue(), 0.0)
+      self.c.setSmallValue(1.0)
+      self.assertEqual(self.c.getSmallValue(), 1.0)
 
 if __name__ == '__main__':
    unittest.main()

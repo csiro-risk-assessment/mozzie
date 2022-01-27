@@ -719,6 +719,11 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       expected_result += [carrying_cap, carrying_cap]
       self.assertTrue(arrayfuzzyequal(pap, expected_result, 6E-6))
 
+   def testGetSetSmallValue(self):
+      self.assertEqual(self.c.getSmallValue(), 0.0)
+      self.c.setSmallValue(1.0)
+      self.assertEqual(self.c.getSmallValue(), 1.0)
+
 
 if __name__ == '__main__':
    unittest.main()

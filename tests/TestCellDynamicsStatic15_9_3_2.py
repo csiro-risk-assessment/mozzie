@@ -34,6 +34,11 @@ class TestCellDynamicsStatic15_9_3_2(unittest.TestCase):
    def testGetNumberOfParameters(self):
       self.assertEqual(self.c.getNumberOfParameters(), 2)
 
+   def testGetSetSmallValue(self):
+      self.assertEqual(self.c.getSmallValue(), 0.0)
+      self.c.setSmallValue(1.0)
+      self.assertEqual(self.c.getSmallValue(), 1.0)
+
 if __name__ == '__main__':
    unittest.main()
 

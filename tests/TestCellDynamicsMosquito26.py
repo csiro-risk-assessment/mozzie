@@ -1381,6 +1381,10 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       # check answer
       self.assertTrue(arrayfuzzyequal(prediction, pap[:48], ep_tol))
 
+   def testGetSetSmallValue(self):
+      self.assertEqual(self.c.getSmallValue(), 0.0)
+      self.c.setSmallValue(1.0)
+      self.assertEqual(self.c.getSmallValue(), 1.0)
 
 if __name__ == '__main__':
    unittest.main()

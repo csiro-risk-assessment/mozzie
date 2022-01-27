@@ -27,6 +27,9 @@ cdef class CellDynamicsBase:
 
     # number of parameters (carrying capacity, mortality rate, etc) in the Cell dynamics
     cpdef unsigned num_parameters
+
+    # A value that can be used as a lower bound on population numbers, carrying capacities, or anything else, to eliminate underflows or to zero populations when they reach a threshold
+    cpdef float small_value
     
     cpdef unsigned getNumberOfPopulations(self)
     """Returns number of populations (maleGw, femaleGG, larvaeMaleGw, whatever) in the Cell dynamics"""
@@ -47,6 +50,12 @@ cdef class CellDynamicsBase:
 
     cpdef unsigned getNumberOfParameters(self)
     """Returns the number of parameters (carrying capacity, mortality rate, etc) in the cell dynamics"""
+
+    cpdef void setSmallValue(self, float small_value)
+    """Sets the small_value"""
+
+    cpdef float getSmallValue(self)
+    """Gets self.small_value"""
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params)
     """Performs one timestep of evolution
@@ -594,7 +603,8 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     cpdef setDeathRate(self, list death_rate)
     """sets self.death_rate to death_rate.
     The death_rate list must be of the form death_rate[genotype][mosquito_species]
-    All elements must be positive"""
+    All elements must be positive.
+    Note that evolve uses exp(-death_rate * dt).  You must ensure that death_rate and dt are set to this does not overflow."""
 
     cpdef list getDeathRate(self)
     """Returns death_rate[genotype][mosquito_species]"""
@@ -727,7 +737,9 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
     """Gets the value of min_cc"""
 
 cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
-    """Solves Mosquito ODE with 2 sexes, 6 genotypes, using a Beverton-Holt delay equation
+    """Solves Mosquito ODE with 2 sexes, 6 genotypes, using a Beverton-Holt delay equation.
+
+    Carrying capacity is wrapped up in the Beverton-Holt "qm" parameter, as documented in TODO (Hence, min_cc is not used).
 
     An example of a delay equation is
     dx/dt = x(t - delay * dt)

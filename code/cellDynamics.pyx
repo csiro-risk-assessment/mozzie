@@ -60,6 +60,7 @@ cdef class CellDynamicsBase:
         self.num_advecting = 0
         self.advecting_indices = array.array('I', [])
         self.num_parameters = 0
+        self.small_value = 0.0
 
     cpdef unsigned getNumberOfPopulations(self):
         return self.num_populations
@@ -78,6 +79,12 @@ cdef class CellDynamicsBase:
 
     cpdef unsigned getNumberOfParameters(self):
         return self.num_parameters
+
+    cpdef void setSmallValue(self, float small_value):
+        self.small_value = small_value
+
+    cpdef float getSmallValue(self):
+        return self.small_value
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         return
@@ -1629,11 +1636,11 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     # better:
                     ind = mprime + mF * self.num_species
                     denom = denom + self.activity.data.as_floats[ind] * pops_and_params[delayed_index]
-            if denom <= 0.0:
-                one_over_denom = 0.0 # this ensures self.xprimeM = 0 below
-            else:
+            if denom > self.small_value:
                 one_over_denom = 1.0 / denom
                 some_males = 1
+            else:
+                one_over_denom = 0.0 # this ensures self.xprimeM = 0 below
             for gM in range(self.num_genotypes):
                 for mM in range(self.num_species):
                     delayed_index = mM + gM * self.num_species + delayed_base # + sex * num_species * num_genotypes
@@ -1655,14 +1662,15 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                             for gF in range(self.num_genotypes):
                                 f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_base
                                 xF = pops_and_params[f_ind]
-                                for mM in range(self.num_species):
-                                    for gM in range(self.num_genotypes):
-                                        xprime_ind = mF + mM * self.num_species + gM * self.num_species2
-                                        precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
-                                        # unoptimised:
-                                        #self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
-                                        # better:
-                                        self.yy.data.as_floats[yy_ind] = self.yy.data.as_floats[yy_ind] + self.precalc.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
+                                if xF > self.small_value:
+                                    for mM in range(self.num_species):
+                                        for gM in range(self.num_genotypes):
+                                            xprime_ind = mF + mM * self.num_species + gM * self.num_species2
+                                            precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
+                                            # unoptimised:
+                                            #self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
+                                            # better:
+                                            self.yy.data.as_floats[yy_ind] = self.yy.data.as_floats[yy_ind] + self.precalc.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
 
         # calculate C
         array.zero(self.comp)
@@ -1695,6 +1703,8 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                 expdrdt = exp(- self.death_rate.data.as_floats[ind] * timestep)
                 ind = self.num_populations + m
                 qm = pops_and_params[ind]
+                if qm <= self.small_value:
+                    qm = 0.0 # this accounts for problems in double-to-float conversion, eg, if qm = 1E-40
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                     # unoptimised:
@@ -1711,6 +1721,8 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                         bb = qm * self.emergence_rate.data.as_floats[m] * self.yy.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
                     current_index = adult_base + ind
                     self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
+                    if self.new_pop.data.as_floats[ind] <= self.small_value:
+                        self.new_pop.data.as_floats[ind] = 0.0
 
         # put the new_pop in the correct slots in pops_and_params in readyness for incrementCurrentIndex
         for g in range(self.num_genotypes):

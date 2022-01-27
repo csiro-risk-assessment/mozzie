@@ -35,6 +35,11 @@ class TestCellDynamicsDelayBase(unittest.TestCase):
          current_index = (current_index + 1) % (self.d.getDelay() + 1)
          self.assertEqual(self.d.getCurrentIndex(), current_index)
 
+   def testGetSetSmallValue(self):
+      self.assertEqual(self.c.getSmallValue(), 0.0)
+      self.c.setSmallValue(1.0)
+      self.assertEqual(self.c.getSmallValue(), 1.0)
+
 if __name__ == '__main__':
    unittest.main()
 
