@@ -1,0 +1,40 @@
+# Example CSV file
+# Any lines beginning with a # will be ignored
+# All other lines are assumed to contain information
+#
+# Number of species.  Note that if you change this from 3, lots of other parameters must also be changed
+num_species, 3
+# Number of days for an egg to become an adult
+delay, 10
+# Death rates (subscript is species),  ww_1, wc_1, wr_1, cc_1, cr_1, rr_1, ww_2, wc_2, wr_2, cc_2, cr_2, rr_2, ww_3, wc_3, wr_3, cc_3, cr_3, rr_3
+death_rate,                            0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27
+# competition between species, 1v1, 1v2, 1v3, 2v1, 2v2, 2v3, 3v1, 3v2, 3v3
+competition,                   1,   0.1, 0.2, 0.1, 0.9, 0.3, 0.1, 0.2, 0.7
+# emergence rate for each species, 1,     2,   3
+emergence_rate,                    0.1, 0.2, 0.3
+# activity between species F=Female M=Male, F1_M1, F2_M1, F3_M1, F1_M2, F2_M2, F3_M2, F1_M3, F2_M3, F3_M3
+activity,                                   1.0,   0.99,  0.98,  0.97,  0.96,  0.95,  0.94,  0.93,  0.92
+# reduction due to construct F=Female M=Male, wwM_wwF, wcM_wwF, wrM_wwF, ccM_wwF, crM_wwF, rrM_wwF, wwM_wcF, wcM_wcF, wrM_wcF, ccM_wcF, crM_wcF, rrM_wcF, wwM_wrF, wcM_wrF, wrM_wrF, ccM_wrF, crM_wrF, rrM_wrF, wwM_ccF, wcM_ccF, wrM_ccF, ccM_ccF, crM_ccF, rrM_ccF, wwM_crF, wcM_crF, wrM_crF, ccM_crF, crM_crF, rrM_crF, wwM_rrF, wcM_rrF, wrM_rrF, ccM_rrF, crM_rrF, rrM_rrF
+reduction,                                    0.11,    0.12,    0.13,    0.14,    0.15,    0.16,    0.21,    0.22,    0.23,    0.24,    0.25,    0.26,   0.31,    0.32,     0.33,    0.34,    0.35,    0.36,    0.41,    0.42,    0.43,    0.44,    0.45,    0.46,    0.51,    0.52,    0.53,    0.54,    0.55,    0.56,    0.61,    0.62,    0.63,    0.64,    0.65,    0.66
+# hybridisation F=Female M=Male o=offspring, M1_F1_o1, M2_F1_o1, M3_F1_o1, M1_F2_o1, M2_F2_o1, M3_F2_o1, M1_F3_o1, M2_F3_o1, M3_F3_o1, M1_F1_o2, M2_F1_o2, M3_F1_o2, M1_F2_o2, M2_F2_o2, M3_F2_o2, M1_F3_o2, M2_F3_o2, M3_F3_o2, M1_F1_o3, M2_F1_o3, M3_F1_o3, M1_F2_o3, M2_F2_o3, M3_F2_o3, M1_F3_o3, M2_F3_o3, M3_F3_o3
+hybridisation,                               0.111,    0.211,    0.311,    0.121,    0.221,    0.321,    0.131,    0.231,    0.331,    0.112,    0.212,    0.312,    0.122,    0.222,    0.322,    0.132,    0.232,    0.332,     0.113,    0.213,    0.313,    0.123,    0.223,    0.323,    0.133,    0.233,    0.333
+# sex ratio = prob that offspring of wc or cc fathers are male (paternal male bias as sex_ration > 0.5)
+sex_ratio, 0.6
+# female bias = prob that offspring of (mother wc or cc + father 22) is female (usually female_bias > 0.5)
+female_bias, 0.51
+m_w, 1E-5
+m_c, 9E-6
+# small value = any populations less than this value will be zeroed
+small_value, 1E-7
+# initial wild-types F=Female M=Male, M1, F1, M2, F2, M3, F3
+initial_populations,                  10, 11, 12, 13, 14, 15
+# qm values (related to carrying capacity), QM1, QM2, QM3
+qm,                                         20,  30,  40
+# following lines define the introduction.  Species number is either 1 2 or 3.  Sex is either Male or Female
+day_of_introduction, 30
+genotype_of_introduction, wc
+species_number_of_introduction, 1
+sex_of_introduction, Male
+quantity_of_introduction, 10000
+# total number of days in the simulation
+simulation_days, 100
