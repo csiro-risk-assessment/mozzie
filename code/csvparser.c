@@ -3,6 +3,11 @@
 #include <string.h>
 #include "csvparser.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+/* We are on Windows */
+# define strtok_r strtok_s
+#endif
+
 // we read the entire file in one gulp, to attempt to speed I/O
 #define MAX_FILE_LENGTH (200 * 1024 * 1024)
 char file_contents[MAX_FILE_LENGTH];
