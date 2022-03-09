@@ -21,11 +21,13 @@ To our knowledge, all python distributions come with `cython` which converts the
 ###	Building on Windows
 1. 	Make sure python3 is installed on Windows, with the packages numpy, scipy and cython
 	The following series of command can help installing the packages (you are going to need administrator rights):
+	```
 	py -m pip --version
 	py -m pip install --upgrade pip setuptools wheel
 	py -m pip install numpy
 	py -m pip install scipy
 	py -m pip install cython
+	```
 2. 	Make sure Visual Studio Build Tools for C++ (version 2015 at least) is installed.
 	If you are using Visual Studio Installer, select "Visual Studio Build Tools 2019", then tick "Desktop development with C++".
 3.	From the repertory /code, run setup.py
@@ -35,10 +37,12 @@ To our knowledge, all python distributions come with `cython` which converts the
 	sys.path.append(os.path.dirname(findbin)+"\code").
 5.	Now we are going to create the executable ab_convert.exe in the folder code/auxillary.
 	a) Add the following lines of code in the file code/csvparser.c
+	```
 		#if defined(_WIN32) || defined(_WIN64)
 		/* We are on Windows */
 		# define strtok_r strtok_s
 		#endif
+	```
 	b) From the Start menu, open a window "Developer Command Prompt for VS 2019" (or 2015, etc.)
 	c) Use the command cd to move to the repertory where the file build_windows.bat is located.
 	d) Type build_windows.bat to run the batch file. You will obtain ab_convert.obj, csvparser.obj and ab_convert.exe. You can now run ab_convert.exe using an 'ordinary' windows Command Prompt.
