@@ -177,7 +177,7 @@ class Window(QMainWindow):
         self.in_params.setText(fname)
 
     def set_out_fn(self):
-        fname, check = QFileDialog.getOpenFileName(
+        fname, check = QFileDialog.getSaveFileName(
             self, "Output file", self.cp['DEFAULT']['out_dir'],
             "CSV File (*.csv)",
         )
