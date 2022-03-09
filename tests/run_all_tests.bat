@@ -1,0 +1,17 @@
+python TestGrid.py
+python TestCellDynamicsStatic15_9_3_2.py
+python TestCellDynamicsLogistic1_1.py
+python TestCellDynamicsBeeton2_2.py
+python TestCellDynamicsMosquito23.py
+python TestPopulationsAndParameters.py
+python TestWind.py
+python TestDiffusion_1.py
+python TestDiffusion_2.py
+python TestAdvection_1.py
+python TestAdvection_2.py
+python TestEvolveCells.py
+python TestCellDynamicsMosquito26.py
+python TestCellDynamicsDelayBase.py
+python TestCellDynamics26DelayBase.py
+python TestCellDynamicsMosquitoLogistic26Delay.py
+python TestCellDynamicsMosquitoBH26Delay.py

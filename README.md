@@ -5,47 +5,41 @@ Mosquito lifecycle, diffusion and advection
 
 ### Prerequisites
 
-The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  Your computer system probably has all the necessary features already installed, but a vanilla system will need various items.  On Ubuntu:
+The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  Your computer system possibly has all the necessary features already installed, but a vanilla system will need various items.
 
-- `sudo apt install python3-dev python3-numpy python3-scipy cython`
-
+On Ubuntu:
+```
+sudo apt install python3-dev python3-numpy python3-scipy cython
+```
 (Other things to install that are unrelated to the mosquito modelling but might be useful are `sudo apt install unzip` and `sudo snap install emacs --classic`.)
 
-The commands may be slightly different on other architectures, but you need python3, numpy, scipy and cython.
+On Windows, make sure python3 is installed, along with the numpy, scipy and cython packages.  After installing python3, the following series of commands can help installing the packages (you are going to need administrator rights):
+```
+py -m pip --version`
+py -m pip install --upgrade pip setuptools wheel
+py -m pip install numpy
+py -m pip install scipy
+py -m pip install cython
+```
+The second step on Windows is to install Visual Studio Build Tools for C++ (version 2015 at least).  If you are using Visual Studio Installer, select "Visual Studio Build Tools 2019", then tick "Desktop development with C++".
+	
+On other architectures, the commands may be slightly different, but you need python3, numpy, scipy and cython.
 
 
 ### Building the code
 
-To our knowledge, all python distributions come with `cython` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, `build_nimbus.sh` etc).  Look at `code/build_nimbus.sh`.  There are two items you will have to change: the `gcc_flags` `include directories` (the paths specified after the -I).  The file `code/build_nimbus.sh` contains hints on how to find those paths.
+To our knowledge, all architectures can install `cython` (see above for examples).  This converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers and different archiectures.
 
-###	Building on Windows
-	1. 	Make sure python3 is installed on Windows, with the packages numpy, scipy and cython
-	The following series of command can help installing the packages (you are going to need administrator rights):
-	py -m pip --version
-	py -m pip install --upgrade pip setuptools wheel
-	py -m pip install numpy
-	py -m pip install scipy
-	py -m pip install cython
-2. 	Make sure Visual Studio Build Tools for C++ (version 2015 at least) is installed.
-	If you are using Visual Studio Installer, select "Visual Studio Build Tools 2019", then tick "Desktop development with C++".
-3.	From the repertory /code, run setup.py
-	The files generated are *.pyx, and in the folder /build, the files generated are *.lib, *.obj, *.ext. It is ok if the names of the files are the names of the classes concatenated with other informations (architecture, python version). The script setup.py made sure that we are using the right name for the class.
-4.	You will need to import the path of the repertory /code in your python script where you use the classes.
-	I suggest the add the line of code:
-	sys.path.append(os.path.dirname(findbin)+"\code").
-5.	Now we are going to create the executable ab_convert.exe in the folder code/auxillary.
-	a) Add the following lines of code in the file code/csvparser.c
-		#if defined(_WIN32) || defined(_WIN64)
-		/* We are on Windows */
-		# define strtok_r strtok_s
-		#endif
-	b) From the Start menu, open a window "Developer Command Prompt for VS 2019" (or 2015, etc.)
-	c) Use the command cd to move to the repertory where the file build_windows.bat is located.
-	d) Type build_windows.bat to run the batch file. You will obtain ab_convert.obj, csvparser.obj and ab_convert.exe. You can now run ab_convert.exe using an 'ordinary' windows Command Prompt.
+On linux-based systems (including mac): in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, `build_nimbus.sh` etc).  Look at `code/build_nimbus.sh`.  There are two items you will have to change: the `gcc_flags` `include directories` (the paths specified after the -I).  The file `code/build_nimbus.sh` contains hints on how to find those paths.
+
+On Windows:
+
+- In the `code` folder, run setup.py (for instance, on the command line, `cd` to the correct folder and then `python setup.py`).  Using the Cython files in the `code` folder, this will generate Windows files.  (Specifically, the *.pyd files.  It is ok that the names of the files are the names of the classes concatenated with other information such as architecture and python version.  The script setup.py ensures that the filenames are correct.)  Depending upon your setup, you may find a conflict between "x86" (old-style 32-bit Windows) and "x64" (new-style 64-bit): we recommend using the "x64" always, and you may have to manually choose this configuration in Visual Studio (eg, by using the `x64 Native Tools Command Prompt for VS 2019` available from the Start Menu).
+- In the `code\auxillary` folder (using the same command prompt, if you used one in the previous step) run the windows batch-script `build_windows.bat`.  This builds the `ab_convert.exe` executable.
 
 ### Testing the code
 
-Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python3 TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `run_all_tests.sh`.
+Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `run_all_tests.sh` (on linux/mac) or `run_all_tests.bat` (on Windows).
 
 ### Simulating
 
