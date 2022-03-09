@@ -21,6 +21,7 @@ To our knowledge, all python distributions come with `cython` which converts the
 ###	Building on Windows
 1. 	Make sure python3 is installed on Windows, with the packages numpy, scipy and cython
 	The following series of command can help installing the packages (you are going to need administrator rights):
+	
 	py -m pip --version
 	py -m pip install --upgrade pip setuptools wheel
 	py -m pip install numpy
