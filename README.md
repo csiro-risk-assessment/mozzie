@@ -19,7 +19,7 @@ The commands may be slightly different on other architectures, but you need pyth
 To our knowledge, all python distributions come with `cython` which converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers: in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, `build_nimbus.sh` etc).  Look at `code/build_nimbus.sh`.  There are two items you will have to change: the `gcc_flags` `include directories` (the paths specified after the -I).  The file `code/build_nimbus.sh` contains hints on how to find those paths.
 
 ###	Building on Windows
-	1. 	Make sure python3 is installed on Windows, with the packages numpy, scipy and cython
+1. 	Make sure python3 is installed on Windows, with the packages numpy, scipy and cython
 	The following series of command can help installing the packages (you are going to need administrator rights):
 	py -m pip --version
 	py -m pip install --upgrade pip setuptools wheel
@@ -31,7 +31,7 @@ To our knowledge, all python distributions come with `cython` which converts the
 3.	From the repertory /code, run setup.py
 	The files generated are *.pyx, and in the folder /build, the files generated are *.lib, *.obj, *.ext. It is ok if the names of the files are the names of the classes concatenated with other informations (architecture, python version). The script setup.py made sure that we are using the right name for the class.
 4.	You will need to import the path of the repertory /code in your python script where you use the classes.
-	I suggest the add the line of code:
+	I suggest to add the line of code:
 	sys.path.append(os.path.dirname(findbin)+"\code").
 5.	Now we are going to create the executable ab_convert.exe in the folder code/auxillary.
 	a) Add the following lines of code in the file code/csvparser.c
