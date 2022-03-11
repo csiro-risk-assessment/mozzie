@@ -1127,7 +1127,7 @@ cdef class CellDynamicsDelayBase(CellDynamicsBase):
 cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     """Base class for anyODE with 2 sexes, 6 genotypes, using a delay equation"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1140,7 +1140,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         current_index: unsigned
             defines the generation that have most recently emerged as adults.  0 <= current_index <= delay.  (default = 0)
         death_rate: list
-            death_rate[genotype][mosquito_species].  All elements must be positive (default = 1.0)
+            death_rate[sex][genotype][mosquito_species].  All elements must be positive (default = 1.0)
         competition: list
             competition[species1][species2].  This is called alpha in the documentation (default = identity)
         emergence_rate: list
@@ -1219,19 +1219,22 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
                     ind = ind + 1
 
     cpdef setDeathRate(self, list death_rate):
-        self.death_rate = array.clone(array.array('f', []), self.num_genotypes * self.num_species, zero = False)
-        if len(death_rate) != self.num_genotypes:
-            raise ValueError("size of death_rate, " + str(len(death_rate)) + ", must be equal to " + str(self.num_genotypes))
-        for g in range(self.num_genotypes):
-            if len(death_rate[g]) != self.num_species:
-                raise ValueError("size of death_rate[" + str(g) + "], " + str(len(death_rate[g])) + ", must be equal to " + str(self.num_species))
-            for m in range(self.num_species):
-                if death_rate[g][m] <= 0.0:
-                    raise ValueError("all death rates must be positive")
-                self.death_rate[m + g * self.num_species] = death_rate[g][m]
+        self.death_rate = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
+        if len(death_rate) != self.num_sexes:
+            raise ValueError("size of death_rate, " + str(len(death_rate)) + ", must be equal to " + str(self.num_sexes))
+        for s in range(self.num_sexes):
+            if len(death_rate[s]) != self.num_genotypes:
+                raise ValueError("size of death_rate[" + str(s) + "], " + str(len(death_rate[s])) + ", must be equal to " + str(self.num_genotypes))
+            for g in range(self.num_genotypes):
+                if len(death_rate[s][g]) != self.num_species:
+                    raise ValueError("size of death_rate[" + str(s) + "][" + str(g) + "], " + str(len(death_rate[s][g])) + ", must be equal to " + str(self.num_species))
+                for m in range(self.num_species):
+                    if death_rate[s][g][m] <= 0.0:
+                        raise ValueError("all death rates must be positive")
+                    self.death_rate[m + g * self.num_species + s * self.num_species * self.num_genotypes] = death_rate[s][g][m]
 
     cpdef list getDeathRate(self):
-        return [[self.death_rate[m + g * self.num_species] for m in range(self.num_species)] for g in range(self.num_genotypes)]
+        return [[[self.death_rate[m + g * self.num_species + s * self.num_species * self.num_genotypes] for m in range(self.num_species)] for g in range(self.num_genotypes)] for s in range(self.num_sexes)]
                      
     cpdef setCompetition(self, list competition):
         self.competition = array.clone(array.array('f', []), self.num_species * self.num_species, zero = False)
@@ -1293,7 +1296,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
                 for species in range(self.num_species):
                     current_index = adult_base + ind
                     delayed_index = delayed_base + ind
-                    dr = self.death_rate[ind % (self.num_genotypes * self.num_species)]
+                    dr = self.death_rate[ind]
                     new_pop[ind] = lambdah * pops_and_params[delayed_index] / dr + (pops_and_params[current_index] - lambdah * pops_and_params[delayed_index] / dr) * exp(- dr * timestep)
                     ind += 1
 
@@ -1344,7 +1347,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
             s = 1 # Female
             self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.sex_ratio
 
-        gM = 3 # cc
+        gM = 3 # cc NEED CR TOO !
         for gF in range(self.num_genotypes):
             s = 0 # Male
             self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.sex_ratio
@@ -1359,7 +1362,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.female_bias
 
         gM = 0 # ww
-        gF = 3 # cc
+        gF = 3 # cc # NEEDS TO BE CR TOO !!!
         s = 0 # Male
         self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.female_bias
         s = 1 # Female
@@ -1419,7 +1422,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
 cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation using logistic growth"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6, min_cc = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6, min_cc = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1432,7 +1435,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
         current_index: unsigned
             defines the generation that have most recently emerged as adults.  0 <= current_index <= delay.  (default = 0)
         death_rate: list
-            death_rate[genotype][mosquito_species].  All elements must be positive (default = 1.0)
+            death_rate[sex][genotype][mosquito_species].  All elements must be positive (default = 1.0)
         competition: list
             competition[species1][species2].  This is called alpha in the documentation (default = identity)
         emergence_rate: list
@@ -1529,9 +1532,9 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
 
         for g in range(self.num_genotypes):
             for m in range(self.num_species):
-                dr = self.death_rate[m + g * self.num_species]
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                    dr = self.death_rate[ind]
                     bb = self.comp[m] * self.yy[ind]
                     current_index = adult_base + ind
                     self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr) * exp(- dr * timestep)
@@ -1567,7 +1570,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
 cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation using Beverton-Holt growth"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[1.0] * 3] * 6, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1580,7 +1583,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         current_index: unsigned
             defines the generation that have most recently emerged as adults.  0 <= current_index <= delay.  (default = 0)
         death_rate: list
-            death_rate[genotype][mosquito_species].  All elements must be positive (default = 1.0)
+            death_rate[sex][genotype][mosquito_species].  All elements must be positive (default = 1.0)
         competition: list
             competition[species1][species2].  This is called alpha in the documentation (default = identity)
         emergence_rate: list
@@ -1693,20 +1696,19 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         # calculate birth rate and new populations
         for g in range(self.num_genotypes):
             for m in range(self.num_species):
-                ind = m + g * self.num_species
-                # note that death_rate > 0 by the constructor and setter
-                # unoptimised:
-                #one_over_dr = self.death_rate[ind]
-                #expdrdt = exp(- self.death_rate[ind] * timestep)
-                # better:
-                one_over_dr = 1.0 / self.death_rate.data.as_floats[ind]
-                expdrdt = exp(- self.death_rate.data.as_floats[ind] * timestep)
                 ind = self.num_populations + m
                 qm = pops_and_params[ind]
                 if qm <= self.small_value:
                     qm = 0.0 # this accounts for problems in double-to-float conversion, eg, if qm = 1E-40
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                    # note that death_rate > 0 by the constructor and setter
+                    # unoptimised:
+                    #one_over_dr = self.death_rate[ind]
+                    #expdrdt = exp(- self.death_rate[ind] * timestep)
+                    # better:
+                    one_over_dr = 1.0 / self.death_rate.data.as_floats[ind]
+                    expdrdt = exp(- self.death_rate.data.as_floats[ind] * timestep)
                     # unoptimised:
                     #if self.yy[ind] <= 0.0:
                     #    bb = 0 # this accounts for qm + self.comp[m] = 0 too

@@ -24,7 +24,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       self.ide4 = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
       self.red = [list(range(1, 7)), list(range(2, 8)), [1] * 6, list(range(4, 10)), [2] * 6, [1, 2, 1, 2, 1, 2]]
       self.hyb = [[[1, 2, 3, 4], [5, 4, 3, 2], [3, 3, 2, 1], [5, 6, 7, 4]], [[6, 7, 3, 2], [4, 6, 1, 8], [4, 7, 3, 2], [9, 8, 0, 7]], [[5, 7, 2, 9], [4, 5, 3, 6], [4, 3, 1, 2], [4, 2, 6, 8]], [[6, 5, 7, 4], [5, 6, 3, 7], [5, 9, 0, 1], [0, 8, 0, 4]]]
-      self.d = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [[1.0] * 4] * 6, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 0.125)
+      self.d = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [[[1.0] * 4] * 6] * 2, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 0.125)
 
    def testSetGetDelay(self):
       self.assertEqual(self.d.getDelay(), 17)
@@ -61,24 +61,33 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
    def testBadSetDeathRate(self):
       with self.assertRaises(ValueError) as the_err:
          e = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [1, 2, 3], competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4)
-      self.assertEqual(str(the_err.exception), "size of death_rate, 3, must be equal to 6")
+      self.assertEqual(str(the_err.exception), "size of death_rate, 3, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [list(range(5))] * 6, emergence_rate = [1.0] * 4, activity = self.ide4)
-      self.assertEqual(str(the_err.exception), "size of death_rate[0], 5, must be equal to 4")
+         e = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [list(range(5))] * 2, emergence_rate = [1.0] * 4, activity = self.ide4)
+      self.assertEqual(str(the_err.exception), "size of death_rate[0], 5, must be equal to 6")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [list(range(4))] * 6, emergence_rate = [1.0] * 4, activity = self.ide4)
+         e = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [[list(range(6))] * 6] * 2, emergence_rate = [1.0] * 4, activity = self.ide4)
+      self.assertEqual(str(the_err.exception), "size of death_rate[0][0], 6, must be equal to 4")
+      with self.assertRaises(ValueError) as the_err:
+         e = CellDynamicsMosquito26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [[list(range(4))] * 6] * 2, emergence_rate = [1.0] * 4, activity = self.ide4)
       self.assertEqual(str(the_err.exception), "all death rates must be positive")
 
       with self.assertRaises(ValueError) as the_err:
          self.d.setDeathRate([2, 3, 4, 5])
-      self.assertEqual(str(the_err.exception), "size of death_rate, 4, must be equal to 6")
+      self.assertEqual(str(the_err.exception), "size of death_rate, 4, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         self.d.setDeathRate([list(range(-1, 3))] * 6)
+         self.d.setDeathRate([[2, 3], [4, 5]])
+      self.assertEqual(str(the_err.exception), "size of death_rate[0], 2, must be equal to 6")
+      with self.assertRaises(ValueError) as the_err:
+         self.d.setDeathRate([[list(range(1, 4))] * 6] * 2)
+      self.assertEqual(str(the_err.exception), "size of death_rate[0][0], 3, must be equal to 4")
+      with self.assertRaises(ValueError) as the_err:
+         self.d.setDeathRate([[list(range(-1, 3))] * 6] * 2)
       self.assertEqual(str(the_err.exception), "all death rates must be positive")
 
    def testSetGetDeathRate(self):
-      self.assertTrue(arrayequal(self.d.getDeathRate(), [[1.0] * 4] * 6))
-      dr = [[i, i + 6, i + 123] for i in range(1, 7)]
+      self.assertTrue(arrayequal(self.d.getDeathRate(), [[[1.0] * 4] * 6] * 2))
+      dr = [[[i, i + 6, i + 123] for i in range(1, 7)], [[i, i + 11, i + 23] for i in range(1, 7)]]
       self.c.setDeathRate(dr)
       self.assertTrue(arrayequal(self.c.getDeathRate(), dr))
 
@@ -86,7 +95,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       # Tests dx/dt = -d * x + lambdah * x(t - delay)
       delay = 5
       current_index = 2
-      death_rate = [[i] for i in range(1, 7)]
+      death_rate = [[[i] for i in range(1, 7)], [[i + 1] for i in range(1, 7)]]
       tiny = CellDynamicsMosquito26Delay(num_species = 1, delay = delay, current_index = current_index, death_rate = death_rate, competition = [[0.0]], emergence_rate = [0.0], activity = [[0.0]], hybridisation = [[[1.0]]])
 
       initial_condition = [random.random() for i in range(tiny.getNumberOfPopulations() + tiny.getNumberOfParameters())]
@@ -98,7 +107,11 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       lambdah = 1.1
       expected_answer = list(initial_condition)
       for i in range(24, 36):
-         dr = death_rate[(i - 24) % 6][0]
+         ind = i - 24
+         g = ind % 6
+         ind = ind - g * 1
+         s = ind // 6
+         dr = death_rate[s][g][0]
          new_pop = lambdah * initial_condition[i + 12] / dr + (initial_condition[i] - lambdah * initial_condition[i + 12] / dr) * exp(- dr * dt)
          expected_answer[i + 12] = new_pop
 
@@ -106,10 +119,10 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       
    def testBadSetCompetition(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[1.0] * 2] * 6, competition = list(range(3)), emergence_rate = [1.0] * 2, activity = [[0, 0], [0, 0]])
+         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = list(range(3)), emergence_rate = [1.0] * 2, activity = [[0, 0], [0, 0]])
       self.assertEqual(str(the_err.exception), "size of competition, 3, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[1.0] * 2] * 6, competition = [[1, 2], [3]], emergence_rate = [1.0] * 2, activity = [[0, 0], [0, 0]])
+         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3]], emergence_rate = [1.0] * 2, activity = [[0, 0], [0, 0]])
       self.assertEqual(str(the_err.exception), "size of competition[1], 1, must be equal to 2")
 
       with self.assertRaises(ValueError) as the_err:
@@ -127,10 +140,10 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
 
    def testBadSetEmergenceRate(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[1.0] * 14] * 6, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 4, activity = [[0] * 14] * 14)
+         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2 , competition = [[0] * 14] * 14, emergence_rate = [1.0] * 4, activity = [[0] * 14] * 14)
       self.assertEqual(str(the_err.exception), "size of emergence_rate, 4, must be equal to 14")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[1.0] * 14] * 6, competition = [[0] * 14] * 14, emergence_rate = [-1.0] * 14, activity = [[0] * 14] * 14)
+         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [-1.0] * 14, activity = [[0] * 14] * 14)
       self.assertEqual(str(the_err.exception), "all emergence rates must be non-negative")
 
       with self.assertRaises(ValueError) as the_err:
@@ -147,13 +160,13 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
 
    def testBadSetActivity(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[1.0] * 14] * 6, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 4)
+         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 4)
       self.assertEqual(str(the_err.exception), "size of activity, 4, must be equal to 14")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[1.0] * 2] * 6, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [3, 2, 1]])
+         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [3, 2, 1]])
       self.assertEqual(str(the_err.exception), "size of activity[1], 3, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[1.0] * 2] * 6, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [3, -2]])
+         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [3, -2]])
       self.assertEqual(str(the_err.exception), "all activity values must be non-negative")
 
       with self.assertRaises(ValueError) as the_err:
@@ -207,10 +220,10 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       
    def testBadSetReduction(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[1.0] * 14] * 6, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 5)
+         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 5)
       self.assertEqual(str(the_err.exception), "size of reduction, 5, must be equal to 6")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[1.0] * 2] * 6, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(5))] * 6)
+         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(5))] * 6)
       self.assertEqual(str(the_err.exception), "size of reduction[0], 5, must be equal to 6")
 
       with self.assertRaises(ValueError) as the_err:
@@ -228,13 +241,13 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
 
    def testBadSetHybridisation(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[1.0] * 14] * 6, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 14] * 12)
+         e = CellDynamicsMosquito26Delay(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 14] * 12)
       self.assertEqual(str(the_err.exception), "size of hybridisation, 12, must be equal to 14")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[1.0] * 2] * 6, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 11] * 2)
+         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 11] * 2)
       self.assertEqual(str(the_err.exception), "size of hybridisation[0], 11, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[1.0] * 2] * 6, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[[1, 2], [1, 2]], [[3333], [1, 2]]])
+         e = CellDynamicsMosquito26Delay(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[[1, 2], [1, 2]], [[3333], [1, 2]]])
       self.assertEqual(str(the_err.exception), "size of hybridisation[1][0], 1, must be equal to 2")
 
       with self.assertRaises(ValueError) as the_err:
@@ -330,7 +343,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       initial_condition = [random.random() for i in range(cd.getNumberOfPopulations())] + [0, 0, 0] # last 3 are the carrying capacities for the 3-species case
       pap = array.array('f', initial_condition)
       # set the death rates
-      dr = [[random.random() for species in range(3)] for genotype in range(6)]
+      dr = [[[random.random() for species in range(3)] for genotype in range(6)] for sex in range(2)]
       cd.setDeathRate(dr)
 
       dt = 1.23
@@ -367,7 +380,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       initial_condition = [random.random() for i in range(cd.getNumberOfPopulations())] + [1E4, 2E4, 3E4] # last 3 are carryin capacities that are definitely above min_cc
       pap = array.array('f', initial_condition)
       # set the death rates
-      dr = [[random.random() for species in range(3)] for genotype in range(6)]
+      dr = [[[random.random() for species in range(3)] for genotype in range(6)] for sex in range(2)]
       cd.setDeathRate(dr)
 
       dt = 1.23
@@ -397,7 +410,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
    def testEvolve_zeroMales(self):
       # Test case where the are zero males, where the ODE reduces to just deaths-only
       num_species = 4
-      dr = [[random.random() for species in range(num_species)] for genotype in range(6)]
+      dr = [[[random.random() for species in range(num_species)] for genotype in range(6)] for sex in range(2)]
       self.d.setDeathRate(dr)
       self.d.setMinCarryingCapacity(1E-12)
 
@@ -438,7 +451,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
    def testEvolve_zeroFemales(self):
       # Test case where the are zero females, where the ODE reduces to just deaths-only
       num_species = 4
-      dr = [[random.random() for species in range(num_species)] for genotype in range(6)]
+      dr = [[[random.random() for species in range(num_species)] for genotype in range(6)] for sex in range(2)]
       self.d.setDeathRate(dr)
       self.d.setMinCarryingCapacity(1E-12)
 
@@ -481,7 +494,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       num_species = 1
       delay = 5
       current_index = 2
-      death_rate = [[random.random()] for i in range(6)]
+      death_rate = [[[random.random()] for i in range(6)], [[random.random()] for i in range(6)]]
       competition = random.random()
       emergence_rate = random.random()
       activity = random.random()
@@ -529,7 +542,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
             for genotype in range(6):
                for species in range(num_species):
                   ind = species + genotype * num_species + sex * num_species * 6
-                  new_adults[ind] = bb[sex][genotype] / death_rate[genotype][species] + (gold[current_base + ind] - bb[sex][genotype] / death_rate[genotype][species]) * exp(- death_rate[genotype][species] * dt)
+                  new_adults[ind] = bb[sex][genotype] / death_rate[sex][genotype][species] + (gold[current_base + ind] - bb[sex][genotype] / death_rate[sex][genotype][species]) * exp(- death_rate[sex][genotype][species] * dt)
 
          # put the result into the correct slots in pops_and_params
          for sex in range(2):
@@ -547,7 +560,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
    def testEvolve_onlyWild(self):
       # Test that when there are only wild-types and m_w=0, no wild-types are produced
       num_species = 4
-      wild = CellDynamicsMosquito26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[1.0] * 4] * 6, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 1E-12, m_w = 0)
+      wild = CellDynamicsMosquito26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[[1.0] * 4] * 6] * 2, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 1E-12, m_w = 0)
 
       # initialise populations and carrying capacities
       carrying_cap = 10 + random.random()
@@ -582,8 +595,9 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       num_species = 1
       delay = 1
       current_index = 0
-      death_rate = [[random.random()] for i in range(6)]
-      death_rate[0][0] = 0.75 # to ensure good timestepping and nonzero steady-state
+      death_rate = [[[random.random()] for i in range(6)], [[random.random()] for i in range(6)]]
+      death_rate[0][0][0] = 0.75 # to ensure good timestepping and nonzero steady-state
+      death_rate[1][0][0] = 0.75 # to ensure good timestepping and nonzero steady-state
       competition = random.random()
       emergence_rate = 11 + random.random()
       activity = random.random()
@@ -606,7 +620,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
       tilde_la = hh * lambdah * ic * pp * rr
       #y = tilde_la * xF
       #bb = max(0, 1 - 2 * competition * tilde_la * XF / carrying_cap) * y
-      steady_state = carrying_cap * (tilde_la - death_rate[0][0]) / 2.0 / competition / tilde_la**2
+      steady_state = carrying_cap * (tilde_la - death_rate[0][0][0]) / 2.0 / competition / tilde_la**2
 
 
       # initialise populations and carrying capacities
@@ -629,7 +643,7 @@ class TestCellDynamicsMosquito26Delay(unittest.TestCase):
          error = abs(steady_state - pap[6])
          if error < 1E-6:
             break
-      print("\n should be less than 3:", tilde_la / death_rate[0][0] + exp(-death_rate[0][0] * dt) * (1.0 - tilde_la / death_rate[0][0]))
+      print("\n should be less than 3:", tilde_la / death_rate[0][0][0] + exp(-death_rate[0][0][0] * dt) * (1.0 - tilde_la / death_rate[0][0][0]))
       self.assertTrue(error < 1E-6)
 
 if __name__ == '__main__':

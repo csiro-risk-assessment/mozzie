@@ -563,7 +563,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     # square of num_species
     cdef unsigned num_species2
 
-    # death rate of mosquito type M and genotype G has index M + G * num_species (all set to 1.0 in constructor)
+    # death rate of mosquito type M and genotype G and sex S  has index M + G * num_species + S * num_species * num_genotypes (all set to 1.0 in constructor)
     cdef array.array death_rate
 
     # competition (alpha) between mosquito type M and type M' has index M' + M * num_species
@@ -602,12 +602,12 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
 
     cpdef setDeathRate(self, list death_rate)
     """sets self.death_rate to death_rate.
-    The death_rate list must be of the form death_rate[genotype][mosquito_species]
+    The death_rate list must be of the form death_rate[sex][genotype][mosquito_species]
     All elements must be positive.
     Note that evolve uses exp(-death_rate * dt).  You must ensure that death_rate and dt are set to this does not overflow."""
 
     cpdef list getDeathRate(self)
-    """Returns death_rate[genotype][mosquito_species]"""
+    """Returns death_rate[sex][genotype][mosquito_species]"""
 
     cpdef setCompetition(self, list competition)
     """sets self.competition to competition[species][species_prime]

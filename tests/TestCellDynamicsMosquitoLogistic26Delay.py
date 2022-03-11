@@ -24,7 +24,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
       self.ide4 = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
       self.red = [list(range(1, 7)), list(range(2, 8)), [1] * 6, list(range(4, 10)), [2] * 6, [1, 2, 1, 2, 1, 2]]
       self.hyb = [[[1, 2, 3, 4], [5, 4, 3, 2], [3, 3, 2, 1], [5, 6, 7, 4]], [[6, 7, 3, 2], [4, 6, 1, 8], [4, 7, 3, 2], [9, 8, 0, 7]], [[5, 7, 2, 9], [4, 5, 3, 6], [4, 3, 1, 2], [4, 2, 6, 8]], [[6, 5, 7, 4], [5, 6, 3, 7], [5, 9, 0, 1], [0, 8, 0, 4]]]
-      self.d = CellDynamicsMosquitoLogistic26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [[1.0] * 4] * 6, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 0.125)
+      self.d = CellDynamicsMosquitoLogistic26Delay(num_species = 4, delay = 17, current_index = 7, death_rate = [[[1.0] * 4] * 6] * 2, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 0.125)
 
    def testSetGetDelay(self):
       self.assertEqual(self.d.getDelay(), 17)
@@ -59,8 +59,8 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
       self.assertEqual(self.d.getNumberOfParameters(), 4)
 
    def testSetGetDeathRate(self):
-      self.assertTrue(arrayequal(self.d.getDeathRate(), [[1.0] * 4] * 6))
-      dr = [[i, i + 6, i + 123] for i in range(1, 7)]
+      self.assertTrue(arrayequal(self.d.getDeathRate(), [[[1.0] * 4] * 6] * 2))
+      dr = [[[i, i + 6, i + 123] for i in range(1, 7)], [[i + 1, i + 18, i + 12] for i in range(1, 7)]]
       self.c.setDeathRate(dr)
       self.assertTrue(arrayequal(self.c.getDeathRate(), dr))
 
@@ -202,7 +202,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
       initial_condition = [random.random() for i in range(cd.getNumberOfPopulations())] + [0, 0, 0] # last 3 are the carrying capacities for the 3-species case
       pap = array.array('f', initial_condition)
       # set the death rates
-      dr = [[random.random() for species in range(3)] for genotype in range(6)]
+      dr = [[[random.random() for species in range(3)] for genotype in range(6)] for sex in range(2)]
       cd.setDeathRate(dr)
 
       dt = 1.23
@@ -216,7 +216,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
             for genotype in range(6):
                for species in range(3):
                   ind = species + genotype * 3 + sex * 3 * 6
-                  new_adults[ind] = gold[current_base + ind] * exp(- dr[genotype][species] * dt)
+                  new_adults[ind] = gold[current_base + ind] * exp(- dr[sex][genotype][species] * dt)
          for sex in range(2):
             for genotype in range(6):
                for species in range(3):
@@ -239,7 +239,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
       initial_condition = [random.random() for i in range(cd.getNumberOfPopulations())] + [1E4, 2E4, 3E4] # last 3 are carryin capacities that are definitely above min_cc
       pap = array.array('f', initial_condition)
       # set the death rates
-      dr = [[random.random() for species in range(3)] for genotype in range(6)]
+      dr = [[[random.random() for species in range(3)] for genotype in range(6)], [[random.random() for species in range(3)] for genotype in range(6)]]
       cd.setDeathRate(dr)
 
       dt = 1.23
@@ -253,7 +253,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
             for genotype in range(6):
                for species in range(3):
                   ind = species + genotype * 3 + sex * 3 * 6
-                  new_adults[ind] = gold[current_base + ind] * exp(- dr[genotype][species] * dt)
+                  new_adults[ind] = gold[current_base + ind] * exp(- dr[sex][genotype][species] * dt)
          for sex in range(2):
             for genotype in range(6):
                for species in range(3):
@@ -269,7 +269,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
    def testEvolve_zeroMales(self):
       # Test case where the are zero males, where the ODE reduces to just deaths-only
       num_species = 4
-      dr = [[random.random() for species in range(num_species)] for genotype in range(6)]
+      dr = [[[random.random() for species in range(num_species)] for genotype in range(6)], [[random.random() for species in range(num_species)] for genotype in range(6)]]
       self.d.setDeathRate(dr)
       self.d.setMinCarryingCapacity(1E-12)
 
@@ -294,7 +294,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
             for genotype in range(6):
                for species in range(num_species):
                   ind = species + genotype * num_species + sex * num_species * 6
-                  new_adults[ind] = gold[current_base + ind] * exp(- dr[genotype][species] * dt)
+                  new_adults[ind] = gold[current_base + ind] * exp(- dr[sex][genotype][species] * dt)
          for sex in range(2):
             for genotype in range(6):
                for species in range(num_species):
@@ -310,7 +310,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
    def testEvolve_zeroFemales(self):
       # Test case where the are zero females, where the ODE reduces to just deaths-only
       num_species = 4
-      dr = [[random.random() for species in range(num_species)] for genotype in range(6)]
+      dr = [[[random.random() for species in range(num_species)] for genotype in range(6)], [[random.random() for species in range(num_species)] for genotype in range(6)]]
       self.d.setDeathRate(dr)
       self.d.setMinCarryingCapacity(1E-12)
 
@@ -335,7 +335,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
             for genotype in range(6):
                for species in range(num_species):
                   ind = species + genotype * num_species + sex * num_species * 6
-                  new_adults[ind] = gold[current_base + ind] * exp(- dr[genotype][species] * dt)
+                  new_adults[ind] = gold[current_base + ind] * exp(- dr[sex][genotype][species] * dt)
          for sex in range(2):
             for genotype in range(6):
                for species in range(num_species):
@@ -353,7 +353,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
       num_species = 1
       delay = 5
       current_index = 2
-      death_rate = [[random.random()] for i in range(6)]
+      death_rate = [[[random.random()] for i in range(6)], [[random.random()] for i in range(6)]]
       competition = random.random()
       emergence_rate = random.random()
       activity = random.random()
@@ -401,7 +401,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
             for genotype in range(6):
                for species in range(num_species):
                   ind = species + genotype * num_species + sex * num_species * 6
-                  new_adults[ind] = bb[sex][genotype] / death_rate[genotype][species] + (gold[current_base + ind] - bb[sex][genotype] / death_rate[genotype][species]) * exp(- death_rate[genotype][species] * dt)
+                  new_adults[ind] = bb[sex][genotype] / death_rate[sex][genotype][species] + (gold[current_base + ind] - bb[sex][genotype] / death_rate[sex][genotype][species]) * exp(- death_rate[sex][genotype][species] * dt)
 
          # put the result into the correct slots in pops_and_params
          for sex in range(2):
@@ -419,7 +419,7 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
    def testEvolve_onlyWild(self):
       # Test that when there are only wild-types and m_w=0, no wild-types are produced
       num_species = 4
-      wild = CellDynamicsMosquitoLogistic26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[1.0] * 4] * 6, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 1E-12, m_w = 0)
+      wild = CellDynamicsMosquitoLogistic26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[[1.0] * 4] * 6] * 2, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, min_cc = 1E-12, m_w = 0)
 
       # initialise populations and carrying capacities
       carrying_cap = 10 + random.random()
