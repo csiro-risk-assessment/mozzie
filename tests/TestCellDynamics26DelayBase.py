@@ -60,7 +60,7 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
          e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [1, 2, 3], competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4)
       self.assertEqual(str(the_err.exception), "size of death_rate, 3, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [list(range(5))] * 2, emergence_rate = [1.0] * 4, activity = self.ide4)
+         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [list(range(5)), list(range(6))], emergence_rate = [1.0] * 4, activity = self.ide4)
       self.assertEqual(str(the_err.exception), "size of death_rate[0], 5, must be equal to 6")
       with self.assertRaises(ValueError) as the_err:
          e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [[list(range(6))] * 6] * 2, emergence_rate = [1.0] * 4, activity = self.ide4)
@@ -84,7 +84,7 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
 
    def testSetGetDeathRate(self):
       self.assertTrue(arrayequal(self.d.getDeathRate(), [[[1.0] * 4] * 6] * 2))
-      dr = [[[i, i + 6, i + 123] for i in range(1, 7)], [[i, i + 11, i + 23] for i in range(1, 7)]]
+      dr = [[[i, i + 6.5, i + 123.125] for i in range(1, 7)], [[0.5 * i + 0.125, i + 11.25, i + 23.375] for i in range(1, 7)]]
       self.c.setDeathRate(dr)
       self.assertTrue(arrayequal(self.c.getDeathRate(), dr))
 
