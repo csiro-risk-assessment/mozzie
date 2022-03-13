@@ -14,6 +14,12 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 
+# following are used in cellDynamics, but pyinstaller does not see that
+import numpy
+from scipy.integrate import solve_ivp
+import math
+
+# the simulator!
 from simulator import Simulator
 
 

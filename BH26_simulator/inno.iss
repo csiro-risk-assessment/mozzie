@@ -27,7 +27,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{D199179C-8128-4267-BCE9-25B70A87126B}}
 AppName={#MyAppName}
-AppVersion={#RetrieveVersion("C:\Users\wilkinsmc\Documents\andytest\bin\version.txt")}
+AppVersion={#RetrieveVersion("C:\Users\abenp\projects\mozzie\BH26_Simulator\bin\version.txt")}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -37,7 +37,7 @@ DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
 OutputBaseFilename=andytestsetup
-SetupIconFile=C:\Users\wilkinsmc\Documents\andytest\dist\andytest\andytest.ico
+SetupIconFile=C:\Users\abenp\projects\mozzie\BH26_Simulator\dist\andytest\andytest.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -49,8 +49,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\wilkinsmc\Documents\andytest\build\andytest\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\wilkinsmc\Documents\andytest\dist\andytest\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\abenp\projects\mozzie\BH26_Simulator\build\andytest\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\abenp\projects\mozzie\BH26_Simulator\dist\andytest\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

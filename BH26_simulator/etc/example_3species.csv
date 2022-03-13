@@ -6,8 +6,8 @@
 num_species, 3
 # Number of days for an egg to become an adult
 delay, 10
-# Death rates (subscript is species),  ww_1, wc_1, wr_1, cc_1, cr_1, rr_1, ww_2, wc_2, wr_2, cc_2, cr_2, rr_2, ww_3, wc_3, wr_3, cc_3, cr_3, rr_3
-death_rate,                            0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27
+# Death rates (subscript is species. M=Male. F=Female),  Mww_1, Fww_1, Mwc_1, Fwc_1, Mwr_1, Fwr_1, Mcc_1, Fcc_1, Mcr_1, Fcr_1, Mrr_1, Frr_1, Mww_2, Fww_2, Mwc_2, Fwc_2, Mwr_2, Fwr_2, Mcc_2, Fcc_2, Mcr_2, Fcr_2, Mrr_2, Frr_2, Mww_3, Fww_3, Mwc_3, Fwc_3, Mwr_3, Fwr_3, Mcc_3, Fcc_3, Mcr_3, Fcr_3, Mrr_3, Frr_3
+death_rate,                                              0.010, 0.110, 0.011, 0.111, 0.012, 0.112, 0.013, 0.113, 0.014, 0.114, 0.015, 0.115, 0.016, 0.116, 0.017, 0.117, 0.018, 0.118, 0.019, 0.119, 0.020, 0.120, 0.021, 0.121, 0.022, 0.122, 0.023, 0.123, 0.024, 0.124, 0.025, 0.125, 0.026, 0.126, 0.027, 0.127
 # competition between species, 1v1, 1v2, 1v3, 2v1, 2v2, 2v3, 3v1, 3v2, 3v3
 competition,                   1,   0.1, 0.2, 0.1, 0.9, 0.3, 0.1, 0.2, 0.7
 # emergence rate for each species, 1,     2,   3
@@ -22,7 +22,9 @@ hybridisation,                               0.111,    0.211,    0.311,    0.121
 sex_ratio, 0.6
 # female bias = prob that offspring of (mother wc or cc + father 22) is female (usually female_bias > 0.5)
 female_bias, 0.51
+# mutation rate of wild-type to resistant-type
 m_w, 1E-5
+# mutation rate from construct to resistant-type
 m_c, 9E-6
 # small value = any populations less than this value will be zeroed
 small_value, 1E-7

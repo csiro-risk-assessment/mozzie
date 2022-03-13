@@ -53,7 +53,9 @@ class Simulator:
                     sys.exit(1)
             elif key == "death_rate":
                 s = list(map(float, line.split(",")))
-                self.values["death_rate"] = [s[i::6] for i in range(6)]
+                male = s[0::2]
+                female = s[1::2]
+                self.values["death_rate"] = [[male[i::6] for i in range(6)], [female[i::6] for i in range(6)]]
             elif key == "competition":
                 s = list(map(float, line.split(",")))
                 self.values["competition"] = [s[i::3] for i in range(3)]
@@ -69,7 +71,7 @@ class Simulator:
                 s = list(map(float, line.split(",")))
                 s = [s[i::3] for i in range(3)]
                 self.values["hybridisation"] = [[x[i::3] for i in range(3)] for x in s]
-            elif key == "death_rate" or key == "sex_ratio" or key == "female_bias" or key == "m_w" or key == "m_c" or key == "small_value":
+            elif key == "sex_ratio" or key == "female_bias" or key == "m_w" or key == "m_c" or key == "small_value":
                 self.values[key] = float(line)
             elif key == "initial_populations" or key == "qm":
                 self.values[key] = list(map(float, line.split(",")))
@@ -177,8 +179,9 @@ class Simulator:
             dr = self.cell.getDeathRate()
             for sp in range(num_species):
                 for g in range(6):
-                    comment += ", " + self.genotype_string(g) + "_" + str(sp + 1)
-                    vals += ", " + str(dr[g][sp])
+                    for sex in range(2):
+                        comment += ", " + ("M" if sex == 0 else "F") + self.genotype_string(g) + "_" + str(sp + 1)
+                        vals += ", " + str(dr[sex][g][sp])
             f.write(comment + "\n")
             f.write(vals + "\n")
 
