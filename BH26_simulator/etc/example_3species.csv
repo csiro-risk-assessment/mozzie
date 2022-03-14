@@ -14,8 +14,8 @@ competition,                   1,   0.1, 0.2, 0.1, 0.9, 0.3, 0.1, 0.2, 0.7
 emergence_rate,                    0.1, 0.2, 0.3
 # activity between species F=Female M=Male, F1_M1, F2_M1, F3_M1, F1_M2, F2_M2, F3_M2, F1_M3, F2_M3, F3_M3
 activity,                                   1.0,   0.99,  0.98,  0.97,  0.96,  0.95,  0.94,  0.93,  0.92
-# reduction due to construct F=Female M=Male, wwM_wwF, wcM_wwF, wrM_wwF, ccM_wwF, crM_wwF, rrM_wwF, wwM_wcF, wcM_wcF, wrM_wcF, ccM_wcF, crM_wcF, rrM_wcF, wwM_wrF, wcM_wrF, wrM_wrF, ccM_wrF, crM_wrF, rrM_wrF, wwM_ccF, wcM_ccF, wrM_ccF, ccM_ccF, crM_ccF, rrM_ccF, wwM_crF, wcM_crF, wrM_crF, ccM_crF, crM_crF, rrM_crF, wwM_rrF, wcM_rrF, wrM_rrF, ccM_rrF, crM_rrF, rrM_rrF
-reduction,                                    0.11,    0.12,    0.13,    0.14,    0.15,    0.16,    0.21,    0.22,    0.23,    0.24,    0.25,    0.26,   0.31,    0.32,     0.33,    0.34,    0.35,    0.36,    0.41,    0.42,    0.43,    0.44,    0.45,    0.46,    0.51,    0.52,    0.53,    0.54,    0.55,    0.56,    0.61,    0.62,    0.63,    0.64,    0.65,    0.66
+# reduction parameters (F=Female M=Male), Mwc,  Fwc,  Mwr,  Fwr,  Mcc,  Fcc,  Mcr,  Fcr,  Mrr,  Frr
+reduction_parameters,                     0.01, 0.11, 0.02, 0.12, 0.03, 0.13, 0.04, 0.14, 0.05, 0.15
 # hybridisation F=Female M=Male o=offspring, M1_F1_o1, M2_F1_o1, M3_F1_o1, M1_F2_o1, M2_F2_o1, M3_F2_o1, M1_F3_o1, M2_F3_o1, M3_F3_o1, M1_F1_o2, M2_F1_o2, M3_F1_o2, M1_F2_o2, M2_F2_o2, M3_F2_o2, M1_F3_o2, M2_F3_o2, M3_F3_o2, M1_F1_o3, M2_F1_o3, M3_F1_o3, M1_F2_o3, M2_F2_o3, M3_F2_o3, M1_F3_o3, M2_F3_o3, M3_F3_o3
 hybridisation,                               0.111,    0.211,    0.311,    0.121,    0.221,    0.321,    0.131,    0.231,    0.331,    0.112,    0.212,    0.312,    0.122,    0.222,    0.322,    0.132,    0.232,    0.332,     0.113,    0.213,    0.313,    0.123,    0.223,    0.323,    0.133,    0.233,    0.333
 # sex ratio = prob that offspring of wc or cc fathers are male (paternal male bias as sex_ration > 0.5)

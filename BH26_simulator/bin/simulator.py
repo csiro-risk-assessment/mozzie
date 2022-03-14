@@ -7,11 +7,41 @@ from cellDynamics import CellDynamicsMosquitoBH26Delay
 
 class Simulator:
 
+    def genotype_string(self, genotype_num):
+        if genotype_num == 0:
+            return "ww"
+        elif genotype_num == 1:
+            return "wc"
+        elif genotype_num == 2:
+            return "wr"
+        elif genotype_num == 3:
+            return "cc"
+        elif genotype_num == 4:
+            return "cr"
+        elif genotype_num == 5:
+            return "rr"
+        return 'None'
+
+    def reduction_matrix(self, params):
+        matrix = []
+        for gM in range(6):
+            matrix.append([])
+            for gF in range(6):
+                matrix[gM].append(params[gM * 2] * params[1 + gF * 2])
+        return matrix
+                
+    def reduction_params(self, matrix):
+        params = []
+        for genotype in range(1, 6):
+            params.append(matrix[genotype][0]) # male genotype with female ww
+            params.append(matrix[0][genotype]) # male ww with female genotype
+        return params
+
     def __init__(self, fn):
         with open(fn, 'r') as f:
             data = f.readlines()
         self.values = {}
-        for key in ["num_species", "delay", "death_rate", "competition", "emergence_rate", "activity", "reduction", "hybridisation", "sex_ratio", "female_bias", "m_w", "m_c", "small_value", "initial_populations", "qm", "day_of_introduction", "species_number_of_introduction", "genotype_of_introduction", "sex_of_introduction", "quantity_of_introduction", "simulation_days"]:
+        for key in ["num_species", "delay", "death_rate", "competition", "emergence_rate", "activity", "reduction_parameters", "hybridisation", "sex_ratio", "female_bias", "m_w", "m_c", "small_value", "initial_populations", "qm", "day_of_introduction", "species_number_of_introduction", "genotype_of_introduction", "sex_of_introduction", "quantity_of_introduction", "simulation_days"]:
             self.values[key] = None
         
         for line in data:
@@ -46,10 +76,10 @@ class Simulator:
                     self.values[key] = 3
                 elif line == "cr":
                     self.values[key] = 4
-                elif line == "cc":
+                elif line == "rr":
                     self.values[key] = 5
                 else:
-                    sys.stderr.write("Error: genotype_of_introduction must be ww, wc, wr, cc, cr or cc\n")
+                    sys.stderr.write("Error: genotype_of_introduction must be ww, wc, wr, cc, cr or rr\n")
                     sys.exit(1)
             elif key == "death_rate":
                 s = list(map(float, line.split(",")))
@@ -64,9 +94,9 @@ class Simulator:
             elif key == "activity":
                 s = list(map(float, line.split(",")))
                 self.values["activity"] = [s[i::3] for i in range(3)]
-            elif key == "reduction":
+            elif key == "reduction_parameters":
                 s = list(map(float, line.split(",")))
-                self.values["reduction"] = [s[i::6] for i in range(6)]
+                self.values[key] = [1, 1] + s
             elif key == "hybridisation":
                 s = list(map(float, line.split(",")))
                 s = [s[i::3] for i in range(3)]
@@ -82,7 +112,7 @@ class Simulator:
                                                   competition = self.values["competition"],
                                                   emergence_rate = self.values["emergence_rate"],
                                                   activity = self.values["activity"],
-                                                  reduction = self.values["reduction"],
+                                                  reduction = self.reduction_matrix(self.values["reduction_parameters"]),
                                                   hybridisation = self.values["hybridisation"],
                                                   sex_ratio = self.values["sex_ratio"],
                                                   female_bias = self.values["female_bias"],
@@ -152,20 +182,6 @@ class Simulator:
             self.cell.incrementCurrentIndex()
 
         
-    def genotype_string(self, genotype_num):
-        if genotype_num == 0:
-            return "ww"
-        elif genotype_num == 1:
-            return "wc"
-        elif genotype_num == 2:
-            return "wr"
-        elif genotype_num == 3:
-            return "cc"
-        elif genotype_num == 4:
-            return "cr"
-        elif genotype_num == 5:
-            return "rr"
-        return 'None'
         
     def output(self, fn):
         num_species = self.values["num_species"]
@@ -214,15 +230,12 @@ class Simulator:
             f.write(comment + "\n")
             f.write(vals + "\n")
 
-            comment = "# reduction due to construct F=Female M=Male"
-            vals = "reduction"
-            c = self.cell.getReduction()
-            for gF in range(6):
-                for gM in range(6):
-                    comment += ", " + self.genotype_string(gM) + "M_" + self.genotype_string(gF) + "F"
-                    vals += ", " + str(c[gM][gF])
+            comment = "# reduction parameters (F=Female M=Male)"
+            for g in range(1, 6):
+                for sex in range(2):
+                    comment += ", " + ("M" if sex == 0 else "F") + self.genotype_string(g)
             f.write(comment + "\n")
-            f.write(vals + "\n")
+            f.write("reduction_parameters, " + ",".join(map(str, self.reduction_params(self.cell.getReduction()))) + "\n")
 
             comment = "# hybridisation F=Female M=Male o=offspring"
             vals = "hybridisation"
