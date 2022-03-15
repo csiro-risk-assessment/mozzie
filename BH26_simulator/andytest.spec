@@ -6,9 +6,9 @@ block_cipher = None
 
 a = Analysis(['bin\\andytest.pyw'],
              pathex=[],
-             binaries=[('bin/routines.cp38-win_amd64.pyd', '.')],
-             datas=[('bin/version.txt', '.'), ('bin/help.html', '.'), ('etc/andytest.ico', '.')],
-             hiddenimports=[],
+             binaries=[('../code/cellDynamics.cp39-win_amd64.pyd', '.')],
+             datas=[('bin/version.txt', '.'), ('etc/andytest.ico', '.')],
+             hiddenimports=['scipy.integrate'],
              hookspath=[],
              hooksconfig={},
              runtime_hooks=[],
