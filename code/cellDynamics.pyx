@@ -1152,9 +1152,9 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         hybridisation: list
             hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF (default = delta_{m, mF})
         sex_ratio : float
-            probability that offspring of wc or cc fathers are male (paternal male bias has sex_ratio > 0.5) (default = 0.5)
+            probability that offspring of wc or cc or cr fathers are male (paternal male bias has sex_ratio > 0.5) (default = 0.5)
         female_bias : float
-            probability that offspring of (mother wc or cc + father ww) is female (usually female_bias > 0.5) (default = 0.5)
+            probability that offspring of (mother wc or cc or cr + father ww) is female (usually female_bias > 0.5) (default = 0.5)
         m_w : float
             description.  Default value in report based on Beighton assuming spontaneous resistance (default = 1E-6)
         m_c : float
@@ -1340,33 +1340,21 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         self.fecundity_p = array.array('f', [0.5] * self.num_sexes * self.num_genotypes2)
         cdef unsigned gM, gF, s
         cdef unsigned ind
-        gM = 1 # wc
-        for gF in range(self.num_genotypes):
-            s = 0 # Male
-            self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.sex_ratio
-            s = 1 # Female
-            self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.sex_ratio
 
-        gM = 3 # cc NEED CR TOO !
-        for gF in range(self.num_genotypes):
-            s = 0 # Male
-            self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.sex_ratio
-            s = 1 # Female
-            self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.sex_ratio
+        for gM in [1, 3, 4]: # wc, cc, cr
+            for gF in range(self.num_genotypes):
+                s = 0 # Male
+                self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.sex_ratio
+                s = 1 # Female
+                self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.sex_ratio
 
-        gM = 0 # ww
-        gF = 1 # wc
-        s = 0 # Male
-        self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.female_bias
-        s = 1 # Female
-        self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.female_bias
+        for gM in [0]: # ww
+            for gF in [1, 3, 4]: # wc, cc, cr
+                s = 0 # Male
+                self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.female_bias
+                s = 1 # Female
+                self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.female_bias
 
-        gM = 0 # ww
-        gF = 3 # cc # NEEDS TO BE CR TOO !!!
-        s = 0 # Male
-        self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = 1.0 - self.female_bias
-        s = 1 # Female
-        self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] = self.female_bias
         self.have_precalculated = 0
 
     cpdef float getSexRatio(self):

@@ -104,10 +104,10 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       for gM in range(6):
          for gF in range(6):
             for s in range(2):
-               if gM == wc or gM == cc:
+               if gM == wc or gM == cc or gM == cr:
                   if s == male: p[gM][gF][s] = sex_ratio
                   else: p[gM][gF][s] = 1 - sex_ratio
-               elif gM == ww and (gF == wc or gF == cc):
+               elif gM == ww and (gF == wc or gF == cc or gF == cr):
                   if s == male: p[gM][gF][s] = 1 - female_bias
                   else: p[gM][gF][s] = female_bias
 
