@@ -51,12 +51,14 @@ class Simulator:
             key, line = line.split(",", 1)
             key = key.strip()
 
+            num_species = self.values["num_species"]
+            if num_species == None: num_species = 3
             if key == "num_species" or key == "delay" or key == "day_of_introduction" or key == "simulation_days" or key == "quantity_of_introduction":
-                self.values[key] = int(line)
+                self.values[key] = int(line.split(",")[0])
             elif key == "species_number_of_introduction":
-                self.values[key] = int(line) - 1
+                self.values[key] = int(line.split(",")[0]) - 1
             elif key == "sex_of_introduction":
-                line = line.strip().lower()
+                line = line.split(",")[0].strip().lower()
                 if line == "male":
                     self.values[key] = 0
                 elif line == "female":
@@ -65,7 +67,7 @@ class Simulator:
                     sys.stderr.write("Error: sex_of_introduction must be either 'Male' or 'Female'\n")
                     sys.exit(1)
             elif key == "genotype_of_introduction":
-                line = line.strip().lower()
+                line = line.split(",")[0].strip().lower()
                 if line == "ww":
                     self.values[key] = 0
                 elif line == "wc":
@@ -82,29 +84,31 @@ class Simulator:
                     sys.stderr.write("Error: genotype_of_introduction must be ww, wc, wr, cc, cr or rr\n")
                     sys.exit(1)
             elif key == "death_rate":
-                s = list(map(float, line.split(",")))
+                s = list(map(float, line.split(",")[:2 * 6 * num_species]))
                 male = s[0::2]
                 female = s[1::2]
                 self.values["death_rate"] = [[male[i::6] for i in range(6)], [female[i::6] for i in range(6)]]
             elif key == "competition":
-                s = list(map(float, line.split(",")))
+                s = list(map(float, line.split(",")[:num_species * num_species]))
                 self.values["competition"] = [s[i::3] for i in range(3)]
             elif key == "emergence_rate":
-                self.values["emergence_rate"] = list(map(float, line.split(",")))
+                self.values["emergence_rate"] = list(map(float, line.split(",")[: num_species]))
             elif key == "activity":
-                s = list(map(float, line.split(",")))
+                s = list(map(float, line.split(",")[:num_species * num_species]))
                 self.values["activity"] = [s[i::3] for i in range(3)]
             elif key == "reduction_parameters":
-                s = list(map(float, line.split(",")))
+                s = list(map(float, line.split(",")[:2 * (6 - 1)]))
                 self.values[key] = [1, 1] + s
             elif key == "hybridisation":
-                s = list(map(float, line.split(",")))
+                s = list(map(float, line.split(",")[:num_species * num_species * num_species]))
                 s = [s[i::3] for i in range(3)]
                 self.values["hybridisation"] = [[x[i::3] for i in range(3)] for x in s]
             elif key == "sex_ratio" or key == "female_bias" or key == "m_w" or key == "m_c" or key == "small_value":
-                self.values[key] = float(line)
-            elif key == "initial_populations" or key == "qm":
-                self.values[key] = list(map(float, line.split(",")))
+                self.values[key] = float(line.split(",")[0])
+            elif key == "initial_populations":
+                self.values[key] = list(map(float, line.split(",")[:2 * num_species]))
+            elif key == "qm":
+                self.values[key] = list(map(float, line.split(",")[:num_species]))
         self.cell = CellDynamicsMosquitoBH26Delay(num_species = self.values["num_species"],
                                                   delay = self.values["delay"],
                                                   current_index = 0,
