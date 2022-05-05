@@ -1416,7 +1416,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         self.have_precalculated = 0
 
     cpdef list getOffspringModifier(self):
-        return [[[self.offspring_modifier[mF + mM * self.num_species + s * self.num_species * self.num_species] for mF in range(self.num_species)] for mM in range(self.num_species)] for s in range(self.num_sexes)]
+        return [[[self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] for mF in range(self.num_species)] for mM in range(self.num_species)] for s in range(self.num_sexes)]
 
     cpdef void setMinCarryingCapacity(self, float value):
         self.min_cc = value
@@ -1474,7 +1474,9 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
         self.new_pop = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
         self.xprimeM = array.clone(array.array('f', []), self.num_species * self.num_genotypes * self.num_species, zero = False)
         self.yy = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
+        self.yyp = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
         self.precalc = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2 * self.num_genotypes * self.num_species2 * self.num_species, zero = False)
+        self.precalcp = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2 * self.num_genotypes * self.num_species2 * self.num_species, zero = False)
         self.comp = array.clone(array.array('f', []), self.num_species, zero = False)
         self.min_cc = min_cc
         self.precalculate()
@@ -1509,6 +1511,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
                         self.xprimeM[ind] = self.activity[mM + mF * self.num_species] * pops_and_params[delayed_index] / denom
 
         array.zero(self.yy)
+        array.zero(self.yyp)
 
         for s in range(self.num_sexes):
             for g in range(self.num_genotypes):
@@ -1523,6 +1526,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
                                     xprime_ind = mF + mM * self.num_species + gM * self.num_species2
                                     precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
                                     self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
+                                    self.yyp[yy_ind] += self.precalcp[precalc_ind] * xF * self.xprimeM[xprime_ind]
 
         array.zero(self.comp)
         for m in range(self.num_species):
@@ -1545,7 +1549,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                     dr = self.death_rate[ind]
-                    bb = self.comp[m] * self.yy[ind]
+                    bb = self.comp[m] * self.yyp[ind]
                     current_index = adult_base + ind
                     self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr) * exp(- dr * timestep)
 
@@ -1566,6 +1570,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
     cpdef precalculate(self):
         cdef unsigned mM, mF, m, gM, gF, g, s, ind
         array.zero(self.precalc)
+        array.zero(self.precalcp)
         for mM in range(self.num_species):
             for mF in range(self.num_species):
                 for m in range(self.num_species):
@@ -1575,6 +1580,8 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
                                 for s in range(self.num_sexes):
                                     ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
                                     self.precalc[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    # UNCOMMENT THIS AND DELETE THE NEXT LINE! self.precalcp[ind] += self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] * self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    self.precalcp[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
         self.have_precalculated = 1
         
 cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
@@ -1622,7 +1629,9 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.new_pop = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
         self.xprimeM = array.clone(array.array('f', []), self.num_species * self.num_genotypes * self.num_species, zero = False)
         self.yy = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
+        self.yyp = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
         self.precalc = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2 * self.num_genotypes * self.num_species2 * self.num_species, zero = False)
+        self.precalcp = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2 * self.num_genotypes * self.num_species2 * self.num_species, zero = False)
         self.comp = array.clone(array.array('f', []), self.num_species, zero = False)
         self.precalculate()
 
@@ -1668,6 +1677,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
 
         # calculate Y
         array.zero(self.yy)
+        array.zero(self.yyp)
         if some_males > 0:
             for s in range(self.num_sexes):
                 for g in range(self.num_genotypes):
@@ -1684,8 +1694,10 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                                             precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
                                             # unoptimised:
                                             #self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
+                                            #self.yyp[yy_ind] += self.precalcp[precalc_ind] * xF * self.xprimeM[xprime_ind]
                                             # better:
                                             self.yy.data.as_floats[yy_ind] = self.yy.data.as_floats[yy_ind] + self.precalc.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
+                                            self.yyp.data.as_floats[yy_ind] = self.yyp.data.as_floats[yy_ind] + self.precalcp.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
 
         # calculate C
         array.zero(self.comp)
@@ -1722,17 +1734,17 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     one_over_dr = 1.0 / self.death_rate.data.as_floats[ind]
                     expdrdt = exp(- self.death_rate.data.as_floats[ind] * timestep)
                     # unoptimised:
-                    #if self.yy[ind] <= 0.0:
-                    #    bb = 0 # this accounts for qm + self.comp[m] = 0 too
+                    #if self.yyp[ind] <= 0.0 or qm <= self.small.value:
+                    #    bb = 0
                     #else:
-                    #    bb = qm * self.emergence_rate[m] * self.yy[ind] / (qm + self.comp[m])
+                    #    bb = qm * self.emergence_rate[m] * self.yyp[ind] / (qm + self.comp[m])
                     #current_index = adult_base + ind
                     #self.new_pop[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
                     # better:
-                    if self.yy.data.as_floats[ind] <= 0.0:
-                        bb = 0 # this accounts for qm + self.comp[m] = 0 too
+                    if self.yyp.data.as_floats[ind] <= 0.0 or qm <= self.small_value:
+                        bb = 0
                     else:
-                        bb = qm * self.emergence_rate.data.as_floats[m] * self.yy.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
+                        bb = qm * self.emergence_rate.data.as_floats[m] * self.yyp.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
                     current_index = adult_base + ind
                     self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
                     if self.new_pop.data.as_floats[ind] <= self.small_value:
@@ -1752,6 +1764,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     cpdef precalculate(self):
         cdef unsigned mM, mF, m, gM, gF, g, s, ind
         array.zero(self.precalc)
+        array.zero(self.precalcp)
         for mM in range(self.num_species):
             for mF in range(self.num_species):
                 for m in range(self.num_species):
@@ -1761,5 +1774,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                                 for s in range(self.num_sexes):
                                     ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
                                     self.precalc[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    # UNCOMMENT THIS AND DELETE THE NEXT LINE! self.precalcp[ind] += self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] * self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    self.precalcp[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
         self.have_precalculated = 1
         

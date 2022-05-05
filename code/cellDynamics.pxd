@@ -600,7 +600,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     # offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) of offspring of sex s that arises from male of species mM and female of species mF.  This is a vector with index mF + mM * num_species + s * num_species * num_species
     cdef array.array offspring_modifier
 
-    # whether precalculate() has been called with the most up-to-date information concerning number of species, emergence rates, inheritance, fecundity, reduction, hybridisation (have_precalculated = 0 means precalculate() has not been called with the most up-to-date information)
+    # whether precalculate() has been called with the most up-to-date information concerning number of species, emergence rates, inheritance, fecundity, reduction, hybridisation, offspring_modifier (have_precalculated = 0 means precalculate() has not been called with the most up-to-date information)
     cdef int have_precalculated
 
     cpdef setDeathRate(self, list death_rate)
@@ -681,7 +681,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     """Gets the value of min_cc"""
 
     cpdef precalculate(self)
-    """Sets have_precalculated = 1.  This method may be over-ridden by derived classes in order to calculate spatially-independent things after number of species, emergence rates, inheritance, fecundity, reduction or hybridsation have changed"""
+    """Sets have_precalculated = 1.  This method may be over-ridden by derived classes in order to calculate spatially-independent things after number of species, emergence rates, inheritance, fecundity, reduction, hybridsation or offspring_modifier have changed"""
 
 cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
     """Solves Mosquito ODE with 2 sexes, 6 genotypes, using a logistic delay equation
@@ -731,11 +731,17 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
     # Y used in evolve.  yy[sex][genotype][m] has index m + genotype * num_species + sex * num_species * num_genotypes
     cdef array.array yy
 
+    # Y' used in evolve.  yyp[sex][genotype][m] has index m + genotype * num_species + sex * num_species * num_genotypes
+    cdef array.array yyp
+
     # comp used in evolve.  comp[m]
     cdef array.array comp
 
     # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] = hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
     cdef array.array precalc
+
+    # precalcp is used in evolve.  precalcp[mM, mF, m, gM, gF, g, s] = offspring_modifier[s, mM, mF] * hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
+    cdef array.array precalcp
 
     cdef float min_cc
     
@@ -795,8 +801,16 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     # Y used in evolve.  yy[sex][genotype][m] has index m + genotype * num_species + sex * num_species * num_genotypes
     cdef array.array yy
 
+    # Y' used in evolve.  yyp[sex][genotype][m] has index m + genotype * num_species + sex * num_species * num_genotypes
+    cdef array.array yyp
+
     # comp used in evolve.  comp[m]
     cdef array.array comp
 
     # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] = hybridisation[mM, mF, m] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
     cdef array.array precalc
+
+    # precalcp is used in evolve.  precalcp[mM, mF, m, gM, gF, g, s] = offspring_modifier[s, mM, mF] * hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
+    cdef array.array precalcp
+
+    
