@@ -597,6 +597,9 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     # hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF.  This is a vector with index m + mF * num_species + mM * num_species * num_species
     cdef array.array hybridisation
 
+    # offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) of offspring of sex s that arises from male of species mM and female of species mF.  This is a vector with index mF + mM * num_species + s * num_species * num_species
+    cdef array.array offspring_modifier
+
     # whether precalculate() has been called with the most up-to-date information concerning number of species, emergence rates, inheritance, fecundity, reduction, hybridisation (have_precalculated = 0 means precalculate() has not been called with the most up-to-date information)
     cdef int have_precalculated
 
@@ -641,6 +644,12 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
 
     cpdef list getHybridisation(self)
     """returns hybridisation[mM][mF][m]"""
+
+    cpdef setOffspringModifier(self, list offspring_modifier)
+    """sets self.offspring_modifier to offspring_modifier[s][mM][mF]"""
+
+    cpdef list getOffspringModifier(self)
+    """returns offspring_modifier[s][mM][mF]"""
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""

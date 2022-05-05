@@ -1127,7 +1127,7 @@ cdef class CellDynamicsDelayBase(CellDynamicsBase):
 cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     """Base class for anyODE with 2 sexes, 6 genotypes, using a delay equation"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, offspring_modifier = [[[1.0] * 3] * 3] * 2, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1151,6 +1151,8 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
             reduction[gM][gF] is the reduction in adults due to the construct (default = 1.0)
         hybridisation: list
             hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF (default = delta_{m, mF})
+        offspring_modifier: list
+            offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) of offspring of sex s that arises from male of species mM and female of species mF.
         sex_ratio : float
             probability that offspring of wc or cc or cr fathers are male (paternal male bias has sex_ratio > 0.5) (default = 0.5)
         female_bias : float
@@ -1202,6 +1204,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         self.setActivity(activity)
         self.setReduction(reduction)
         self.setHybridisation(hybridisation)
+        self.setOffspringModifier(offspring_modifier)
 
         self.have_precalculated = 0
 
@@ -1398,6 +1401,23 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     cpdef list getHybridisation(self):
         return [[[self.hybridisation[m + mF * self.num_species + mM * self.num_species * self.num_species] for m in range(self.num_species)] for mF in range(self.num_species)] for mM in range(self.num_species)]
 
+    cpdef setOffspringModifier(self, list offspring_modifier):
+        self.offspring_modifier = array.clone(array.array('f', []), self.num_species2 * self.num_sexes, zero = False)
+        if len(offspring_modifier) != self.num_sexes:
+            raise ValueError("size of offspring_modifier, " + str(len(offspring_modifier)) + ", must be equal to " + str(self.num_sexes))
+        for s in range(self.num_sexes):
+            if len(offspring_modifier[s]) != self.num_species:
+                raise ValueError("size of offspring_modifier[" + str(s) + "], " + str(len(offspring_modifier[s])) + ", must be equal to " + str(self.num_species))
+            for mM in range(self.num_species):
+                if len(offspring_modifier[s][mM]) != self.num_species:
+                    raise ValueError("size of offspring_modifier[" + str(s) + "][" + str(mM) + "], " + str(len(offspring_modifier[s][mM])) + ", must be equal to " + str(self.num_species))
+                for mF in range(self.num_species):
+                    self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] = offspring_modifier[s][mM][mF]
+        self.have_precalculated = 0
+
+    cpdef list getOffspringModifier(self):
+        return [[[self.offspring_modifier[mF + mM * self.num_species + s * self.num_species * self.num_species] for mF in range(self.num_species)] for mM in range(self.num_species)] for s in range(self.num_sexes)]
+
     cpdef void setMinCarryingCapacity(self, float value):
         self.min_cc = value
 
@@ -1410,7 +1430,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
 cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation using logistic growth"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6, min_cc = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, offspring_modifier = [[[1.0] * 3] * 3] * 2, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6, min_cc = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1434,6 +1454,8 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
             reduction[gM][gF] is the reduction in adults due to the construct (default = 1.0)
         hybridisation: list
             hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF (default = delta_{m, mF})
+        offspring_modifier: list
+            offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) of offspring of sex s that arises from male of species mM and female of species mF.
         sex_ratio : float
             probability that offspring of wc or cc fathers are male (paternal male bias has sex_ratio > 0.5) (default = 0.5)
         female_bias : float
@@ -1446,7 +1468,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
             minimum carrying capacity.  If carrying capacity in pops_and_params is less than this quantity, no births will occur
         """
         
-        super().__init__(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = competition, emergence_rate = emergence_rate, activity = activity, reduction = reduction, hybridisation = hybridisation, sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c)
+        super().__init__(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = competition, emergence_rate = emergence_rate, activity = activity, reduction = reduction, hybridisation = hybridisation, offspring_modifier = offspring_modifier, sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c)
 
         self.num_parameters = self.num_species # carrying capacities
         self.new_pop = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
@@ -1558,7 +1580,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
 cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation using Beverton-Holt growth"""
     
-    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
+    def __init__(self, num_species = 3, delay = 1, current_index = 0, death_rate = [[[1.0] * 3] * 6] * 2, competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], emergence_rate = [1.0] * 3, activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], reduction = [[1.0] * 6] * 6, hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]] * 3, offspring_modifier = [[[1.0] * 3] * 3] * 2, sex_ratio = 0.5, female_bias = 0.5, m_w = 1E-6, m_c = 1E-6):
         """Constructor
         Note that num_sexes = 2 and num_genotypes = 6.  These two parameters could be arguments in the constructor, since all methods use self.num_sexes and self.num_genotypes (ie, no methods hardcode 2 and 6) but no tests exist for different num_sexes and num_genotypes.
 
@@ -1582,6 +1604,8 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
             reduction[gM][gF] is the reduction in adults due to the construct (default = 1.0)
         hybridisation: list
             hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF (default = delta_{m, mF})
+        offspring_modifier: list
+            offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) of offspring of sex s that arises from male of species mM and female of species mF.
         sex_ratio : float
             probability that offspring of wc or cc fathers are male (paternal male bias has sex_ratio > 0.5) (default = 0.5)
         female_bias : float
@@ -1592,7 +1616,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
             description.  Default value in report based on Beighton assuming spontaneous resistance (default = 1E-6)
         """
         
-        super().__init__(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = competition, emergence_rate = emergence_rate, activity = activity, reduction = reduction, hybridisation = hybridisation, sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c)
+        super().__init__(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = competition, emergence_rate = emergence_rate, activity = activity, reduction = reduction, hybridisation = hybridisation, offspring_modifier = offspring_modifier, sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c)
 
         self.num_parameters = self.num_species # "q" parameters
         self.new_pop = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)

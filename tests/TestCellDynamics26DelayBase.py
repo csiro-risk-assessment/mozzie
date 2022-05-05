@@ -24,7 +24,8 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
       self.ide4 = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
       self.red = [list(range(1, 7)), list(range(2, 8)), [1] * 6, list(range(4, 10)), [2] * 6, [1, 2, 1, 2, 1, 2]]
       self.hyb = [[[1, 2, 3, 4], [5, 4, 3, 2], [3, 3, 2, 1], [5, 6, 7, 4]], [[6, 7, 3, 2], [4, 6, 1, 8], [4, 7, 3, 2], [9, 8, 0, 7]], [[5, 7, 2, 9], [4, 5, 3, 6], [4, 3, 1, 2], [4, 2, 6, 8]], [[6, 5, 7, 4], [5, 6, 3, 7], [5, 9, 0, 1], [0, 8, 0, 4]]]
-      self.d = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [[[1.0] * 4] * 6] * 2, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb)
+      self.o_m = [[[0.125, 0.25, 0.375, 0.4375], [0.5, 0.625, 0.75, 0.875], [0.9375, 1.0, 1.125, 1.25], [1.375, 1.4375, 1.5, 1.625]], [[3.125, 3.25, 3.375, 3.4375], [3.5, 3.625, 3.75, 3.875], [3.9375, 4.0, 4.125, 4.25], [4.375, 4.4375, 4.5, 4.625]]]
+      self.d = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [[[1.0] * 4] * 6] * 2, competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, reduction = self.red, hybridisation = self.hyb, offspring_modifier = self.o_m)
 
    def testSetGetDelay(self):
       self.assertEqual(self.d.getDelay(), 17)
@@ -57,16 +58,16 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
 
    def testBadSetDeathRate(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [1, 2, 3], competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4)
+         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [1, 2, 3], competition = self.ide4, emergence_rate = [1.0] * 4, activity = self.ide4, offspring_modifier = self.o_m)
       self.assertEqual(str(the_err.exception), "size of death_rate, 3, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [list(range(5)), list(range(6))], emergence_rate = [1.0] * 4, activity = self.ide4)
+         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [list(range(5)), list(range(6))], emergence_rate = [1.0] * 4, activity = self.ide4, offspring_modifier = self.o_m)
       self.assertEqual(str(the_err.exception), "size of death_rate[0], 5, must be equal to 6")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [[list(range(6))] * 6] * 2, emergence_rate = [1.0] * 4, activity = self.ide4)
+         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [[list(range(6))] * 6] * 2, emergence_rate = [1.0] * 4, activity = self.ide4, offspring_modifier = self.o_m)
       self.assertEqual(str(the_err.exception), "size of death_rate[0][0], 6, must be equal to 4")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [[list(range(4))] * 6] * 2, emergence_rate = [1.0] * 4, activity = self.ide4)
+         e = CellDynamics26DelayBase(num_species = 4, delay = 17, current_index = 7, death_rate = [[list(range(4))] * 6] * 2, emergence_rate = [1.0] * 4, activity = self.ide4, offspring_modifier = self.o_m)
       self.assertEqual(str(the_err.exception), "all death rates must be positive")
 
       with self.assertRaises(ValueError) as the_err:
@@ -93,7 +94,7 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
       delay = 5
       current_index = 2
       death_rate = [[[i] for i in range(1, 7)], [[i + 1] for i in range(1, 7)]]
-      tiny = CellDynamics26DelayBase(num_species = 1, delay = delay, current_index = current_index, death_rate = death_rate, competition = [[0.0]], emergence_rate = [0.0], activity = [[0.0]], hybridisation = [[[1.0]]])
+      tiny = CellDynamics26DelayBase(num_species = 1, delay = delay, current_index = current_index, death_rate = death_rate, competition = [[0.0]], emergence_rate = [0.0], activity = [[0.0]], hybridisation = [[[1.0]]], offspring_modifier = [[[1.0]], [[1.0]]])
 
       initial_condition = [random.random() for i in range(tiny.getNumberOfPopulations() + tiny.getNumberOfParameters())]
       pap = array.array('f', initial_condition)
@@ -116,10 +117,10 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
       
    def testBadSetCompetition(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = list(range(3)), emergence_rate = [1.0] * 2, activity = [[0, 0], [0, 0]])
+         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = list(range(3)), emergence_rate = [1.0] * 2, activity = [[0, 0], [0, 0]], offspring_modifier = [[[1.0] * 2] * 2] * 2)
       self.assertEqual(str(the_err.exception), "size of competition, 3, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3]], emergence_rate = [1.0] * 2, activity = [[0, 0], [0, 0]])
+         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3]], emergence_rate = [1.0] * 2, activity = [[0, 0], [0, 0]], offspring_modifier = [[[1.0] * 2] * 2] * 2)
       self.assertEqual(str(the_err.exception), "size of competition[1], 1, must be equal to 2")
 
       with self.assertRaises(ValueError) as the_err:
@@ -137,10 +138,10 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
 
    def testBadSetEmergenceRate(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 4, activity = [[0] * 14] * 14)
+         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 4, activity = [[0] * 14] * 14, offspring_modifier = [[[1.0] * 14] * 14] * 2)
       self.assertEqual(str(the_err.exception), "size of emergence_rate, 4, must be equal to 14")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [-1.0] * 14, activity = [[0] * 14] * 14)
+         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [-1.0] * 14, activity = [[0] * 14] * 14, offspring_modifier = [[[1.0] * 14] * 14] * 2)
       self.assertEqual(str(the_err.exception), "all emergence rates must be non-negative")
 
       with self.assertRaises(ValueError) as the_err:
@@ -157,13 +158,13 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
 
    def testBadSetActivity(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 4)
+         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 4, offspring_modifier = [[[1.0] * 14] * 14] * 2)
       self.assertEqual(str(the_err.exception), "size of activity, 4, must be equal to 14")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [3, 2, 1]])
+         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [3, 2, 1]], offspring_modifier = [[[1.0] * 2] * 2] * 2)
       self.assertEqual(str(the_err.exception), "size of activity[1], 3, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [3, -2]])
+         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [3, -2]], offspring_modifier = [[[1.0] * 2] * 2] * 2)
       self.assertEqual(str(the_err.exception), "all activity values must be non-negative")
 
       with self.assertRaises(ValueError) as the_err:
@@ -217,10 +218,10 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
       
    def testBadSetReduction(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 5)
+         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 5, offspring_modifier = [[[1.0] * 14] * 14] * 2)
       self.assertEqual(str(the_err.exception), "size of reduction, 5, must be equal to 6")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(5))] * 6)
+         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(5))] * 6, offspring_modifier = [[[1.0] * 2] * 2] * 2)
       self.assertEqual(str(the_err.exception), "size of reduction[0], 5, must be equal to 6")
 
       with self.assertRaises(ValueError) as the_err:
@@ -238,13 +239,13 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
 
    def testBadSetHybridisation(self):
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 14] * 12)
+         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 14] * 12, offspring_modifier = [[[1.0] * 14] * 14] * 2)
       self.assertEqual(str(the_err.exception), "size of hybridisation, 12, must be equal to 14")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 11] * 2)
+         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 11] * 2, offspring_modifier = [[[1.0] * 2] * 2] * 2)
       self.assertEqual(str(the_err.exception), "size of hybridisation[0], 11, must be equal to 2")
       with self.assertRaises(ValueError) as the_err:
-         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[[1, 2], [1, 2]], [[3333], [1, 2]]])
+         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[[1, 2], [1, 2]], [[3333], [1, 2]]], offspring_modifier = [[[1.0] * 2] * 2] * 2)
       self.assertEqual(str(the_err.exception), "size of hybridisation[1][0], 1, must be equal to 2")
 
       with self.assertRaises(ValueError) as the_err:
@@ -259,6 +260,30 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
       a = [[[3, 4, 5], [1, 2, 3], [1, 5, 6]], [[6, 5, 1], [8, 8, 1], [9, 3, 1]], [[4, 5, 6], [4, 4, 4], [3, 6, 1]]]
       self.c.setHybridisation(a)
       self.assertTrue(arrayequal(self.c.getHybridisation(), a))
+
+   def testBadSetOffspringModifier(self):
+      with self.assertRaises(ValueError) as the_err:
+         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 14] * 14, offspring_modifier = [[[1.0] * 14] * 14] * 3)
+      self.assertEqual(str(the_err.exception), "size of offspring_modifier, 3, must be equal to 2")
+      with self.assertRaises(ValueError) as the_err:
+         e = CellDynamics26DelayBase(num_species = 14, delay = 17, current_index = 7, death_rate = [[[1.0] * 14] * 6] * 2, competition = [[0] * 14] * 14, emergence_rate = [1.0] * 14, activity = [[0] * 14] * 14, reduction = [list(range(6))] * 6, hybridisation = [[list(range(14))] * 14] * 14, offspring_modifier = [[[1.0] * 14] * 11] * 2)
+      self.assertEqual(str(the_err.exception), "size of offspring_modifier[0], 11, must be equal to 14")
+      with self.assertRaises(ValueError) as the_err:
+         e = CellDynamics26DelayBase(num_species = 2, delay = 17, current_index = 7, death_rate = [[[1.0] * 2] * 6] * 2, competition = [[1, 2], [3, 4]], emergence_rate = [1.0] * 2, activity = [[1, 2], [2, 1]], reduction = [list(range(6))] * 6, hybridisation = [[[1, 2], [1, 2]], [[3333, 2222], [1, 2]]], offspring_modifier = [[[1.0, 2.0], [3, 4]], [[1], [5, 6]]])
+      self.assertEqual(str(the_err.exception), "size of offspring_modifier[1][0], 1, must be equal to 2")
+
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setOffspringModifier([2, 3, 4, 5])
+      self.assertEqual(str(the_err.exception), "size of offspring_modifier, 4, must be equal to 2")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setOffspringModifier([[[0, 1, 2], [3, 2, 1], [2, 3, 1]], [[0, 1, 2], [3, 2, 1], [111111, 2222]]])
+      self.assertEqual(str(the_err.exception), "size of offspring_modifier[1][2], 2, must be equal to 3")
+
+   def testSetGetOffspringModifier(self):
+      self.assertTrue(arrayequal(self.d.getOffspringModifier(), self.o_m))
+      a = [[[3, 4, 5], [1, 2, 3], [1, 5, 6]], [[6, 5, 1], [8, 8, 1], [9, 3, 1]]]
+      self.c.setOffspringModifier(a)
+      self.assertTrue(arrayequal(self.c.getOffspringModifier(), a))
 
    def testGetInheritance(self):
       m_w = 0.125
