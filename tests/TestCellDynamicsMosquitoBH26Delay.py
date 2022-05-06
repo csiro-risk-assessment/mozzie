@@ -410,10 +410,11 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
 
          # compute y[s][g] and C
          y = [[sum([sum([hybridisation * emergence_rate * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
+         yp = [[sum([sum([hybridisation * offspring_modifier[s][0][0] * emergence_rate * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
          cc = competition * sum([sum(y[s]) for s in range(2)])
 
          # compute B[s][g]
-         bb = [[qm * y[s][g] / (qm + cc) for g in range(6)] for s in range(2)]
+         bb = [[qm * yp[s][g] / (qm + cc) for g in range(6)] for s in range(2)]
 
          # compute the new adult populations
          new_adults = [0 for i in range(num_species * 6 * 2)]
@@ -477,7 +478,8 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       reduction = [[random.random() for i in range(6)] for j in range(6)]
       reduction[0][0] = 1.0 + random.random() # to ensure a nonzero steady-state
       hybridisation = 1.0 + random.random() # to ensure a nonzero steady-state
-      offspring_modifier = [[[0.9 + 0.2 * random.random()]], [[0.9 + 0.2 * random.random()]]]
+      o_m = 0.9 + 0.2 * random.random()
+      offspring_modifier = [[[o_m]], [[o_m]]]
       sex_ratio = random.random()
       female_bias = random.random()
       m_w = 0.0 # so only ww mosquitos
@@ -494,7 +496,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       lambda_m = emergence_rate # > 2
       # note that because lambda_m > 2 and death_rate <= 1, the steady_state is positive
       num_sexes = 2
-      steady_state = (1.0 / (num_sexes * competition) / (HORXprimeM * lambda_m)) * qm * (HORXprimeM * lambda_m / death_rate[1][0][0] - 1)
+      steady_state = (1.0 / (num_sexes * competition) / (HORXprimeM * lambda_m)) * qm * (HORXprimeM * o_m * lambda_m / death_rate[1][0][0] - 1)
 
 
       # initialise very small populations

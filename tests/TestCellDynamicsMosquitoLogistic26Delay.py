@@ -392,10 +392,11 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
 
          # compute y[s][g] and C
          y = [[sum([sum([hybridisation * emergence_rate * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
+         yp = [[sum([sum([offspring_modifier[s][0][0] * hybridisation * emergence_rate * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
          cc = competition * sum([sum(y[s]) for s in range(2)])
 
          # compute B[s][g]
-         bb = [[max(0, 1.0 - cc / carrying_cap) * y[s][g] for g in range(6)] for s in range(2)]
+         bb = [[max(0, 1.0 - cc / carrying_cap) * yp[s][g] for g in range(6)] for s in range(2)]
 
          # compute the new adult populations
          new_adults = [0 for i in range(num_species * 6 * 2)]
