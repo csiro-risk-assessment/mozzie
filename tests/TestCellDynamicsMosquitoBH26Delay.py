@@ -374,7 +374,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
          for g in range(6 - 1):
             death_rate[s].append([random.random() for species in range(num_species)])
       competition = random.random()
-      emergence_rate = random.random()
+      emergence_rate = 1.0 + random.random()
       activity = random.random()
       reduction = [[random.random() for i in range(6)] for j in range(6)]
       hybridisation = random.random()
@@ -409,11 +409,11 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
          xprimeM = [gold[delayed_base + g] / denom for g in range(6)]
 
          # compute y[s][g] and C
-         y = [[sum([sum([hybridisation * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
+         y = [[sum([sum([hybridisation * emergence_rate * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
          cc = competition * sum([sum(y[s]) for s in range(2)])
 
          # compute B[s][g]
-         bb = [[qm * emergence_rate * y[s][g] / (qm + cc) for g in range(6)] for s in range(2)]
+         bb = [[qm * y[s][g] / (qm + cc) for g in range(6)] for s in range(2)]
 
          # compute the new adult populations
          new_adults = [0 for i in range(num_species * 6 * 2)]
@@ -434,7 +434,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
          tiny.evolve(dt, pap)
          tiny.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
 
-         self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
+         self.assertTrue(arrayfuzzyequal(pap, gold, 1E-4))
       
    def testEvolve_onlyWild(self):
       # Test that when there are only wild-types and m_w=0, no wild-types are produced
@@ -494,7 +494,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       lambda_m = emergence_rate # > 2
       # note that because lambda_m > 2 and death_rate <= 1, the steady_state is positive
       num_sexes = 2
-      steady_state = (1.0 / (num_sexes * competition) / HORXprimeM) * qm * (HORXprimeM * lambda_m / death_rate[1][0][0] - 1)
+      steady_state = (1.0 / (num_sexes * competition) / (HORXprimeM * lambda_m)) * qm * (HORXprimeM * lambda_m / death_rate[1][0][0] - 1)
 
 
       # initialise very small populations

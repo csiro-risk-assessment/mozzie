@@ -1144,7 +1144,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         competition: list
             competition[species1][species2].  This is called alpha in the documentation (default = identity)
         emergence_rate: list
-            emergence_rate[species].  Adult emergence rate (default = 0.0)
+            emergence_rate[species].  Larvae per wildtype female at the end of the larval duration period, per day, per adult female, in the absence of density dependence (default = 0.0)
         activity: list
             activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing (default = identity)
         reduction: list
@@ -1447,7 +1447,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
         competition: list
             competition[species1][species2].  This is called alpha in the documentation (default = identity)
         emergence_rate: list
-            emergence_rate[species].  Adult emergence rate (default = 0.0)
+            emergence_rate[species].  Larvae per wildtype female at the end of the larval duration period, per day, per adult female, in the absence of density dependence (default = 0.0)
         activity: list
             activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing (default = identity)
         reduction: list
@@ -1604,7 +1604,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         competition: list
             competition[species1][species2].  This is called alpha in the documentation (default = identity)
         emergence_rate: list
-            emergence_rate[species].  Adult emergence rate (default = 0.0)
+            emergence_rate[species].  Larvae per wildtype female at the end of the larval duration period, per day, per adult female, in the absence of density dependence (default = 0.0)
         activity: list
             activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing (default = identity)
         reduction: list
@@ -1737,14 +1737,14 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     #if self.yyp[ind] <= 0.0 or qm <= self.small.value:
                     #    bb = 0
                     #else:
-                    #    bb = qm * self.emergence_rate[m] * self.yyp[ind] / (qm + self.comp[m])
+                    #    bb = qm * self.yyp[ind] / (qm + self.comp[m])
                     #current_index = adult_base + ind
                     #self.new_pop[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
                     # better:
                     if self.yyp.data.as_floats[ind] <= 0.0 or qm <= self.small_value:
                         bb = 0
                     else:
-                        bb = qm * self.emergence_rate.data.as_floats[m] * self.yyp.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
+                        bb = qm * self.yyp.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
                     current_index = adult_base + ind
                     self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
                     if self.new_pop.data.as_floats[ind] <= self.small_value:
@@ -1773,8 +1773,8 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                             for g in range(self.num_genotypes):
                                 for s in range(self.num_sexes):
                                     ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
-                                    self.precalc[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
-                                    # UNCOMMENT THIS AND DELETE THE NEXT LINE! self.precalcp[ind] += self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] * self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
-                                    self.precalcp[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    self.precalc[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    # UNCOMMENT THIS AND DELETE THE NEXT LINE! self.precalcp[ind] += self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] * self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    self.precalcp[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
         self.have_precalculated = 1
         

@@ -569,7 +569,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     # competition (alpha) between mosquito type M and type M' has index M' + M * num_species
     cdef array.array competition
 
-    # emergence rate[mF] (lambda) of type mF
+    # emergence rate[mF] (lambda) of type mF.  Larvae per wildtype female at the end of the larval duration period, per day, per adult female, in the absence of density dependence
     cdef array.array emergence_rate
 
     # activity level (a) of female type mF and male type mM has index mM + mF * num_species
@@ -807,7 +807,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     # comp used in evolve.  comp[m]
     cdef array.array comp
 
-    # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] = hybridisation[mM, mF, m] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
+    # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] = hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
     cdef array.array precalc
 
     # precalcp is used in evolve.  precalcp[mM, mF, m, gM, gF, g, s] = offspring_modifier[s, mM, mF] * hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
