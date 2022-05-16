@@ -1096,6 +1096,13 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.r_prob = 1 - self.w_prob - self.c_prob
         self.setInheritance()
 
+    cdef float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
+        if (father_gt == 1 or father_gt == 3 or father_gt == 4): # ww, wc, wr, cc, cr, rr.
+            if (offspring_sex == 0): # male sex bias if modified father (any mother)
+                return accuracy
+            else:
+                return 1. - accuracy
+
 cdef class CellDynamicsDelayBase(CellDynamicsBase):
     """Base class for lifecycle dynamics as governed by a delay differential equation"""
     
