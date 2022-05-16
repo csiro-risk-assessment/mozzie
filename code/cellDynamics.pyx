@@ -1102,6 +1102,8 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
                 return self.accuracy
             else:
                 return 1. - self.accuracy
+        else:
+            return 0.5
 
 cdef class CellDynamicsDelayBase(CellDynamicsBase):
     """Base class for lifecycle dynamics as governed by a delay differential equation"""
