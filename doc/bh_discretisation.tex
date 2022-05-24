@@ -1,0 +1,52 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage{pdflscape}
+\usepackage{amsmath}
+\usepackage[margin=0.5cm]{geometry}
+
+\begin{document}
+
+There are lots of ``$d$-type'' and ``$x$-type'' variables in this document, sigh!
+
+The equation
+\begin{equation}
+  \frac{\mathrm{d}}{\mathrm{d}t}X(x, y, t) = -dX(x, y, t) + B(x, y, t - \delta) + \nabla\left[D\nabla X(x, y, t) - AV(x, y, t)X(x, y, t)\right] \ ,
+\end{equation}
+is solved numerically using an operator split.  Specifically, the equation describing the lifecycle:
+\begin{equation}
+  \frac{\mathrm{d}}{\mathrm{d}t}X(x, y, t) = -dX(x, y, t) + B(x, y, t - \delta) \ ,
+\end{equation}
+is solved using a timestep of $\Delta t$, and then the equation describing the spatial dynamics:
+\begin{equation}
+  \frac{\mathrm{d}}{\mathrm{d}t}X(x, y, t) = \nabla\left[D\nabla X(x, y, t) - V(x, y, t)X(x, y, t)\right] \ ,
+\end{equation}
+is solved using the same timestep $\Delta t$.
+
+The lifecycle equation is solved using
+\begin{equation}
+  X(x, y, t + \Delta t) = \frac{B(x, y, t - \delta)}{d} + \left(X(x, y, t) - \frac{B(x, y, t - \delta)}{d}\right)e^{ - d\Delta t} \ . \label{discrete.lifecycle}
+\end{equation}
+For small $\Delta t$, $e^{-d\Delta t} \approx 1 - d\Delta t$, so this reduces to $X(t + \Delta t) = X(t) + \Delta t (-dX(t) + B(t - \delta))$, which is the forward Euler form.  For large $\Delta t$, this reduces to $X(t + \Delta t) = B(t - \delta) / d$, which is the long-time equilibrium solution of the lifecycle equation.  Equation~(\ref{discrete.lifecycle}) may be motivated by considering the variable $Y(t) = X(t) - B(t - \delta)/d$, which would satisfy the equation $\mathrm{d}Y/\mathrm{d}t = -d Y$ if $B$ were time independent.  This equation has analytic solution $Y(t + \Delta t) = Y(t) e^{-d \Delta t}$, which is exactly Eqn~(\ref{discrete.lifecycle}).  Of course, $B$ is time dependent, so Eqn~(\ref{discrete.lifecycle}) is not an exact solution.  Nevertheless, it has superior numerical properties compared with the forward Euler form.
+
+If desired, Eqn~(\ref{discrete.lifecycle}) could be used with multiple small timesteps, $\Delta t_{i}$, such that $\sum_{i}\Delta t_{i} = \Delta t$.  This would increase the accuracy of the final solution.
+
+The spatial dynamics is solved using a finite-difference spatial discretisation with a 5-point stencil for the Laplacian, a fully-upwind advection approach, and a forward Euler temporal discretisation:
+\begin{eqnarray}
+  X(x, y, t + \Delta t) & = & X(x, y, t) + \frac{\Delta t}{\Delta x \Delta y} \left[ X(x - \Delta x, y, t) + X(x + \Delta x, y, t) + X(x, y + \Delta y, t) + X(x, y - \Delta y, t) \right. \nonumber \\
+  && \ \ \ \ \ \ \ \ \
+    \left. - 4 X(x, y, t) \right]  - AX(x, y, t) + A\sum_{\tilde{x}, \tilde{y}} X(\tilde{x}, \tilde{y}, t) \ .
+  \label{eqn.adv.diff}
+\end{eqnarray}
+Here $\Delta x = \Delta y$ is the cell size, and $(\tilde{x}, \tilde{y})$ are all the points from which advected mosquitoes originated from in this timestep:
+\begin{equation}
+  \tilde{x} + \Delta t V_{x}(\tilde{x}, \tilde{y}, t) = x \ \ \mbox{and}\ \ 
+  \tilde{y} + \Delta t V_{y}(\tilde{x}, \tilde{y}, t) = y \ .
+  \label{eqn.tildexy}
+\end{equation}
+Given $(x, y)$ there could be many $(\tilde{x}, \tilde{y})$, for instance, if all wind vectors pointed towards one point, hence the $\sum_{\tilde{x}, \tilde{y}}$ in Eqn~(\ref{eqn.adv.diff}).  Since the spatial equations are solved on a grid, the equalities in Eqn~(\ref{eqn.tildexy}) are rounded to the nearest grid point.
+
+
+
+
+\end{document}
