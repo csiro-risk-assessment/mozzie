@@ -19,7 +19,7 @@ is solved numerically using an operator split.  Specifically, the equation descr
 \end{equation}
 is solved using a timestep of $\Delta t$, and then the equation describing the spatial dynamics:
 \begin{equation}
-  \frac{\mathrm{d}}{\mathrm{d}t}X(x, y, t) = \nabla\left[D\nabla X(x, y, t) - V(x, y, t)X(x, y, t)\right] \ ,
+  \frac{\mathrm{d}}{\mathrm{d}t}X(x, y, t) = \nabla\left[D\nabla X(x, y, t) - AV(x, y, t)X(x, y, t)\right] \ ,
 \end{equation}
 is solved using the same timestep $\Delta t$.
 
