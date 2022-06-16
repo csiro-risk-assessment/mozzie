@@ -546,6 +546,56 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       self.c.setSmallValue(1.0)
       self.assertEqual(self.c.getSmallValue(), 1.0)
 
+   def testCalcQm(self):
+      num_species = 4
+      wild = CellDynamicsMosquitoBH26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[[1.0, 2.0, 3.0, 4.0]] * 6] * 2, competition = [[1, 2, 3, 4], [5, 6, 7, 8], [6, 5, 4, 3], [3, 2, 3, 2]], emergence_rate = [41.0, 32.0, 23.0, 14.0], activity = [[0.125, 0.25, 0.75, 1], [1.25, 1, 0.625, 0.25], [0.25, 0.375, 0.5, 0.625], [0.385, 0.5, 0.125, 0.25]], reduction = self.red, hybridisation = [[[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]] * 4, offspring_modifier = [[[1] * 4] * 4] * 2, m_w = 0)
+      initial_condition = [0 for i in range(wild.getNumberOfPopulations() + wild.getNumberOfParameters())]
+
+      # first do something that will raise a division-by-zero error
+      ss = [10000 * i for i in range(num_species)] # assumed steady-state populations (there are 10000 wild-type males and 10000 wild-type females of species=1, for instance).  Note, there are zero mosquitoes for species = 0, which will raise the error
+      for delay in range(wild.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  if genotype == 0:
+                     initial_condition[ind] = ss[species]
+                  else:
+                     initial_condition[ind] = 0.0 # zero non-wildtype
+      pap = array.array('f', initial_condition)
+
+      with self.assertRaises(ValueError) as the_err:
+         qm = wild.calcQm(pap)
+      self.assertEqual(str(the_err.exception), "Sum_{g, s}d_{g, s, m}X_{g, s, m} for m = 0 is zero")
+
+      # now do something sensible
+      ss = [10000 * (i + 1) for i in range(num_species)] # Note there are no zero populations
+      for delay in range(wild.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  if genotype == 0:
+                     initial_condition[ind] = ss[species]
+                  else:
+                     initial_condition[ind] = 0.0 # zero non-wildtype
+      pap = array.array('f', initial_condition)
+
+      qm = wild.calcQm(pap)
+      for species in range(num_species):
+         pap[wild.getNumberOfPopulations() + species] = qm[species]
+      pap_initial = list(pap)
+
+      # check steady-state is indeed obtained
+      wild.evolve(1E6, pap)
+      wild.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
+
+      self.assertTrue(arrayfuzzyequal(pap, pap_initial, 1E-6))
+
+      
+
+      
+
 if __name__ == '__main__':
    unittest.main()
 

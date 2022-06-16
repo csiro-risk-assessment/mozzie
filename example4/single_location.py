@@ -2,23 +2,25 @@
 species_list = ["ag", "ac", "ar"] # if you change to !=3 subspecies, a few other things below will need to be changed, as noted below.  If you change these names, then search throughout this file for "species_list" to see what else you might need to change
 sex_list = ["male", "female"] # must be 2 sexes
 genotype_list = ["ww", "wc", "wr", "cc", "cr", "rr"] # must be 6 genotypes
-qm = [1000, 1000, 1000] # for the 3 species.  Must be changed if num_species changes from 3
+eqm_wild_pops = [1E4, 2E4, 3E4] # for the 3 species.  Must be changed if num_species changes from 3
 num_species = len(species_list)
 delay_days = 10 # number of days in the delay DE
 death_rate_ww = [0.1, 0.1, 0.1] # death rate of wild-types of each species, measured in 1/day.  Below we assume the other genotypes have the same death rate: if a bad assumption then just modify death_rate variable below.  Must be changed if num_species changes from 3
 competition = [[1, 0.4, 0.4], [0.4, 1, 0.4], [0.4, 0.4, 1]] # competition between subspecies.  Must be changed if num_species changes from 3
+competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]] # competition between subspecies.  Must be changed if num_species changes from 3
+competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]] # competition between subspecies.  Must be changed if num_species changes from 3
 emergence_rate = [9.0, 9.0, 9.0] # emergence rate for each species.  Must be changed if num_species changes from 3
 activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]] # activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing.  Must be changed if num_species changes from 3
-hM = 0.9 # reduction R = (1 - s * h) * (1 - s * h) for genotype = wc, for instance: see the recut function below.  Using that function, it is assumed that hM = hF
-sM = 0.9 # reduction R = (1 - s * h) * (1 - s * h) for genotype = wc, for instance: see the recut function below.  Using that function, it is assumed that sM = sF
+hM = 0.0 # reduction R = (1 - s * h) * (1 - s * h) for genotype = wc, for instance: see the reduct function below.  Using that function, it is assumed that hM = hF
+sM = 0.0 # reduction R = (1 - s * h) * (1 - s * h) for genotype = wc, for instance: see the reduct function below.  Using that function, it is assumed that sM = sF
 hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]] # hybridisation[mM][mF][m] = prob that offspring of species m results from male of species mM and female of species mF.  The current value means offspring is always same as mF.  Must be changed if num_species changes from 3
 offspring_modifier = [[[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]]] # offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) of sppring of sex s that arises from male of species mM and female of species mF
 sex_ratio = 0.7 # probability that offspring of wc or cc fathers are male
 female_bias = 0.6 # probability that offspring of (mother wc or cc + father ww) is female
-m_w = 1E-6
-m_c = 1E-6
+m_w = 0
+m_c = 0
 small_value = 1E-5 # when populations, carrying capacity, etc get smaller than this, set them to zero
-intro = 10000 # number of AC wc mosquitoes introduced
+intro = 1E4 # number of AC wc mosquitoes introduced
 
 
 death_rate = [[death_rate_ww] * 6] * 2
@@ -55,15 +57,14 @@ cell.setSmallValue(small_value)
  
 ######################################################
 # Define initial condition, which is wild-only
-# Note that qm * (emergence / death / 2 - 1) is only approximate because of the competition between species (the "/2" comes from 2 sexes
-initial_wilds = [qm[m] * (emergence_rate[m] / death_rate_ww[m] / 2.0 - 1.0) for m in range(num_species)]
 initial_condition = [0 for i in range(cell.getNumberOfPopulations() + cell.getNumberOfParameters())]
 for species in range(num_species):
     for genotype in [0]: # only wild-types
         for sex in range(2):
             for d in range(delay_days + 1):
                  index = species + genotype * num_species + sex * num_species * 6 + d * num_species * 6 * 2
-                 initial_condition[index] = initial_wilds[species]
+                 initial_condition[index] = eqm_wild_pops[species]
+qm = cell.calcQm(array.array('f', initial_condition)) # calculate qm for this equilibrium
 for m in range(num_species):
    initial_condition[cell.getNumberOfPopulations() + m] = qm[m] # set the qm values, which live at the end of the list
 
@@ -75,7 +76,6 @@ dt = 1
 for day in range(1000):
     cell.evolve(dt, pap)
     cell.incrementCurrentIndex() # needed for Delay DE!
-
 
 ######################################################
 # Define the ODE with m_w != 0 so resistant types can be created
@@ -89,14 +89,14 @@ cell.setSmallValue(small_value)
 genotype = 1 # genotype = wc
 sex = 0 # sex = male
 species = 1 # species = AC
-num = 10000
+num = intro
 pap[species + genotype * num_species + sex * num_species * 6 + cell.getCurrentIndex() * num_species * 6 * 2] = num
 
 
 ######################################################
 # Evolve
 results = []
-for day in range(60):
+for day in range(40):
     # output ww and wc, species=AC adult populations at the start of this day
     sys.stdout.write("day = " + str(day) + ". (ww, wc) = ")
     for species in [1]: # AC
@@ -106,15 +106,17 @@ for day in range(60):
                     ind = species + genotype * num_species + sex * num_species * 6 + d * num_species * 6 * 2
                     sys.stdout.write(str(round(pap[ind], 0)) + " ")
     sys.stdout.write("\n")
-    results.append([day, pap[1 + 1 * num_species + cell.getCurrentIndex() * num_species * 6 * 2]])
+    results.append([day, pap[1 + 0 * num_species + cell.getCurrentIndex() * num_species * 6 * 2], pap[1 + 1 * num_species + cell.getCurrentIndex() * num_species * 6 * 2]])
     cell.evolve(dt, pap)
     cell.incrementCurrentIndex() # needed for Delay DE!
 
 plt.figure()
-plt.plot([x[0] for x in results], [x[1] for x in results])
+plt.plot([x[0] for x in results], [x[1] for x in results], label = 'ww')
+plt.plot([x[0] for x in results], [x[2] for x in results], label = 'wc')
+plt.legend()
 plt.xlabel("Time (day)")
-plt.ylabel("WC population")
-plt.title("hM = " + str(hM) + " sm = " + str(sM))
+plt.ylabel("Population")
+plt.title("Male population, with hM = " + str(hM) + " sm = " + str(sM))
 plt.grid()
 plt.show()
 plt.close()
