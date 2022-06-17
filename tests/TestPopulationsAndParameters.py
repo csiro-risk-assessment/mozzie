@@ -36,6 +36,9 @@ class TestPopulationsAndParameters(unittest.TestCase):
       self.assertEqual(self.pap.getCell().getNumberOfParameters(), 2)
       self.assertTrue(arrayequal(self.pap.getCell().getDiffusingIndices(), [0, 2, 3, 4, 5, 6, 8, 10, 11]))
       self.assertTrue(arrayequal(self.pap.getCell().getAdvectingIndices(), [0, 4, 10]))
+      self.assertTrue(arrayequal(self.pap.getCell().getAdvectionClass(), [1, 1, 1]))
+      self.pap.getCell().setAdvectionClass(4, 3)
+      self.assertTrue(arrayequal(self.pap.getCell().getAdvectionClass(), [1, 3, 1]))
 
    def testBadSetPopulationAndParameters(self):
       with self.assertRaises(ValueError) as the_err:

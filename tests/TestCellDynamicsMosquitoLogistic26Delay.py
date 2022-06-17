@@ -43,6 +43,16 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
       gold = list(range(12 * 4 * 7, 12 * 4 * (7 + 1)))
       self.assertTrue(arrayequal(self.d.getAdvectingIndices(), gold))
 
+   def testSetGetAdvectionClass(self):
+      gold = [1] * 12 * 4
+      self.assertTrue(arrayequal(self.d.getAdvectionClass(), gold))
+      with self.assertRaises(ValueError) as the_err:
+         self.d.setAdvectionClass(11, 23)
+      self.assertEqual(str(the_err.exception), "setAdvectionClass: population index 11 has not defined to be advecting")
+      self.d.setAdvectionClass(12 * 4 * 7 + 1, 23)
+      gold[1] = 23
+      self.assertTrue(arrayequal(self.d.getAdvectionClass(), gold))
+
    def testGetDiffusingIndices(self):
       gold = list(range(12 * 4 * 7, 12 * 4 * (7 + 1)))
       self.assertTrue(arrayequal(self.d.getDiffusingIndices(), gold))

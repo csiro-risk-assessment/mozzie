@@ -31,6 +31,9 @@ class TestCellDynamicsStatic15_9_3_2(unittest.TestCase):
    def testGetAdvectingIndices(self):
       self.assertTrue(arrayequal(self.c.getAdvectingIndices(), [0, 4, 10]))
 
+   def testGetAdvectionClass(self):
+      self.assertTrue(arrayequal(self.c.getAdvectionClass(), [1] * 3))
+
    def testGetNumberOfParameters(self):
       self.assertEqual(self.c.getNumberOfParameters(), 2)
 

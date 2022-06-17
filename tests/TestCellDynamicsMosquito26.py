@@ -420,6 +420,16 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
       self.c.setNumAges(5)
       self.assertTrue(arrayequal(self.c.getAdvectingIndices(), list(range(24 * 4, 24 * 5))))
 
+   def testGetAdvectionClass(self):
+      gold = [1] * 24
+      self.assertTrue(arrayequal(self.c.getAdvectionClass(), gold))
+      self.c.setAdvectionClass(25, 26)
+      gold[1] = 26
+      self.assertTrue(arrayequal(self.c.getAdvectionClass(), gold))
+      self.c.setNumAges(5)
+      gold[1] = 1
+      self.assertTrue(arrayequal(self.c.getAdvectionClass(), gold))
+
    def testSetGetMuLarvae(self):
       self.c.setMuLarvae(1234.0)
       self.assertEqual(self.c.getMuLarvae(), 1234.0)
