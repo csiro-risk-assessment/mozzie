@@ -188,8 +188,6 @@ cdef class SpatialDynamics:
         cdef unsigned p
         # utility indeces
         cdef unsigned i, j, k
-        # the quantity dumped at the "to" cell
-        cdef float qu
 
         # grab all the advecting populations
         for ind in range(self.num_active_cells):
@@ -199,8 +197,10 @@ cdef class SpatialDynamics:
                 self.all_advecting_populations.data.as_floats[i + p] = self.all_quantities.data.as_floats[j + self.advecting_indices.data.as_uints[p]]
 
         # initialise the self.change_adv in populations, which is just the amount that comes out of the cells
-        for i in range(self.num_advecting_populations_total):
-            self.change_adv.data.as_floats[i] = - advection_fraction[0] * self.all_advecting_populations.data.as_floats[i]
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_advecting_populations_at_cell
+            for p in range(self.num_advecting_populations_at_cell):
+                self.change_adv.data.as_floats[i + p] = - advection_fraction[self.advection_classes.data.as_uints[p]] * self.all_advecting_populations.data.as_floats[i + p]
 
         # use wind to disperse to neighbours
         cdef unsigned from_index
@@ -208,9 +208,8 @@ cdef class SpatialDynamics:
         for i in range(num_advections):
             from_index = self.num_advecting_populations_at_cell * afr.data.as_uints[i]
             to_index = self.num_advecting_populations_at_cell * ato.data.as_uints[i]
-            qu = advection_fraction[0] * apr.data.as_floats[i]
             for p in range(self.num_advecting_populations_at_cell):
-                self.change_adv.data.as_floats[to_index + p] = self.change_adv.data.as_floats[to_index + p] + qu * self.all_advecting_populations.data.as_floats[from_index + p]
+                self.change_adv.data.as_floats[to_index + p] = self.change_adv.data.as_floats[to_index + p] + advection_fraction[self.advection_classes.data.as_uints[p]] * apr.data.as_floats[i] * self.all_advecting_populations.data.as_floats[from_index + p]
 
         # add the result to the populations
         for ind in range(self.num_active_cells):
