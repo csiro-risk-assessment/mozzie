@@ -75,7 +75,7 @@ sys.stdout.write("Advecting\n")
 start = timeit.default_timer()
 for i in range(1, 11):
    sys.stdout.write("Time step " + str(i) + "\n")
-   spatial.advect(1.0, w)
+   spatial.advect(array.array('f', [1.0]), w)
 sys.stdout.write("Time for 1 diffusion step = " + str((timeit.default_timer() - start) / 10.0) + "s\n")
 
 

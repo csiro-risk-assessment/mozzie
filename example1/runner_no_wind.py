@@ -12,6 +12,7 @@
 # Import libraries
 import os
 import sys
+import array
 import timeit
 
 # so we can find our ../code no matter how we are called
@@ -106,7 +107,7 @@ for i in range(501):
    # diffuse with diffusion coefficient 0.1 km^2/day
    spatial.diffuse(timestep_size, 0.1)
    # NO ADVECTION
-   # spatial.advect(0.01, wind)
+   # spatial.advect(array.array('f', [0.01]), wind)
    if (i%100 == 0):
       sys.stdout.write("Outputting population result...\n")
       spatial.outputCSV("runner_no_wind_" + str(i) + "_days.csv", 0, "0", "")

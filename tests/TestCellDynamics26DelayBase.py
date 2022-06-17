@@ -44,7 +44,7 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
       self.assertTrue(arrayequal(self.d.getAdvectingIndices(), gold))
 
    def testSetGetAdvectionClass(self):
-      gold = [1] * 12 * 4
+      gold = [0] * 12 * 4
       self.assertTrue(arrayequal(self.d.getAdvectionClass(), gold))
       with self.assertRaises(ValueError) as the_err:
          self.d.setAdvectionClass(11, 23)

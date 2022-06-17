@@ -1,5 +1,6 @@
 import os
 import sys
+import array
 import unittest
 
 # so we can find our ../code no matter how we are called
@@ -35,7 +36,7 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities.setPopulationAndParameters(0, pop)
       spatial = SpatialDynamics(self.g1, all_quantities)
       with self.assertRaises(ValueError) as the_err:
-         spatial.advect(1.0, w_not_processed)
+         spatial.advect(array.array('f', [1.0]), w_not_processed)
       self.assertEqual(str(the_err.exception), "Wind must have been processed before being used")
 
 
@@ -46,7 +47,7 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities = PopulationsAndParameters(self.g1, self.cell)
       all_quantities.setPopulationAndParameters(0, pop)
       spatial = SpatialDynamics(self.g1, all_quantities)
-      spatial.advect(1.0, self.w1)
+      spatial.advect(array.array('f', [1.0]), self.w1)
       spatial.outputCSV(os.path.join(findbin, "2D_advection_out_0_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_0_1.csv")) as f:
          data = f.readlines()
@@ -61,7 +62,7 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities = PopulationsAndParameters(self.g1, self.cell)
       all_quantities.setPopulationAndParameters(1, pop)
       spatial = SpatialDynamics(self.g1, all_quantities)
-      spatial.advect(1.0, self.w1)
+      spatial.advect(array.array('f', [1.0]), self.w1)
       spatial.outputCSV(os.path.join(findbin, "2D_advection_out_1_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_1_1.csv")) as f:
          data = f.readlines()
@@ -77,7 +78,7 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities = PopulationsAndParameters(self.g1, self.cell)
       all_quantities.setPopulationAndParameters(6, pop)
       spatial = SpatialDynamics(self.g1, all_quantities)
-      spatial.advect(5.0, self.w1)
+      spatial.advect(array.array('f', [5.0]), self.w1)
       spatial.outputCSV(os.path.join(findbin, "2D_advection_out_2_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_2_1.csv")) as f:
          data = f.readlines()

@@ -120,7 +120,7 @@ for bigP in [20, 1]:
          sys.stdout.write("    K_high subcycle " + str(sub_cycle) + "\n")
          spatial.evolveCells(timestep_size)
          spatial.diffuse(timestep_size, 0.1)
-         spatial.advect(0.01, wind)
+         spatial.advect(array.array('f', [0.01]), wind)
          the_time += timestep_size
       all_pops.setOverActiveGrid(2, cc_low)
       all_pops.setOverActiveGrid(3, cc_low)
@@ -128,7 +128,7 @@ for bigP in [20, 1]:
          sys.stdout.write("    K_low subcycle " + str(sub_cycle) + "\n")
          spatial.evolveCells(timestep_size)
          spatial.diffuse(timestep_size, 0.1)
-         spatial.advect(0.01, wind)
+         spatial.advect(array.array('f', [0.01]), wind)
          the_time += timestep_size
 
    sys.stdout.write("Outputting population result...\n")
@@ -155,7 +155,7 @@ for bigP in [20, 1]:
          sys.stdout.write("    K_high subcycle " + str(sub_cycle) + "\n")
          spatial.evolveCells(timestep_size)
          spatial.diffuse(timestep_size, 0.1)
-         spatial.advect(0.01, wind)
+         spatial.advect(array.array('f', [0.01]), wind)
          the_time += timestep_size
       all_pops.setOverActiveGrid(2, cc_low)
       all_pops.setOverActiveGrid(3, cc_low)
@@ -163,7 +163,7 @@ for bigP in [20, 1]:
          sys.stdout.write("    K_low subcycle " + str(sub_cycle) + "\n")
          spatial.evolveCells(timestep_size)
          spatial.diffuse(timestep_size, 0.1)
-         spatial.advect(0.01, wind)
+         spatial.advect(array.array('f', [0.01]), wind)
          the_time += timestep_size
 
    sys.stdout.write("Outputting population result...\n")
@@ -191,7 +191,7 @@ for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparis
          sys.stdout.write("    K_high subcycle " + str(sub_cycle) + "\n")
          #### spatial.evolveCells(timestep_size)
          spatial.diffuse(timestep_size, 0.1)
-         spatial.advect(0.01, wind)
+         spatial.advect(array.array('f', [0.01]), wind)
          the_time += timestep_size
       #all_pops.setOverActiveGrid(2, cc_low)
       #all_pops.setOverActiveGrid(3, cc_low)
@@ -199,7 +199,7 @@ for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparis
          sys.stdout.write("    K_low subcycle " + str(sub_cycle) + "\n")
          #### spatial.evolveCells(timestep_size)
          spatial.diffuse(timestep_size, 0.1)
-         spatial.advect(0.01, wind)
+         spatial.advect(array.array('f', [0.01]), wind)
          the_time += timestep_size
 
    sys.stdout.write("Outputting population result...\n")
@@ -228,7 +228,7 @@ for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparis
          sys.stdout.write("    K_high subcycle " + str(sub_cycle) + "\n")
          spatial.evolveCells(timestep_size)
          spatial.diffuse(timestep_size, 0.1)
-         spatial.advect(0.01, wind)
+         spatial.advect(array.array('f', [0.01]), wind)
          the_time += timestep_size
       all_pops.setOverActiveGrid(2, cc_high)
       all_pops.setOverActiveGrid(3, cc_low)
@@ -236,7 +236,7 @@ for bigP in [1]: # this is irrelevant - i just keep it here for ease of comparis
          sys.stdout.write("    K_low subcycle " + str(sub_cycle) + "\n")
          spatial.evolveCells(timestep_size)
          spatial.diffuse(timestep_size, 0.1)
-         spatial.advect(0.01, wind)
+         spatial.advect(array.array('f', [0.01]), wind)
          the_time += timestep_size
 
    sys.stdout.write("Outputting population result...\n")

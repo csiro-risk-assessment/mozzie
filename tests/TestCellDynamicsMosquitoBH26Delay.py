@@ -43,6 +43,13 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       gold = list(range(12 * 4 * 7, 12 * 4 * (7 + 1)))
       self.assertTrue(arrayequal(self.d.getAdvectingIndices(), gold))
 
+   def testGetAdvectionClass(self):
+      gold = [0] * 12 * 4
+      self.assertTrue(arrayequal(self.d.getAdvectionClass(), gold))
+      self.d.setAdvectionClass(12 * 4 * 7 + 9, 123)
+      gold[9] = 123
+      self.assertTrue(arrayequal(self.d.getAdvectionClass(), gold))
+
    def testGetDiffusingIndices(self):
       gold = list(range(12 * 4 * 7, 12 * 4 * (7 + 1)))
       self.assertTrue(arrayequal(self.d.getDiffusingIndices(), gold))

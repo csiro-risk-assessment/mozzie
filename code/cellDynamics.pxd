@@ -26,8 +26,8 @@ cdef class CellDynamicsBase:
     cpdef array.array advecting_indices
 
     # advection_class[i] is the class of the i^th population that is advecting
-    # 1 <= advection_class[i], with 0 <= i < num_advecting
-    # This allows for different types of advection, for instance, males (class = 1) advecting with a different probability than females (class = 2)
+    # 0 <= advection_class[i], with 0 <= i < num_advecting
+    # This allows for different types of advection, for instance, males (class = 0) advecting with a different probability than females (class = 1)
     cpdef array.array advection_class
 
     # number of parameters (carrying capacity, mortality rate, etc) in the Cell dynamics
@@ -55,9 +55,9 @@ cdef class CellDynamicsBase:
 
     cpdef array.array getAdvectionClass(self)
     """Returns: advection_class[i], which is the class of the i^th population that is advecting
-    1 <= advection_class[i], with 0 <= i < num_advecting.  This allows for different types of
-    advection, for instance, males (class = 1) advecting with a different probability than
-    females (class = 2)"""
+    0 <= advection_class[i], with 0 <= i < num_advecting.  This allows for different types of
+    advection, for instance, males (class = 0) advecting with a different probability than
+    females (class = 1)"""
 
     cpdef setAdvectionClass(self, unsigned population_index, unsigned new_class)
     """Sets the advection class of the given population_index to new_class.  0 <= population_index < num_populations.
@@ -83,7 +83,7 @@ cdef class CellDynamicsBase:
 
 cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
     """No dynamics within the cell (all populations are static as far as the cell is concerned)
-    15 populations, 9 of them are diffusing and 3 advecting (all with advection_class=1), with 2 parameters"""
+    15 populations, 9 of them are diffusing and 3 advecting (all with advection_class=0), with 2 parameters"""
     
 
 cdef class CellDynamicsLogistic1_1(CellDynamicsBase):

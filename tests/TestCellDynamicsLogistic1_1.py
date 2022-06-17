@@ -36,7 +36,7 @@ class TestCellDynamicsLogistic1_1(unittest.TestCase):
       self.assertTrue(arrayequal(self.c.getAdvectingIndices(), [0]))
 
    def testSetGetAdvectionClass(self):
-      self.assertTrue(arrayequal(self.c.getAdvectionClass(), [1]))
+      self.assertTrue(arrayequal(self.c.getAdvectionClass(), [0]))
       with self.assertRaises(ValueError) as the_err:
          self.c.setAdvectionClass(1, 23)
       self.assertEqual(str(the_err.exception), "setAdvectionClass: population index 1 has not defined to be advecting")

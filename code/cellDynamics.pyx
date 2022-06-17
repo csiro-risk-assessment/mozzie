@@ -113,7 +113,7 @@ cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
         self.diffusing_indices = array.array('I', [0, 2, 3, 4, 5, 6, 8, 10, 11])
         self.num_advecting = 3
         self.advecting_indices = array.array('I', [0, 4, 10])
-        self.advection_class = array.array('I', [1, 1, 1])
+        self.advection_class = array.array('I', [0, 0, 0])
         self.num_parameters = 2
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
@@ -133,7 +133,7 @@ cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
         self.diffusing_indices = array.array('I', [0])
         self.num_advecting = 1
         self.advecting_indices = array.array('I', [0])
-        self.advection_class = array.array('I', [1])
+        self.advection_class = array.array('I', [0])
         self.num_parameters = 1
         self.growth_rate = 0.01 # fixed for this example
 
@@ -153,7 +153,7 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         self.diffusing_indices = array.array('I', [0, 1])
         self.num_advecting = 2 # both subspecies advect (and there is just 1 advection class)
         self.advecting_indices = array.array('I', [0, 1])
-        self.advection_class = array.array('I', [1, 1])
+        self.advection_class = array.array('I', [0, 0])
         self.num_parameters = 2 # carrying capacity Kx, and carrying capacity Ky
         # Default parameters in Equations (4.1) and (4.2) of Beeton et al, are as set in Fig5c
         self.mux = 0.7
@@ -385,7 +385,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.num_advecting = self.num_sexes * self.num_genotypes * self.num_species # only adults advect
         self.diffusing_indices = array.clone(array.array('I', []), self.num_diffusing, zero = False)
         self.advecting_indices = array.clone(array.array('I', []), self.num_advecting, zero = False)
-        self.advection_class = array.array('I', [1] * self.num_advecting)
+        self.advection_class = array.array('I', [0] * self.num_advecting)
         cdef unsigned sex, genotype, species, offset
         cdef unsigned ind = 0
         cdef unsigned age = self.num_ages - 1
@@ -1214,7 +1214,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         self.num_advecting = self.num_sexes * self.num_genotypes * self.num_species
         self.diffusing_indices = array.clone(array.array('I', []), self.num_diffusing, zero = False)
         self.advecting_indices = array.clone(array.array('I', []), self.num_advecting, zero = False)
-        self.advection_class = array.array('I', [1] * self.num_advecting)
+        self.advection_class = array.array('I', [0] * self.num_advecting)
         cdef unsigned ind = 0
         for sex in range(self.num_sexes):
             for genotype in range(self.num_genotypes):

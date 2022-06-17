@@ -57,6 +57,9 @@ cdef class SpatialDynamics:
     # The advecting population indices
     cpdef array.array advecting_indices
 
+    # The advection classes of the advecting populations
+    cpdef array.array advection_classes
+
     # Total number of advecting populations over all cells
     cpdef unsigned num_advecting_populations_total
 
@@ -107,6 +110,7 @@ cdef class SpatialDynamics:
         
         self.num_advecting_populations_at_cell = self.cell.getNumberOfAdvectingPopulations()
         self.advecting_indices = self.cell.getAdvectingIndices()
+        self.advection_classes = self.cell.getAdvectionClass()
         self.num_advecting_populations_total = self.num_active_cells * self.num_advecting_populations_at_cell
         # initialize change_adv
         self.change_adv = array.clone(float_template, self.num_advecting_populations_total, zero = False)
@@ -167,9 +171,9 @@ cdef class SpatialDynamics:
                 k = j + self.diffusing_indices.data.as_uints[p]
                 self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
                 
-    cpdef advect(self, float advection_fraction, Wind wind):
+    cpdef advect(self, float [:] advection_fraction, Wind wind):
         """One timestep of advection, using the given wind.
-        advection_fraction of all populations that the Cell has labelled as 'advecting' will experience advection"""
+        advection_fraction of all populations that the Cell has labelled as 'advecting' will experience advection.  advection_class = i will experience advection_fraction[i]"""
         if wind.getProcessedDataComputed() != 1:
             raise ValueError("Wind must have been processed before being used")
 
@@ -196,7 +200,7 @@ cdef class SpatialDynamics:
 
         # initialise the self.change_adv in populations, which is just the amount that comes out of the cells
         for i in range(self.num_advecting_populations_total):
-            self.change_adv.data.as_floats[i] = - advection_fraction * self.all_advecting_populations.data.as_floats[i]
+            self.change_adv.data.as_floats[i] = - advection_fraction[0] * self.all_advecting_populations.data.as_floats[i]
 
         # use wind to disperse to neighbours
         cdef unsigned from_index
@@ -204,7 +208,7 @@ cdef class SpatialDynamics:
         for i in range(num_advections):
             from_index = self.num_advecting_populations_at_cell * afr.data.as_uints[i]
             to_index = self.num_advecting_populations_at_cell * ato.data.as_uints[i]
-            qu = advection_fraction * apr.data.as_floats[i]
+            qu = advection_fraction[0] * apr.data.as_floats[i]
             for p in range(self.num_advecting_populations_at_cell):
                 self.change_adv.data.as_floats[to_index + p] = self.change_adv.data.as_floats[to_index + p] + qu * self.all_advecting_populations.data.as_floats[from_index + p]
 
@@ -340,7 +344,7 @@ cdef class SpatialDynamics:
 
     cpdef advect_stoc(self, float advection_fraction, Wind wind):
         """One timestep of stochastic advection, using the given wind.
-        advection_fraction of all populations that the Cell has labelled as 'advecting' will experience advection"""
+        advection_fraction of all populations that the Cell has labelled as 'advecting' will experience advection."""
         if wind.getProcessedDataComputed() != 1:
             raise ValueError("Wind must have been processed before being used")
 

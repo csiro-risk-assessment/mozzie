@@ -1,5 +1,6 @@
 import os
 import sys
+import array
 import unittest
 
 # so we can find our ../code no matter how we are called
@@ -36,7 +37,7 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities = PopulationsAndParameters(self.g2, self.cell)
       all_quantities.setPopulationAndParameters(1, pop)
       spatial = SpatialDynamics(self.g2, all_quantities)
-      spatial.advect(1.0, self.w2)
+      spatial.advect(array.array('f', [1.0]), self.w2)
       spatial.outputCSV(os.path.join(findbin, "2D_advection_out_4_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_4_1.csv")) as f:
          data = f.readlines()
@@ -51,7 +52,7 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities = PopulationsAndParameters(self.g2, self.cell)
       all_quantities.setPopulationAndParameters(2, pop)
       spatial = SpatialDynamics(self.g2, all_quantities)
-      spatial.advect(1.0, self.w2)
+      spatial.advect(array.array('f', [1.0]), self.w2)
       spatial.outputCSV(os.path.join(findbin, "2D_advection_out_5_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_5_1.csv")) as f:
          data = f.readlines()
@@ -67,7 +68,7 @@ class TestAdvection_1(unittest.TestCase):
       all_quantities.setPopulationAndParameters(5, pop5)
       all_quantities.setPopulationAndParameters(6, pop6)
       spatial = SpatialDynamics(self.g2, all_quantities)
-      spatial.advect(0.6, self.w2)
+      spatial.advect(array.array('f', [0.6]), self.w2)
       spatial.outputCSV(os.path.join(findbin, "2D_advection_out_6_1.csv"), 4, "0", "")
       with open(os.path.join(findbin, "2D_advection_out_6_1.csv")) as f:
          data = f.readlines()
