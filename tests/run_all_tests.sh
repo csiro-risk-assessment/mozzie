@@ -13,6 +13,7 @@ python3 ${DIR}/TestDiffusion_1.py
 python3 ${DIR}/TestDiffusion_2.py
 python3 ${DIR}/TestAdvection_1.py
 python3 ${DIR}/TestAdvection_2.py
+python3 ${DIR}/TestAdvection_3.py
 python3 ${DIR}/TestEvolveCells.py
 python3 ${DIR}/TestCellDynamicsMosquito26.py
 python3 ${DIR}/TestCellDynamicsDelayBase.py

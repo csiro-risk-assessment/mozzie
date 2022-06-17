@@ -9,6 +9,7 @@ py TestDiffusion_1.py
 py TestDiffusion_2.py
 py TestAdvection_1.py
 py TestAdvection_2.py
+py TestAdvection_3.py
 py TestEvolveCells.py
 py TestCellDynamicsMosquito26.py
 py TestCellDynamicsDelayBase.py
