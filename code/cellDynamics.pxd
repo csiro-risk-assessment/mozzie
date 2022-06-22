@@ -80,6 +80,9 @@ cdef class CellDynamicsBase:
     Note: pops_and_params will be of size num_populations + num_parameters, and should not be resized
     Note: the first num_populations entries of pops_and_params will be the population values, while the remainder are the parameter values"""
 
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params)
+    """This currently only works for CellDynamicsMosquitoBH26Delay.  Given the eqm_pops_and_params, which is an array containing the populations at equilibrium, return the qm values.  Only the 'current_index' entries of eqm_pops_and_params are used in this calculation.  That is, you must make sure the entries corresponding to adults of species M, genotype G, sex S are correct (they have index = M + G * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes).  This function does not check that eqm_pops_and_params is actually an equilibrium: if you feed it garbage, it will produce garbage!"""
+
 
 cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
     """No dynamics within the cell (all populations are static as far as the cell is concerned)
@@ -838,9 +841,6 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
 
     # precalcp is used in evolve.  precalcp[mM, mF, m, gM, gF, g, s] = offspring_modifier[s, mM, mF] * hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
     cdef array.array precalcp
-
-    cpdef array.array calcQm(self, float[:] eqm_pops_and_params)
-    """Given the eqm_pops_and_params, which is an array containing the populations at equilibrium, return the qm values.  Only the 'current_index' entries of eqm_pops_and_params are used in this calculation.  That is, you must make sure the entries corresponding to adults of species M, genotype G, sex S are correct (they have index = M + G * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes).  This function does not check that eqm_pops_and_params is actually an equilibrium: if you feed it garbage, it will produce garbage!"""
 
     cpdef unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params)
     """Calculates X'_M (= self.xprimeM), given the pops_and_params, and the delayed_base, which usually = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes.  Returns 0 if there are no male mosquitoes whatsoever in the delayed pops_and_params slots, and returns 1 otherwise.  This is used in evolve() and probably isn't much use elsewhere"""

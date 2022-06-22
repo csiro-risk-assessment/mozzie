@@ -101,6 +101,10 @@ cdef class CellDynamicsBase:
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
         return
 
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
+        """Not defined for this class"""
+        return
+
 
 cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
     """No dynamics within the cell (all populations are static as far as the cell is concerned)
@@ -121,6 +125,9 @@ cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
         
         return
     
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
+        """Not defined for this class"""
+        return
 
 cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
     """Logistic growth of a single diffusing and advecting population
@@ -144,6 +151,9 @@ cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
         # pops_and_params[1] is the carrying capacity
         pops_and_params[0] = pops_and_params[0] + timestep * self.growth_rate * pops_and_params[0] * (1.0 - pops_and_params[0] / pops_and_params[1])
 
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
+        """Not defined for this class"""
+        return
 
 cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
     def __init__(self):
@@ -231,6 +241,9 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         pops_and_params[0] = max(0.0, x + timestep * f * x)
         pops_and_params[1] = max(0.0, y + timestep * g * y)
 
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
+        """Not defined for this class"""
+        return
 
 cdef class CellDynamicsMosquito23(CellDynamicsBase):
     def __init__(self):
@@ -779,6 +792,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         for ind in range(self.num_populations):
             if pops_and_params[ind] < self.zero_cutoff:
                 pops_and_params[ind] = 0.0
+
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
+        """Not defined for this class"""
+        return
 
     cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange):
         cdef unsigned ind
@@ -1586,6 +1603,10 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                     delayed_ind = delayed_base + ind
                     pops_and_params[delayed_ind] = self.new_pop[ind]
+
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
+        """Not defined for this class"""
+        return
 
     cpdef void setMinCarryingCapacity(self, float value):
         self.min_cc = value
