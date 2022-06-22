@@ -601,10 +601,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       wild.evolve(1E6, pap)
       wild.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
 
-      self.assertTrue(arrayfuzzyequal(pap, pap_initial, 1E-6))
-
-      
-
+      self.assertTrue(arrayfuzzyequal(pap, pap_initial, 1E-2))
       
 
 if __name__ == '__main__':
