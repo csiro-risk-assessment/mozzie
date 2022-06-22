@@ -241,6 +241,31 @@ cdef class SpatialDynamics:
             for p in range(self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
 
+    cpdef calcQm(self):
+        """Calculates qm at all the cells in the grid, assuming that the populations on the grid are at equilibrium"""
+
+        # active cell index
+        cdef unsigned ind
+        # population index
+        cdef unsigned p
+        # utility index
+        cdef unsigned i
+        # number of populations
+        cdef unsigned num_pops = self.cell.getNumberOfPopulations()
+        # qm values are held here
+        cdef array.array qm_vals = array.clone(array.array('f', []), self.cell.getNumSpecies(), zero = False)
+
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_quantities_at_cell
+            # copy into the c_cell_params_and_props local array
+            for p in range(self.num_quantities_at_cell):
+                self.c_cell_params_and_props[p] = self.all_quantities.data.as_floats[i + p]
+            # calculate qm at this cell
+            qm_vals = self.cell.calcQm(self.c_cell_params_and_props)
+            # copy back into the correct slots
+            for p in range(num_pops, self.num_quantities_at_cell):
+                self.all_quantities.data.as_floats[i + p] = qm_vals.data.as_floats[p - num_pops]
+
     cpdef outputCSV(self, str filename, unsigned pop_or_param, str inactive_value, str additional_header_lines):
         """Outputs cell information for given population or parameter number to filename in CSV format.
         the value inactive_value (as a string) is used in the CSV file for inactive cells.
