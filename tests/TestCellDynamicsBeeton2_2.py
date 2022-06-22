@@ -20,6 +20,9 @@ class TestCellDynamicsBeeton2_2(unittest.TestCase):
    def setUp(self):
       self.c = CellDynamicsBeeton2_2()
 
+   def testGetNumSpecies(self):
+      self.assertEqual(self.c.getNumSpecies(), 2)
+      
    def testSetGetMuX(self):
       self.c.setMuX(1234.0)
       self.assertEqual(self.c.getMuX(), 1234.0)

@@ -262,7 +262,7 @@ cdef class SpatialDynamics:
                 self.c_cell_params_and_props[p] = self.all_quantities.data.as_floats[i + p]
             # calculate qm at this cell
             qm_vals = self.cell.calcQm(self.c_cell_params_and_props)
-            # copy back into the correct slots
+            # place qm into the correct slots
             for p in range(num_pops, self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = qm_vals.data.as_floats[p - num_pops]
 

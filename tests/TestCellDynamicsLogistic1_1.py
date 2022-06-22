@@ -23,6 +23,9 @@ class TestCellDynamicsLogistic1_1(unittest.TestCase):
    def testGetNumberOfPopulations(self):
       self.assertEqual(self.c.getNumberOfPopulations(), 1)
 
+   def testGetNumSpecies(self):
+      self.assertEqual(self.c.getNumSpecies(), 1)
+
    def testGetNumberOfDiffusingPopulations(self):
       self.assertEqual(self.c.getNumberOfDiffusingPopulations(), 1)
 

@@ -105,6 +105,9 @@ cdef class CellDynamicsBase:
         """Not defined for this class"""
         return
 
+    cpdef unsigned getNumSpecies(self):
+        return 0
+    
 
 cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
     """No dynamics within the cell (all populations are static as far as the cell is concerned)
@@ -129,6 +132,9 @@ cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
         """Not defined for this class"""
         return
 
+    cpdef unsigned getNumSpecies(self):
+        return 1
+    
 cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
     """Logistic growth of a single diffusing and advecting population
     1 parameter, which is the carrying capacity"""
@@ -154,6 +160,10 @@ cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
     cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
         """Not defined for this class"""
         return
+
+    cpdef unsigned getNumSpecies(self):
+        return 1
+    
 
 cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
     def __init__(self):
@@ -245,6 +255,9 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         """Not defined for this class"""
         return
 
+    cpdef unsigned getNumSpecies(self):
+        return 2
+    
 cdef class CellDynamicsMosquito23(CellDynamicsBase):
     def __init__(self):
         super().__init__()
@@ -1470,6 +1483,9 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     cpdef precalculate(self):
         self.have_precalculated = 1
 
+    cpdef unsigned getNumSpecies(self):
+        return self.num_species
+    
 cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
     """Mosquito lifecycle dynamics as governed by a delay differential equation using logistic growth"""
     

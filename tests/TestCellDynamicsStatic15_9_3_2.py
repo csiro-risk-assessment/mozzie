@@ -19,6 +19,9 @@ class TestCellDynamicsStatic15_9_3_2(unittest.TestCase):
    def testGetNumberOfPopulations(self):
       self.assertEqual(self.c.getNumberOfPopulations(), 15)
 
+   def testGetNumSpecies(self):
+      self.assertEqual(self.c.getNumSpecies(), 1)
+
    def testGetNumberOfDiffusingPopulations(self):
       self.assertEqual(self.c.getNumberOfDiffusingPopulations(), 9)
 

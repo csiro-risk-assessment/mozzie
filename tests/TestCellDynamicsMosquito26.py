@@ -400,6 +400,11 @@ class TestCellDynamicsMosquito26(unittest.TestCase):
    def testGetNumberOfParameters(self):
       self.assertEqual(self.c.getNumberOfParameters(), 2)
 
+   def testGetNumSpecies(self):
+      self.assertEqual(self.c.getNumSpecies(), 2)
+      self.c.setNumSpecies(4)
+      self.assertEqual(self.c.getNumSpecies(), 4)
+
    def testGetNumberOfDiffusingPopulations(self):
       self.assertEqual(self.c.getNumberOfDiffusingPopulations(), 24)
       self.c.setNumAges(4)

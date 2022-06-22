@@ -83,6 +83,8 @@ cdef class CellDynamicsBase:
     cpdef array.array calcQm(self, float[:] eqm_pops_and_params)
     """This currently only works for CellDynamicsMosquitoBH26Delay.  Given the eqm_pops_and_params, which is an array containing the populations at equilibrium, return the qm values.  Only the 'current_index' entries of eqm_pops_and_params are used in this calculation.  That is, you must make sure the entries corresponding to adults of species M, genotype G, sex S are correct (they have index = M + G * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes).  This function does not check that eqm_pops_and_params is actually an equilibrium: if you feed it garbage, it will produce garbage!"""
 
+    cpdef unsigned getNumSpecies(self)
+    """Get number of species"""
 
 cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
     """No dynamics within the cell (all populations are static as far as the cell is concerned)
@@ -399,9 +401,6 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cpdef void setGenotypeRapidAccess(self)
     """Sets the values in self.genotypeRapidAccess.  Before calling this, self.num_sexes should have been set, since self.genotypeRapidAccess depends on that parameter.  Also, self.num_genotypes should have been set using setNumGenotypes(...).  Also, self.accuracy should not be zero.  Please see extended comments associated with the genotypeRapidAccess array"""
 
-    cpdef unsigned getNumSpecies(self)
-    """Get number of species"""
-    
     cpdef void setAccuracy(self, float accuracy)
     """Set accuracy of PMB.  This calls setInternalParameters to appropriately set other parameters, given accuracy"""
 

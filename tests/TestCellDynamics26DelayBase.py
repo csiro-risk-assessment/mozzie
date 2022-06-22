@@ -33,6 +33,10 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
    def testGetNumberOfPopulations(self):
       self.assertEqual(self.d.getNumberOfPopulations(), 12 * 18 * 4)
 
+   def testGetNumSpecies(self):
+      self.assertEqual(self.c.getNumSpecies(), 3)
+      self.assertEqual(self.d.getNumSpecies(), 4)
+
    def testGetNumberOfDiffusingPopulations(self):
       self.assertEqual(self.d.getNumberOfDiffusingPopulations(), 12 * 4)
 
