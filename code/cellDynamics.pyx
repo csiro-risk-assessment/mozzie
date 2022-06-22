@@ -1658,6 +1658,9 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.precalc = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2 * self.num_genotypes * self.num_species2 * self.num_species, zero = False)
         self.precalcp = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2 * self.num_genotypes * self.num_species2 * self.num_species, zero = False)
         self.comp = array.clone(array.array('f', []), self.num_species, zero = False)
+        self.death_terms = array.clone(array.array('f', []), self.num_species, zero = False)
+        self.yyp_terms = array.clone(array.array('f', []), self.num_species, zero = False)
+        self.qm_vals = array.clone(array.array('f', []), self.num_species, zero = False)
         self.precalculate()
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
@@ -1740,7 +1743,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                                     self.precalcp[ind] += self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] * self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
         self.have_precalculated = 1
         
-    cpdef list calcQm(self, float[:] eqm_pops_and_params):
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
         if self.have_precalculated == 0:
             self.precalculate()
 
@@ -1757,21 +1760,22 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.calcCompetition(some_males, eqm_pops_and_params)
                             
         # calculate sum over genotypes and sexes of the death terms and the Y' terms
-        death_terms = [0.0] * self.num_species
-        yyp_terms = [0.0] * self.num_species
+        array.zero(self.death_terms)
+        array.zero(self.yyp_terms)
         for m in range(self.num_species):
             for g in range(self.num_genotypes):
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
-                    yyp_terms[m] += self.yyp[ind]
-                    death_terms[m] += self.death_rate[ind] * eqm_pops_and_params[ind + adult_base]
+                    self.yyp_terms.data.as_floats[m] = self.yyp_terms.data.as_floats[m] + self.yyp.data.as_floats[ind]
+                    self.death_terms.data.as_floats[m] = self.death_terms.data.as_floats[m] + self.death_rate.data.as_floats[ind] * eqm_pops_and_params[ind + adult_base]
 
         for m in range(self.num_species):
-            if death_terms[m] <= 0.0:
+            if self.death_terms.data.as_floats[m] <= 0.0:
                 raise ValueError("Sum_{g, s}d_{g, s, m}X_{g, s, m} for m = " + str(m) + " is zero")
         # calculate the resulting qm values
-        qm = [self.comp[m] / (yyp_terms[m] / death_terms[m] - 1.0) for m in range(self.num_species)]
-        return qm
+        for m in range(self.num_species):
+            self.qm_vals.data.as_floats[m] = self.comp.data.as_floats[m] / (self.yyp_terms.data.as_floats[m] / self.death_terms.data.as_floats[m] - 1.0)
+        return self.qm_vals
 
     cpdef unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params):
         cdef unsigned some_males = 0 # zero if there are no delayed males whatsoever

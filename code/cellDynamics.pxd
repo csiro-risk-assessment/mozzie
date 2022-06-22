@@ -824,13 +824,22 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     # comp used in evolve.  comp[m]
     cdef array.array comp
 
+    # death_terms used in calcQm.  death_terms[m]
+    cdef array.array death_terms
+
+    # yyp_terms used in calcQm.  yyp_terms[m]
+    cdef array.array yyp_terms
+
+    # qm_vals used in calcQm.  qm_vals[m]
+    cdef array.array qm_vals
+
     # precalc is used in evolve.  precalc[mM, mF, m, gM, gF, g, s] = hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
     cdef array.array precalc
 
     # precalcp is used in evolve.  precalcp[mM, mF, m, gM, gF, g, s] = offspring_modifier[s, mM, mF] * hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
     cdef array.array precalcp
 
-    cpdef list calcQm(self, float[:] eqm_pops_and_params)
+    cpdef array.array calcQm(self, float[:] eqm_pops_and_params)
     """Given the eqm_pops_and_params, which is an array containing the populations at equilibrium, return the qm values.  Only the 'current_index' entries of eqm_pops_and_params are used in this calculation.  That is, you must make sure the entries corresponding to adults of species M, genotype G, sex S are correct (they have index = M + G * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes).  This function does not check that eqm_pops_and_params is actually an equilibrium: if you feed it garbage, it will produce garbage!"""
 
     cpdef unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params)
