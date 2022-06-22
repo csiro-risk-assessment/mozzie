@@ -16,3 +16,4 @@ py TestCellDynamicsDelayBase.py
 py TestCellDynamics26DelayBase.py
 py TestCellDynamicsMosquitoLogistic26Delay.py
 py TestCellDynamicsMosquitoBH26Delay.py
+py TestCalcQm.py
