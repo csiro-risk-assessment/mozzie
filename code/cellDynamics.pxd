@@ -810,10 +810,24 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
       5 is rr
     There are num_species spatially-varying parameters, which are the carrying-capacities of each species
     """
+    # number of genotypes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity.
+    cdef unsigned num_genotypes_to_calc
+
+    # number of sexes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
+    cdef unsigned num_sexes_to_calc
+
+    # determines whether the parameters in pops_and_params represent the carrying capacity or q_m."""
+    cdef unsigned use_qm
+
+    # Array to indicate presence or absence of species, sized to num_species
+    cdef array.array speciesPresent
+
+    # Array to indicate presence or absence of genotype, sized to num_genotypes
+    cdef array.array genotypePresent
 
     # this is used in evolve to hold the new population, new_pop[s, g, m] with index m + g * self.num_species + s * self.num_species * self.num_genotypes
     cdef array.array new_pop
-    
+
     # this is used in evolve to hold xprimeM (proportionate mixing quantity).  xprimeM[gM][mM][mF] has index mF + mM * num_species + gM * num_species * num_species
     cdef array.array xprimeM
 
@@ -850,5 +864,12 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     cpdef void calcCompetition(self, unsigned some_males, float [:] pops_and_params)
     """Calculates C = competition (= self.comp), given some_males (whether there are any males whatsoever in the delayed pops_and_params), and pops_and_params.  This is used in evolve() and probably isn't much use elsewhere"""
 
+    cpdef void setNumGenotypesToCalc(self, unsigned num_sexes, unsigned num_genotypes_to_calc)
+    """Sets number of genotypes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
 
+    cpdef void setNumSexesToCalc(self, unsigned num_sexes_to_calc)
+    """Sets number of sexes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
+    
+    cpdef void setUseQm(self, unsigned use_qm)
+    """Sets the use_qm constant to determine whether the parameters in pops_and_params represent the carrying capacity or q_m."""
     

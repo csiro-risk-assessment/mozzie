@@ -2,23 +2,25 @@
 species_list = ["ag", "ac", "ar"] # if you change to !=3 subspecies, a few other things below will need to be changed, as noted below.  If you change these names, then search throughout this file for "species_list" to see what else you might need to change
 sex_list = ["male", "female"] # must be 2 sexes
 genotype_list = ["ww", "wc", "wr", "cc", "cr", "rr"] # must be 6 genotypes
-eqm_wild_pops = [1E4, 2E4, 3E4] # for the 3 species.  Must be changed if num_species changes from 3
+eqm_wild_pops = [140000, 140000, 140000] # for the 3 species.  Must be changed if num_species changes from 3
 num_species = len(species_list)
 delay_days = 10 # number of days in the delay DE
 death_rate_ww = [0.1, 0.1, 0.1] # death rate of wild-types of each species, measured in 1/day.  Below we assume the other genotypes have the same death rate: if a bad assumption then just modify death_rate variable below.  Must be changed if num_species changes from 3
-competition = [[1, 0.4, 0.4], [0.4, 1, 0.4], [0.4, 0.4, 1]] # competition between subspecies.  Must be changed if num_species changes from 3
-competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]] # competition between subspecies.  Must be changed if num_species changes from 3
-competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]] # competition between subspecies.  Must be changed if num_species changes from 3
+#competition = [[1, 0.4, 0.4], [0.4, 1, 0.4], [0.4, 0.4, 1]] # competition between subspecies.  Must be changed if num_species changes from 3
+#competition = [[1, 0, 0], [0, 1, 0], [0, 0, 1]] # competition between subspecies.  Must be changed if num_species changes from 3
+competition = [[1, 0.717, 0.562], [0.717, 1, 0.317], [0.562, 0.317, 1]]
 emergence_rate = [9.0, 9.0, 9.0] # emergence rate for each species.  Must be changed if num_species changes from 3
-activity = [[1, 0, 0], [0, 1, 0], [0, 0, 1]] # activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing.  Must be changed if num_species changes from 3
+activity = [[0.9982032342, 0.0008983829, 0.0008983829], 
+[0.0008974781, 0.9971978740, 0.0019046479], 
+[0.0008974781, 0.0019046479, 0.9971978740]] # activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing.  Must be changed if num_species changes from 3
 hM = 0.0 # reduction R = (1 - s * h) * (1 - s * h) for genotype = wc, for instance: see the reduct function below.  Using that function, it is assumed that hM = hF
 sM = 0.0 # reduction R = (1 - s * h) * (1 - s * h) for genotype = wc, for instance: see the reduct function below.  Using that function, it is assumed that sM = sF
 hybridisation = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]] # hybridisation[mM][mF][m] = prob that offspring of species m results from male of species mM and female of species mF.  The current value means offspring is always same as mF.  Must be changed if num_species changes from 3
 offspring_modifier = [[[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]]] # offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) of sppring of sex s that arises from male of species mM and female of species mF
-sex_ratio = 0.7 # probability that offspring of wc or cc fathers are male
-female_bias = 0.6 # probability that offspring of (mother wc or cc + father ww) is female
-m_w = 0
-m_c = 0
+sex_ratio = 0.950 # probability that offspring of wc or cc fathers are male
+female_bias = 1. - 0.449 # probability that offspring of (mother wc or cc + father ww) is female
+m_w = 1E-6
+m_c = 1E-6
 small_value = 1E-5 # when populations, carrying capacity, etc get smaller than this, set them to zero
 intro = 1E4 # number of AC wc mosquitoes introduced
 
@@ -64,9 +66,11 @@ for species in range(num_species):
             for d in range(delay_days + 1):
                  index = species + genotype * num_species + sex * num_species * 6 + d * num_species * 6 * 2
                  initial_condition[index] = eqm_wild_pops[species]
+sys.stdout.write(str(initial_condition) + "\n")
 qm = cell.calcQm(array.array('f', initial_condition)) # calculate qm for this equilibrium
 for m in range(num_species):
-   initial_condition[cell.getNumberOfPopulations() + m] = qm[m] # set the qm values, which live at the end of the list
+    initial_condition[cell.getNumberOfPopulations() + m] = qm[m] # set the qm values, which live at the end of the list
+    sys.stdout.write("qm[" + str(m) + "] = " + str(qm[m]) + "\n")
 
 
 ######################################################
@@ -74,6 +78,14 @@ for m in range(num_species):
 pap = array.array('f', initial_condition)
 dt = 1
 for day in range(1000):
+    sys.stdout.write("day = " + str(day) + ". (ww) = ")
+    for species in [1]: # AC
+        for genotype in [0]: # ww and wc
+            for sex in [0]: # males
+                for d in [cell.getCurrentIndex()]:
+                    ind = species + genotype * num_species + sex * num_species * 6 + d * num_species * 6 * 2
+                    sys.stdout.write(str(round(pap[ind], 0)) + " ")
+    sys.stdout.write("\n")
     cell.evolve(dt, pap)
     cell.incrementCurrentIndex() # needed for Delay DE!
 
@@ -96,7 +108,7 @@ pap[species + genotype * num_species + sex * num_species * 6 + cell.getCurrentIn
 ######################################################
 # Evolve
 results = []
-for day in range(40):
+for day in range(365):
     # output ww and wc, species=AC adult populations at the start of this day
     sys.stdout.write("day = " + str(day) + ". (ww, wc) = ")
     for species in [1]: # AC

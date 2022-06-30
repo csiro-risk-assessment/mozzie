@@ -1698,21 +1698,81 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.death_terms = array.clone(array.array('f', []), self.num_species, zero = False)
         self.yyp_terms = array.clone(array.array('f', []), self.num_species, zero = False)
         self.qm_vals = array.clone(array.array('f', []), self.num_species, zero = False)
+        self.num_genotypes_to_calc = self.num_genotypes
+        self.num_sexes_to_calc = self.num_sexes
+        self.use_qm = 1
+        self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = False) 
+        for m in range(self.num_species): # default to all present (in case calc_Qm run before evolve)
+            self.speciesPresent.data.as_uchars[m] = 1
+        self.genotypePresent = array.clone(array.array('B', []), self.num_genotypes, zero = False)
+        for g in range(self.num_genotypes): # default to all present (in case calc_Qm run before evolve)
+            self.genotypePresent.data.as_uchars[g] = 1
         self.precalculate()
+
+    cpdef void setNumGenotypesToCalc(self, unsigned num_sexes, unsigned num_genotypes_to_calc):
+        if num_sexes != self.num_sexes:
+            raise ValueError("setNumGenotypes: num_sexes != self.num_sexes.  " + str(num_sexes) + "!=" + str(self.num_sexes) + ".  Probably there is a bug in the code")
+
+        self.num_genotypes_to_calc = num_genotypes_to_calc
+
+    cpdef void setNumSexesToCalc(self, unsigned num_sexes_to_calc):
+        self.num_sexes_to_calc = num_sexes_to_calc
+
+    cpdef void setUseQm(self, unsigned use_qm):
+        self.use_qm = use_qm
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
 
         if self.have_precalculated == 0:
             self.precalculate()
         
-        cdef unsigned ind, s, g, m, current_index, delayed_index
+        cdef unsigned ind, s, g, m, current_index, delayed_index, some_males
         cdef float bb, one_over_dr, expdrdt, qm
 
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
         cdef unsigned delayed_base = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes
+        
+        # Calculate indicators whether a given species or genotype is present
+        # (based on delayed data, as this is where births come from)
+        array.zero(self.speciesPresent)
+        for m in range(self.num_species):
+            for g in range(self.num_genotypes):
+                for s in range(self.num_sexes):
+                    ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                    delayed_ind = delayed_base + ind
+                    if pops_and_params[delayed_ind] > 0:
+                        self.speciesPresent.data.as_uchars[m] = 1
+                        break
+                if pops_and_params[delayed_ind] > 0:
+                    break
+
+        array.zero(self.genotypePresent)
+        for g in range(self.num_genotypes):
+            for m in range(self.num_species):
+                for s in range(self.num_sexes):
+                    ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                    delayed_ind = delayed_base + ind
+                    if pops_and_params[delayed_ind] > 0:
+                        self.genotypePresent.data.as_uchars[g] = 1
+                        break
+                if pops_and_params[delayed_ind] > 0:
+                    break
+
+        if self.use_qm == 0:
+            
+            # create eqm_pops_and_params with carrying capacity in relevant places (others don't matter as are not read)
+            g = 0
+            eqm_pops_and_params = pops_and_params
+            for m in range(self.num_species):
+                for s in range(self.num_sexes):
+                    ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                    current_index = adult_base + ind
+                    eqm_pops_and_params[current_index] = pops_and_params[self.num_populations + m]
+
+            qm_vals = self.calcQm(eqm_pops_and_params)
 
         # calculate xprimeM
-        cdef unsigned some_males = self.calcXprimeM(delayed_base, pops_and_params)  # zero if there are no delayed males whatsoever
+        some_males = self.calcXprimeM(delayed_base, pops_and_params)  # zero if there are no delayed males whatsoever
 
         # calculate Y
         self.calcYYprime(some_males, delayed_base, pops_and_params)
@@ -1723,8 +1783,11 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         # calculate birth rate and new populations
         for g in range(self.num_genotypes):
             for m in range(self.num_species):
-                ind = self.num_populations + m
-                qm = pops_and_params[ind]
+                if self.use_qm == 1:
+                    ind = self.num_populations + m
+                    qm = pops_and_params[ind]
+                else:
+                    qm = qm_vals.data.as_floats[m]
                 if qm <= self.small_value:
                     qm = 0.0 # this accounts for problems in double-to-float conversion, eg, if qm = 1E-40
                 for s in range(self.num_sexes):
@@ -1753,7 +1816,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     if self.new_pop.data.as_floats[ind] <= self.small_value:
                         self.new_pop.data.as_floats[ind] = 0.0
 
-        # put the new_pop in the correct slots in pops_and_params in readyness for incrementCurrentIndex
+        # put the new_pop in the correct slots in pops_and_params in readiness for incrementCurrentIndex
         for g in range(self.num_genotypes):
             for m in range(self.num_species):
                 for s in range(self.num_sexes):
@@ -1784,27 +1847,32 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         if self.have_precalculated == 0:
             self.precalculate()
 
-        cdef unsigned m, g, s, ind
+        cdef unsigned m, g, s, ind, some_males
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
 
+        self.setNumGenotypesToCalc(self.num_sexes, 1)
+        self.setNumSexesToCalc(1)
+
         # calculate xprimeM
-        cdef unsigned some_males = self.calcXprimeM(adult_base, eqm_pops_and_params)  # zero if there are no adult males whatsoever
+        some_males = self.calcXprimeM(adult_base, eqm_pops_and_params)  # zero if there are no adult males whatsoever
 
         # calculate Y
         self.calcYYprime(some_males, adult_base, eqm_pops_and_params)
 
         # calculate C
         self.calcCompetition(some_males, eqm_pops_and_params)
-                            
+
+        self.setNumGenotypesToCalc(self.num_sexes, self.num_genotypes)
+        self.setNumSexesToCalc(self.num_sexes)
         # calculate sum over genotypes and sexes of the death terms and the Y' terms
         array.zero(self.death_terms)
         array.zero(self.yyp_terms)
         for m in range(self.num_species):
-            for g in range(self.num_genotypes):
-                for s in range(self.num_sexes):
-                    ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
-                    self.yyp_terms.data.as_floats[m] = self.yyp_terms.data.as_floats[m] + self.yyp.data.as_floats[ind]
-                    self.death_terms.data.as_floats[m] = self.death_terms.data.as_floats[m] + self.death_rate.data.as_floats[ind] * eqm_pops_and_params[ind + adult_base]
+            g = 0
+            s = 0
+            ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+            self.yyp_terms.data.as_floats[m] = self.yyp.data.as_floats[ind]
+            self.death_terms.data.as_floats[m] = self.death_rate.data.as_floats[ind] * eqm_pops_and_params[ind + adult_base]
 
         for m in range(self.num_species):
             if self.death_terms.data.as_floats[m] <= 0.0:
@@ -1819,30 +1887,35 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         cdef unsigned mF, sex, gprime, mprime, delayed_index, ind, gM, mM, inda
         cdef float denom, one_over_denom
         for mF in range(self.num_species):
+            #if self.speciesPresent.data.as_uchars[mF] == 1: # can never generate a species if it does not exist
             denom = 0.0
             sex = 0 # male
-            for gprime in range(self.num_genotypes):
-                for mprime in range(self.num_species):
-                    delayed_index = mprime + gprime * self.num_species + delayed_base # + sex * num_species * num_genotypes
-                    # unoptimised:
-                    # denom += self.activity[mprime + mF * self.num_species] * pops_and_params[delayed_index]
-                    # better:
-                    ind = mprime + mF * self.num_species
-                    denom = denom + self.activity.data.as_floats[ind] * pops_and_params[delayed_index]
+            for gprime in range(self.num_genotypes_to_calc):
+                if self.genotypePresent.data.as_uchars[gprime] == 1: # if not present then x[ind] = 0
+                    for mprime in range(self.num_species):
+                        if self.speciesPresent.data.as_uchars[mprime] == 1: # can never generate a species if it does not exist
+                            delayed_index = mprime + gprime * self.num_species + delayed_base # + sex * num_species * num_genotypes
+                            # unoptimised:
+                            # denom += self.activity[mprime + mF * self.num_species] * pops_and_params[delayed_index]
+                            # better:
+                            ind = mprime + mF * self.num_species
+                            denom = denom + self.activity.data.as_floats[ind] * pops_and_params[delayed_index]
             if denom > self.small_value:
                 one_over_denom = 1.0 / denom
                 some_males = 1
             else:
                 one_over_denom = 0.0 # this ensures self.xprimeM = 0 below
-            for gM in range(self.num_genotypes):
-                for mM in range(self.num_species):
-                    delayed_index = mM + gM * self.num_species + delayed_base # + sex * num_species * num_genotypes
-                    ind = mF + mM * self.num_species + gM * self.num_species2
-                    # unoptimised:
-                    #self.xprimeM[ind] = self.activity[mM + mF * self.num_species] * pops_and_params[delayed_index] / denom
-                    # better:
-                    inda = mM + mF * self.num_species
-                    self.xprimeM.data.as_floats[ind] = self.activity.data.as_floats[inda] * pops_and_params[delayed_index] * one_over_denom
+            for gM in range(self.num_genotypes_to_calc):
+                if self.genotypePresent.data.as_uchars[gM] == 1: # if not present then x[ind] = 0
+                    for mM in range(self.num_species):
+                        if self.speciesPresent.data.as_uchars[mM] == 1: # can never generate a species if it does not exist
+                            delayed_index = mM + gM * self.num_species + delayed_base # + sex * num_species * num_genotypes
+                            ind = mF + mM * self.num_species + gM * self.num_species2
+                            # unoptimised:
+                            #self.xprimeM[ind] = self.activity[mM + mF * self.num_species] * pops_and_params[delayed_index] / denom
+                            # better:
+                            inda = mM + mF * self.num_species
+                            self.xprimeM.data.as_floats[ind] = self.activity.data.as_floats[inda] * pops_and_params[delayed_index] * one_over_denom
         return some_males
 
     cpdef void calcYYprime(self, unsigned some_males, unsigned delayed_base, float[:] pops_and_params):
@@ -1851,25 +1924,30 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         array.zero(self.yy)
         array.zero(self.yyp)
         if some_males > 0:
-            for s in range(self.num_sexes):
-                for g in range(self.num_genotypes):
+            for s in range(self.num_sexes_to_calc):
+                for g in range(self.num_genotypes_to_calc):
                     for m in range(self.num_species):
+                    #if self.speciesPresent.data.as_uchars[m] == 1: # can never generate a species if it does not exist
                         yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                         for mF in range(self.num_species):
-                            for gF in range(self.num_genotypes):
-                                f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_base
-                                xF = pops_and_params[f_ind]
-                                if xF > self.small_value:
-                                    for mM in range(self.num_species):
-                                        for gM in range(self.num_genotypes):
-                                            xprime_ind = mF + mM * self.num_species + gM * self.num_species2
-                                            precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
-                                            # unoptimised:
-                                            #self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
-                                            #self.yyp[yy_ind] += self.precalcp[precalc_ind] * xF * self.xprimeM[xprime_ind]
-                                            # better:
-                                            self.yy.data.as_floats[yy_ind] = self.yy.data.as_floats[yy_ind] + self.precalc.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
-                                            self.yyp.data.as_floats[yy_ind] = self.yyp.data.as_floats[yy_ind] + self.precalcp.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
+                            if self.speciesPresent.data.as_uchars[mF] == 1: # can never generate a species if it does not exist
+                                for gF in range(self.num_genotypes_to_calc):
+                                    if self.genotypePresent.data.as_uchars[gF] == 1: # if not present then x[ind] = 0
+                                        f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_base
+                                        xF = pops_and_params[f_ind]
+                                        if xF > self.small_value:
+                                            for mM in range(self.num_species):
+                                                if self.speciesPresent.data.as_uchars[mM] == 1: # can never generate a species if it does not exist
+                                                    for gM in range(self.num_genotypes_to_calc):
+                                                        if self.genotypePresent.data.as_uchars[gM] == 1: # if not present then x[ind] = 0
+                                                            xprime_ind = mF + mM * self.num_species + gM * self.num_species2
+                                                            precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
+                                                            # unoptimised:
+                                                            #self.yy[yy_ind] += self.precalc[precalc_ind] * xF * self.xprimeM[xprime_ind]
+                                                            #self.yyp[yy_ind] += self.precalcp[precalc_ind] * xF * self.xprimeM[xprime_ind]
+                                                            # better:
+                                                            self.yy.data.as_floats[yy_ind] = self.yy.data.as_floats[yy_ind] + self.precalc.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
+                                                            self.yyp.data.as_floats[yy_ind] = self.yyp.data.as_floats[yy_ind] + self.precalcp.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
 
 
     cpdef void calcCompetition(self, unsigned some_males, float [:] pops_and_params):
@@ -1884,8 +1962,8 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     #alpha = self.competition[alpha_ind]
                     # better:
                     alpha = self.competition.data.as_floats[alpha_ind]
-                    for s in range(self.num_sexes):
-                        for g in range(self.num_genotypes):
+                    for s in range(self.num_sexes_to_calc):
+                        for g in range(self.num_genotypes_to_calc):
                             yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                             # unoptimised:
                             #self.comp[m] += alpha * self.yy[yy_ind]
