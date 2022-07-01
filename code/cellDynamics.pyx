@@ -1879,7 +1879,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                 raise ValueError("Sum_{g, s}d_{g, s, m}X_{g, s, m} for m = " + str(m) + " is zero")
         # calculate the resulting qm values
         for m in range(self.num_species):
-            self.qm_vals.data.as_floats[m] = self.comp.data.as_floats[m] / (self.yyp_terms.data.as_floats[m] / self.death_terms.data.as_floats[m] - 1.0)
+            self.qm_vals.data.as_floats[m] = 2. * self.comp.data.as_floats[m] / (self.yyp_terms.data.as_floats[m] / self.death_terms.data.as_floats[m] - 1.0)
         return self.qm_vals
 
     cpdef unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params):
