@@ -337,8 +337,8 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.xcol = 0.0
 
         # allocate the boolean arrays correctly
-        self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = False) 
-        self.genotypePresent = array.clone(array.array('B', []), self.num_genotypes, zero = False)
+        self.species_present = array.clone(array.array('B', []), self.num_species, zero = False) 
+        self.genotype_present = array.clone(array.array('B', []), self.num_genotypes, zero = False)
 
         # default to explicit_euler
         self.time_integration_method = 0
@@ -404,7 +404,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.cchange = self.change
 
         # allocate the boolean arrays correctly
-        self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = False) 
+        self.species_present = array.clone(array.array('B', []), self.num_species, zero = False) 
 
         # set diffusing and advecting information
         self.num_diffusing = self.num_sexes * self.num_genotypes * self.num_species # only adults diffuse
@@ -553,7 +553,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # correctly size arrays that depend on num_genotypes
         self.inheritance_cube = array.clone(array.array('f', []), self.num_genotypes2 * self.num_genotypes, zero = False)
         self.genotypeRapidAccess = array.clone(array.array('f', []), num_sexes * self.num_genotypes2, zero = False)
-        self.genotypePresent = array.clone(array.array('B', []), num_genotypes, zero = False)
+        self.genotype_present = array.clone(array.array('B', []), num_genotypes, zero = False)
         self.fitness = array.clone(array.array('f', []), num_genotypes, zero = True)
 
         # calculate things that depend on num_genotypes
@@ -609,7 +609,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         array.zero(self.rhs)
         
         # Calculate indicators whether a given species or genotype is present
-        array.zero(self.speciesPresent)
+        array.zero(self.species_present)
         ind_d = 0
         for sp in range(self.num_species):
             for gt_d in range(self.num_genotypes):
@@ -617,21 +617,21 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                     for age_d in range(self.num_ages):
                         ind_d = self.getIndex(sp, gt_d, sex_d, age_d)
                         if x[ind_d] > 0:
-                            self.speciesPresent.data.as_uchars[sp] = 1
+                            self.species_present.data.as_uchars[sp] = 1
                             break
                     if x[ind_d] > 0:
                         break
                 if x[ind_d] > 0:
                     break
                 
-        array.zero(self.genotypePresent)
+        array.zero(self.genotype_present)
         for gt in range(self.num_genotypes):
             for sp_d in range(self.num_species):
                 for sex_d in range(self.num_sexes):
                     for age_d in range(self.num_ages):
                         ind_d = self.getIndex(sp_d, gt, sex_d, age_d)
                         if x[ind_d] > 0:
-                            self.genotypePresent.data.as_uchars[gt] = 1
+                            self.genotype_present.data.as_uchars[gt] = 1
                             break
                     if x[ind_d] > 0:
                         break
@@ -650,7 +650,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
             # first calculate all comp.data and denom.data where needed
             for sp in range(self.num_species):
-                if self.speciesPresent.data.as_uchars[sp] == 1: # can never generate a species if it does not exist
+                if self.species_present.data.as_uchars[sp] == 1: # can never generate a species if it does not exist
                     if self.num_parameters == 1: # only using one CC
                         cidx = 0
                     else:
@@ -660,9 +660,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         for age_d in range(end_index_for_competition):
                             for sex_d in range(self.num_sexes):
                                 for gt_d in range(self.num_genotypes):
-                                    if self.genotypePresent.data.as_uchars[gt_d] == 1: # if not present then x[ind] = 0
+                                    if self.genotype_present.data.as_uchars[gt_d] == 1: # if not present then x[ind] = 0
                                         for sp_d in range(self.num_species):
-                                            if self.speciesPresent.data.as_uchars[sp_d] == 1:  # if not present then x[ind] = 0
+                                            if self.species_present.data.as_uchars[sp_d] == 1:  # if not present then x[ind] = 0
                                                 ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                                                 self.comp.data.as_floats[sp] = self.comp.data.as_floats[sp] + self.getAlphaComponent(sp, sp_d) * x[ind_d]
                         self.comp.data.as_floats[sp] = max(0.0, 1.0 - self.comp.data.as_floats[sp] * self.one_over_kk[cidx])
@@ -671,9 +671,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                         age_d = self.num_ages - 1 # adult
                         sex_d = 0 # male
                         for gt_d in range(self.num_genotypes):
-                            if self.genotypePresent.data.as_uchars[gt_d] == 1: # if not present then x[ind] = 0
+                            if self.genotype_present.data.as_uchars[gt_d] == 1: # if not present then x[ind] = 0
                                 for sp_d in range(self.num_species):
-                                    if self.speciesPresent.data.as_uchars[sp_d] == 1:  # if not present then x[ind] = 0
+                                    if self.species_present.data.as_uchars[sp_d] == 1:  # if not present then x[ind] = 0
                                         ind_d = self.getIndex(sp_d, gt_d, sex_d, age_d)
                                         # note: here sp = female species
                                         self.denom.data.as_floats[sp] = self.denom.data.as_floats[sp] + self.getMatingComponent(sp_d, sp) * self.getFitnessComponent(gt_d) * x[ind_d]
@@ -687,7 +687,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             # now define competition
 
             for sp in range(self.num_species):
-                if self.speciesPresent.data.as_uchars[sp] == 1: # self.comp[sp] will be zero
+                if self.species_present.data.as_uchars[sp] == 1: # self.comp[sp] will be zero
                     if self.num_parameters == 1: # only using one CC
                         cidx = 0
                     else:
@@ -707,19 +707,19 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                                 row = self.getIndex(sp, gt, sex, age)
                                 # now want to set the column in M corresonding to female adults of genotype gtf and species spf
                                 for gtf in range(self.num_genotypes): # female genotype
-                                    if self.genotypePresent.data.as_uchars[gtf] == 1: # if not present then x[col] will be zero
+                                    if self.genotype_present.data.as_uchars[gtf] == 1: # if not present then x[col] will be zero
                                         for spf in range(self.num_species): # female species
-                                            if self.speciesPresent.data.as_uchars[spf] == 1: # if not present then x[col] will be zero
+                                            if self.species_present.data.as_uchars[spf] == 1: # if not present then x[col] will be zero
                                                 col = self.getIndex(spf, gtf, 1, self.num_ages - 1) # species=spf, genotype=gtf, sex=female, age=adult
                                                 self.xcol = x[col]
                                                 self.tmp_float = 0.0
                                                 ind_mat = col + row * self.num_populations  # index into mat corresponding to the row, and the aforementioned adult female
                                                 for gtm in range(self.num_genotypes): # male genotype
-                                                    if self.genotypePresent.data.as_uchars[gtm] == 1: # if not present then x[ind] will be zero
+                                                    if self.genotype_present.data.as_uchars[gtm] == 1: # if not present then x[ind] will be zero
                                                         ind1 = sex * self.num_genotypes2 + gtf * self.num_genotypes + gtm
                                                         self.genotype_stuff = self.getInheritance(gtm, gtf, gt)
                                                         for spm in range(self.num_species): # male species
-                                                            if self.speciesPresent.data.as_uchars[spm] == 1:  # if not present then x[ind] will be zero
+                                                            if self.species_present.data.as_uchars[spm] == 1:  # if not present then x[ind] will be zero
                                                                 ind = self.getIndex(spm, gtm, 0, self.num_ages - 1) # species=spm, genotype=gtm, sex=male, age=adult
                                                                 self.species_stuff = self.getHybridisationRate(spm, spf, sp) * self.getMatingComponent(spm, spf)
                                                                 self.tmp_float = self.tmp_float + self.species_stuff * self.genotypeRapidAccess.data.as_floats[ind1] * self.genotype_stuff * x[ind] * self.xcol
@@ -730,9 +730,9 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # mortality, and aging into/from neighbouring age brackets
         for sex in range(self.num_sexes):
             for gt in range(self.num_genotypes):
-                if self.genotypePresent.data.as_uchars[gt] == 1: # if not present then cannot create the genotype from current x (next timestep there may be juveniles of this gt that can age, but not this timestep)
+                if self.genotype_present.data.as_uchars[gt] == 1: # if not present then cannot create the genotype from current x (next timestep there may be juveniles of this gt that can age, but not this timestep)
                     for sp in range(self.num_species):
-                        if self.speciesPresent.data.as_uchars[sp] == 1: # if not present then cannot create the species out of nothing
+                        if self.species_present.data.as_uchars[sp] == 1: # if not present then cannot create the species out of nothing
                             age = 0
                             row = self.getIndex(sp, gt, sex, age)
                             ind = row + self.num_populations * row # diagonal entry
@@ -1701,12 +1701,12 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.num_genotypes_to_calc = self.num_genotypes
         self.num_sexes_to_calc = self.num_sexes
         self.use_qm = 1
-        self.speciesPresent = array.clone(array.array('B', []), self.num_species, zero = False) 
+        self.species_present = array.clone(array.array('B', []), self.num_species, zero = False) 
         for m in range(self.num_species): # default to all present (in case calc_Qm run before evolve)
-            self.speciesPresent.data.as_uchars[m] = 1
-        self.genotypePresent = array.clone(array.array('B', []), self.num_genotypes, zero = False)
+            self.species_present[m] = 1
+        self.genotype_present = array.clone(array.array('B', []), self.num_genotypes, zero = False)
         for g in range(self.num_genotypes): # default to all present (in case calc_Qm run before evolve)
-            self.genotypePresent.data.as_uchars[g] = 1
+            self.genotype_present[g] = 1
         self.precalculate()
 
     cpdef setNumGenotypesToCalc(self, unsigned num_genotypes_to_calc):
@@ -1746,26 +1746,26 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         
         # Calculate indicators whether a given species or genotype is present
         # (based on delayed data, as this is where births come from)
-        array.zero(self.speciesPresent)
+        array.zero(self.species_present)
         for m in range(self.num_species):
             for g in range(self.num_genotypes):
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                     delayed_ind = delayed_base + ind
                     if pops_and_params[delayed_ind] > 0:
-                        self.speciesPresent.data.as_uchars[m] = 1
+                        self.species_present.data.as_uchars[m] = 1
                         break
                 if pops_and_params[delayed_ind] > 0:
                     break
 
-        array.zero(self.genotypePresent)
+        array.zero(self.genotype_present)
         for g in range(self.num_genotypes):
             for m in range(self.num_species):
                 for s in range(self.num_sexes):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                     delayed_ind = delayed_base + ind
                     if pops_and_params[delayed_ind] > 0:
-                        self.genotypePresent.data.as_uchars[g] = 1
+                        self.genotype_present.data.as_uchars[g] = 1
                         break
                 if pops_and_params[delayed_ind] > 0:
                     break
@@ -1899,13 +1899,13 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         cdef unsigned mF, sex, gprime, mprime, delayed_index, ind, gM, mM, inda
         cdef float denom, one_over_denom
         for mF in range(self.num_species):
-            #if self.speciesPresent.data.as_uchars[mF] == 1: # can never generate a species if it does not exist
+            #if self.species_present.data.as_uchars[mF] == 1: # can never generate a species if it does not exist
             denom = 0.0
             sex = 0 # male
             for gprime in range(self.num_genotypes_to_calc):
-                if self.genotypePresent.data.as_uchars[gprime] == 1: # if not present then x[ind] = 0
+                if self.genotype_present.data.as_uchars[gprime] == 1: # if not present then x[ind] = 0
                     for mprime in range(self.num_species):
-                        if self.speciesPresent.data.as_uchars[mprime] == 1: # can never generate a species if it does not exist
+                        if self.species_present.data.as_uchars[mprime] == 1: # can never generate a species if it does not exist
                             delayed_index = mprime + gprime * self.num_species + delayed_base # + sex * num_species * num_genotypes
                             # unoptimised:
                             # denom += self.activity[mprime + mF * self.num_species] * pops_and_params[delayed_index]
@@ -1918,9 +1918,9 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
             else:
                 one_over_denom = 0.0 # this ensures self.xprimeM = 0 below
             for gM in range(self.num_genotypes_to_calc):
-                if self.genotypePresent.data.as_uchars[gM] == 1: # if not present then x[ind] = 0
+                if self.genotype_present.data.as_uchars[gM] == 1: # if not present then x[ind] = 0
                     for mM in range(self.num_species):
-                        if self.speciesPresent.data.as_uchars[mM] == 1: # can never generate a species if it does not exist
+                        if self.species_present.data.as_uchars[mM] == 1: # can never generate a species if it does not exist
                             delayed_index = mM + gM * self.num_species + delayed_base # + sex * num_species * num_genotypes
                             ind = mF + mM * self.num_species + gM * self.num_species2
                             # unoptimised:
@@ -1939,19 +1939,19 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
             for s in range(self.num_sexes_to_calc):
                 for g in range(self.num_genotypes_to_calc):
                     for m in range(self.num_species):
-                    #if self.speciesPresent.data.as_uchars[m] == 1: # can never generate a species if it does not exist
+                    #if self.species_present.data.as_uchars[m] == 1: # can never generate a species if it does not exist
                         yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                         for mF in range(self.num_species):
-                            if self.speciesPresent.data.as_uchars[mF] == 1: # can never generate a species if it does not exist
+                            if self.species_present.data.as_uchars[mF] == 1: # can never generate a species if it does not exist
                                 for gF in range(self.num_genotypes_to_calc):
-                                    if self.genotypePresent.data.as_uchars[gF] == 1: # if not present then x[ind] = 0
+                                    if self.genotype_present.data.as_uchars[gF] == 1: # if not present then x[ind] = 0
                                         f_ind = mF + gF * self.num_species + 1 * self.num_species * self.num_genotypes + delayed_base
                                         xF = pops_and_params[f_ind]
                                         if xF > self.small_value:
                                             for mM in range(self.num_species):
-                                                if self.speciesPresent.data.as_uchars[mM] == 1: # can never generate a species if it does not exist
+                                                if self.species_present.data.as_uchars[mM] == 1: # can never generate a species if it does not exist
                                                     for gM in range(self.num_genotypes_to_calc):
-                                                        if self.genotypePresent.data.as_uchars[gM] == 1: # if not present then x[ind] = 0
+                                                        if self.genotype_present.data.as_uchars[gM] == 1: # if not present then x[ind] = 0
                                                             xprime_ind = mF + mM * self.num_species + gM * self.num_species2
                                                             precalc_ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
                                                             # unoptimised:

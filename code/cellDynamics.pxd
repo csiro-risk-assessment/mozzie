@@ -270,10 +270,10 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef array.array genotypeRapidAccess
 
     # Array to indicate presence or absence of species, sized to num_species
-    cdef array.array speciesPresent
+    cdef array.array species_present
 
     # Array to indicate presence or absence of genotype, sized to num_genotypes
-    cdef array.array genotypePresent
+    cdef array.array genotype_present
 
     # Runge-Kutta "y" array that holds the value of populations and the carrying capacity: the C version is passed to computeRHS.  Sized to num_populations + num_parameters
     cdef array.array rky
@@ -820,10 +820,10 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     cdef unsigned use_qm
 
     # Array to indicate presence or absence of species, sized to num_species
-    cdef array.array speciesPresent
+    cdef array.array species_present
 
     # Array to indicate presence or absence of genotype, sized to num_genotypes
-    cdef array.array genotypePresent
+    cdef array.array genotype_present
 
     # this is used in evolve to hold the new population, new_pop[s, g, m] with index m + g * self.num_species + s * self.num_species * self.num_genotypes
     cdef array.array new_pop
