@@ -1715,8 +1715,13 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
 
         self.num_genotypes_to_calc = num_genotypes_to_calc
 
-    cpdef void setNumSexesToCalc(self, unsigned num_sexes_to_calc):
+    cpdef setNumSexesToCalc(self, unsigned num_sexes_to_calc):
+        if num_sexes_to_calc > self.num_sexes:
+            raise ValueError("setNumSexesToCalc: num_sexes_to_calc must be <= " + str(self.num_sexes))
         self.num_sexes_to_calc = num_sexes_to_calc
+
+    cpdef unsigned getNumSexesToCalc(self):
+        return self.num_sexes_to_calc
 
     cpdef setUseQm(self, unsigned use_qm):
         if not (use_qm == 0 or use_qm == 1):
