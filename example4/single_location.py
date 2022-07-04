@@ -102,8 +102,7 @@ genotype = 1 # genotype = wc
 sex = 0 # sex = male
 species = 1 # species = AC
 num = intro
-for d in range(delay_days + 1):
-    pap[species + genotype * num_species + sex * num_species * 6 + d * num_species * 6 * 2] = num
+pap[species + genotype * num_species + sex * num_species * 6 + cell.getCurrentIndex() * num_species * 6 * 2] = num
 
 
 ######################################################
