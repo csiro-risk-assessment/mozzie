@@ -602,7 +602,14 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       wild.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
 
       self.assertTrue(arrayfuzzyequal(pap, pap_initial, 1E-2))
-      
+
+   def testSetGetUseQm(self):
+      self.assertEqual(self.c.getUseQm(), 1)
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setUseQm(2)
+      self.assertEqual(str(the_err.exception), "setUseQm: use_qm must be 0 or 1")
+      self.c.setUseQm(0)
+      self.assertEqual(self.c.getUseQm(), 0)
 
 if __name__ == '__main__':
    unittest.main()

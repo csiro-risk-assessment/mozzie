@@ -1718,8 +1718,13 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     cpdef void setNumSexesToCalc(self, unsigned num_sexes_to_calc):
         self.num_sexes_to_calc = num_sexes_to_calc
 
-    cpdef void setUseQm(self, unsigned use_qm):
+    cpdef setUseQm(self, unsigned use_qm):
+        if not (use_qm == 0 or use_qm == 1):
+            raise ValueError("setUseQm: use_qm must be 0 or 1")
         self.use_qm = use_qm
+
+    cpdef unsigned getUseQm(self):
+        return self.use_qm
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
 

@@ -870,6 +870,8 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     cpdef void setNumSexesToCalc(self, unsigned num_sexes_to_calc)
     """Sets number of sexes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
     
-    cpdef void setUseQm(self, unsigned use_qm)
+    cpdef setUseQm(self, unsigned use_qm)
     """Sets the use_qm constant to determine whether the parameters in pops_and_params represent the carrying capacity or q_m."""
     
+    cpdef unsigned getUseQm(self)
+    """Gets the value of use_qm"""
