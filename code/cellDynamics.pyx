@@ -1709,11 +1709,13 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
             self.genotypePresent.data.as_uchars[g] = 1
         self.precalculate()
 
-    cpdef void setNumGenotypesToCalc(self, unsigned num_sexes, unsigned num_genotypes_to_calc):
-        if num_sexes != self.num_sexes:
-            raise ValueError("setNumGenotypes: num_sexes != self.num_sexes.  " + str(num_sexes) + "!=" + str(self.num_sexes) + ".  Probably there is a bug in the code")
-
+    cpdef setNumGenotypesToCalc(self, unsigned num_genotypes_to_calc):
+        if num_genotypes_to_calc > self.num_genotypes:
+            raise ValueError("setNumGenotypesToCalc: num_genotypes_to_calc must be <= " + str(self.num_genotypes))
         self.num_genotypes_to_calc = num_genotypes_to_calc
+
+    cpdef unsigned getNumGenotypesToCalc(self):
+        return self.num_genotypes_to_calc
 
     cpdef setNumSexesToCalc(self, unsigned num_sexes_to_calc):
         if num_sexes_to_calc > self.num_sexes:
@@ -1860,7 +1862,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         cdef unsigned m, g, s, ind, some_males
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
 
-        self.setNumGenotypesToCalc(self.num_sexes, 1)
+        self.setNumGenotypesToCalc(1)
         self.setNumSexesToCalc(1)
 
         # calculate xprimeM
@@ -1872,7 +1874,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         # calculate C
         self.calcCompetition(some_males, eqm_pops_and_params)
 
-        self.setNumGenotypesToCalc(self.num_sexes, self.num_genotypes)
+        self.setNumGenotypesToCalc(self.num_genotypes)
         self.setNumSexesToCalc(self.num_sexes)
         # calculate sum over genotypes and sexes of the death terms and the Y' terms
         array.zero(self.death_terms)

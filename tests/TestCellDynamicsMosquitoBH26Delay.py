@@ -619,6 +619,14 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       self.c.setNumSexesToCalc(1)
       self.assertEqual(self.c.getNumSexesToCalc(), 1)
 
+   def testSetGetNumGenotypesToCalc(self):
+      self.assertEqual(self.c.getNumGenotypesToCalc(), 6)
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setNumGenotypesToCalc(7)
+      self.assertEqual(str(the_err.exception), "setNumGenotypesToCalc: num_genotypes_to_calc must be <= 6")
+      self.c.setNumGenotypesToCalc(4)
+      self.assertEqual(self.c.getNumGenotypesToCalc(), 4)
+
 if __name__ == '__main__':
    unittest.main()
 

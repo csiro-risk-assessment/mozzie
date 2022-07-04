@@ -864,8 +864,11 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     cpdef void calcCompetition(self, unsigned some_males, float [:] pops_and_params)
     """Calculates C = competition (= self.comp), given some_males (whether there are any males whatsoever in the delayed pops_and_params), and pops_and_params.  This is used in evolve() and probably isn't much use elsewhere"""
 
-    cpdef void setNumGenotypesToCalc(self, unsigned num_sexes, unsigned num_genotypes_to_calc)
+    cpdef setNumGenotypesToCalc(self, unsigned num_genotypes_to_calc)
     """Sets number of genotypes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
+
+    cpdef unsigned getNumGenotypesToCalc(self)
+    """Gets the value of num_genotypes_to_calc"""
 
     cpdef setNumSexesToCalc(self, unsigned num_sexes_to_calc)
     """Sets number of sexes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
