@@ -627,6 +627,114 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       self.c.setNumGenotypesToCalc(4)
       self.assertEqual(self.c.getNumGenotypesToCalc(), 4)
 
+   def testUseQm(self):
+      # Test that use_qm=0 and use_qm=1 produce the same results (at least for the following parameters: note m_w = 0)
+      num_species = 4
+      wild = CellDynamicsMosquitoBH26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[[1.0, 2.0, 3.0, 4.0], [0.5, 0.75, 0.25, 0.125], [2, 3, 4, 5], [3, 4, 5, 6], [2.5, 3.5, 4.5, 5.5], [1.5, 2.5, 3.5, 4.5]]] * 2, competition = [[1, 2, 3, 4], [5, 6, 7, 8], [6, 5, 4, 3], [3, 2, 3, 2]], emergence_rate = [41.0, 32.0, 23.0, 14.0], activity = [[0.125, 0.25, 0.75, 1], [1.25, 1, 0.625, 0.25], [0.25, 0.375, 0.5, 0.625], [0.375, 0.5, 0.125, 0.25]], reduction = self.red, hybridisation = [[[1, 0.5, 0.25, 0.125], [0.5, 1, 0.375, 0.375], [0.125, 0.625, 1, 0.125], [0.0625, 0.125, 0.25, 0.75]]] * 4, offspring_modifier = [[[1.25, 1, 0.625, 0.5], [0.625, 0.5, 0.375, 1], [0.375, 0.375, 0.625, 0.25], [1.275, 1.375, 1.625, 1.25]], [[1.25, 1, 0.625, 0.5], [0.625, 0.5, 0.375, 1], [0.375, 0.375, 0.625, 0.25], [1.275, 1.375, 1.625, 1.25]]] , sex_ratio = 0.625, female_bias = 0.75, m_w = 0.0, m_c = 0.125)
+      initial_condition = [0 for i in range(wild.getNumberOfPopulations() + wild.getNumberOfParameters())]
+
+      # assumed qm values:
+      qm = [10000 * (i + 1) for i in range(num_species)]
+
+      # initialise wild-type populations at something like their steady-state
+      for delay in range(wild.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  if genotype == 0:
+                     initial_condition[ind] = qm[species] * 0.01
+                  else:
+                     initial_condition[ind] = 0.0 # zero non-wildtype
+      for species in range(num_species):
+         initial_condition[wild.getNumberOfPopulations() + species] = qm[species]
+      pap = array.array('f', initial_condition)
+
+      # evolve for a long time to find the steady-state
+      for i in range(1000):
+         wild.evolve(10, pap)
+         wild.incrementCurrentIndex()
+      ss = [0 for i in range(num_species)] # the steady-state wild-type population
+      for delay in [wild.getCurrentIndex() + 1]:
+         for species in range(num_species):
+            for genotype in range(1):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  ss[species] += pap[ind]
+
+      # initialise some wild-only random populations
+      for delay in range(wild.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  if genotype == 0:
+                     initial_condition[ind] = random.random() * ss[species]
+                  else:
+                     initial_condition[ind] = 0.0 # zero non-wildtype
+
+      # insert qm and evolve for a short time
+      wild.setUseQm(1)
+      for species in range(num_species):
+         initial_condition[wild.getNumberOfPopulations() + species] = qm[species]
+      pap = array.array('f', initial_condition)
+      wild.evolve(1, pap)
+      pap_after_qm = list(pap)
+
+      # now use the equilibrium carrying capacities
+      wild.setUseQm(0)
+      for species in range(num_species):
+         initial_condition[wild.getNumberOfPopulations() + species] = ss[species]
+      pap = array.array('f', initial_condition)
+      wild.evolve(1, pap)
+      pap_after_cc = list(pap)
+
+      # check that the results are identical
+      for delay in range(wild.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  max_change = ss[species] - initial_condition[ind]
+                  self.assertTrue(abs(pap_after_qm[ind] - pap_after_cc[ind]) < 1E-4 * max_change)
+      
+
+      # initialise some random populations including constructs
+      for delay in range(wild.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  initial_condition[ind] = random.random() * ss[species]
+
+      # insert qm and evolve for a short time
+      wild.setUseQm(1)
+      for species in range(num_species):
+         initial_condition[wild.getNumberOfPopulations() + species] = qm[species]
+      pap = array.array('f', initial_condition)
+      wild.evolve(1, pap)
+      pap_after_qm = list(pap)
+
+      # now use the equilibrium carrying capacities
+      wild.setUseQm(0)
+      for species in range(num_species):
+         initial_condition[wild.getNumberOfPopulations() + species] = ss[species]
+      pap = array.array('f', initial_condition)
+      wild.evolve(1, pap)
+      pap_after_cc = list(pap)
+
+      # check that the results are identical
+      for delay in range(wild.getDelay() + 1):
+         for species in range(num_species):
+            for genotype in range(6):
+               for sex in range(2):
+                  ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
+                  max_change = ss[species] - initial_condition[ind]
+                  self.assertTrue(abs(pap_after_qm[ind] - pap_after_cc[ind]) < 1E-4 * max_change)
+      
+
+
+      
 if __name__ == '__main__':
    unittest.main()
 
