@@ -81,7 +81,7 @@ cdef class CellDynamicsBase:
     Note: the first num_populations entries of pops_and_params will be the population values, while the remainder are the parameter values"""
 
     cpdef array.array calcQm(self, float[:] eqm_pops_and_params)
-    """This currently only works for CellDynamicsMosquitoBH26Delay.  Given the eqm_pops_and_params, which is an array containing the populations at equilibrium, return the qm values.  Only the 'current_index' entries of eqm_pops_and_params are used in this calculation.  That is, you must make sure the entries corresponding to adults of species M, genotype G, sex S are correct (they have index = M + G * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes).  This function does not check that eqm_pops_and_params is actually an equilibrium: if you feed it garbage, it will produce garbage!"""
+    """This currently only works for CellDynamicsMosquitoBH26Delay.  Given the eqm_pops_and_params, which is an array containing the populations at equilibrium, return the qm values.  Only the 'current_index' and wild-type entries of eqm_pops_and_params are used in this calculation.  This function assumes the equilibrium populations for male equal those for females.  You must make sure the entries corresponding to adults of species M, genotype=0, sex S are correct (they have index = M + 0 * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes).  This function does not work if the equilibrium populations contain genotype!=0 mosquitoes, and only works if male=female=carrying_capacity/2.  This function does not check that eqm_pops_and_params is actually an equilibrium: if you feed it garbage, it will produce garbage!"""
 
     cpdef unsigned getNumSpecies(self)
     """Get number of species"""
@@ -810,10 +810,10 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
       5 is rr
     There are num_species spatially-varying parameters, which are the carrying-capacities of each species
     """
-    # number of genotypes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity.
+    # number of genotypes to be calculated in calcXprimeM, calcYYprime and calcCompetition.  If there are only wild-type (that is, genotype=0) mosquitoes present, then by setting num_genotypes_to_calc=1, eliminates loops over the genotype (only genotype=0 is used).  Otherwise, num_genotypes_to_calc should be set to num_genotypes.  num_genotypes_to_calc is currently only used when computing qm from carrying capacities."""
     cdef unsigned num_genotypes_to_calc
 
-    # number of sexes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
+    # number of sexes to be calculated in calcYYprime and calcCompetition.  If both sexes have identical properties, including identical populations (this is probably only relevant for purely wild-type populations that are at equilibrium at their carrying capacity) then computational time may be saved by setting num_sexes_to_calc=1, which eliminates loops over the sexes (only sex=0 is used) in the aforementioned functions.  Otherwise, num_sexes_to_calc should be set to 2.  num_sexes_to_calc is currently only used when computing qm from carrying capacities."""
     cdef unsigned num_sexes_to_calc
 
     # determines whether the parameters in pops_and_params represent the carrying capacity or q_m."""
@@ -843,9 +843,6 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     # death_terms used in calcQm.  death_terms[m]
     cdef array.array death_terms
 
-    # yyp_terms used in calcQm.  yyp_terms[m]
-    cdef array.array yyp_terms
-
     # qm_vals used in calcQm.  qm_vals[m]
     cdef array.array qm_vals
 
@@ -855,14 +852,17 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     # precalcp is used in evolve.  precalcp[mM, mF, m, gM, gF, g, s] = offspring_modifier[s, mM, mF] * hybridisation[mM, mF, m] * emergence_rate[mF] * inheritance_cube[gM, gF, g] * fecundity[gM, gF, s] * reduction[gM, gF].  It has index s + num_sexes * (g + num_genotypes * (gF + num_genotypes * (gM + num_genotypes * (m + num_species * (mF + num_species * mM))))), so is of size num_sexes * num_genotypes^3 * num_species^3 = 11664, which is probably tiny compared to other things.  Since this is constant for all grid cells at all times, it should be precalculated, using precalculate() prior to evolve
     cdef array.array precalcp
 
+    # Used in evolve if use_qm = 0.  This array stores the equilibrium populations and parameters
+    cdef array.array eqm_pops_and_params
+
     cpdef unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params)
     """Calculates X'_M (= self.xprimeM), given the pops_and_params, and the delayed_base, which usually = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes.  Returns 0 if there are no male mosquitoes whatsoever in the delayed pops_and_params slots, and returns 1 otherwise.  This is used in evolve() and probably isn't much use elsewhere"""
 
     cpdef void calcYYprime(self, unsigned some_males, unsigned delayed_base, float[:] pops_and_params)
-    """Calculates Y (= self.yy) and Y' (= self.yyp), given some_males (whether there are any males whatsoever in the delayed pops_and_params), and pops_and_params, and the delayed_base, which usually = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes.  This is used in evolve() and probably isn't much use elsewhere"""
+    """Calculates Y (= self.yy) and Y' (= self.yyp), given some_males (whether there are any males whatsoever in the delayed pops_and_params), and pops_and_params, and the delayed_base, which usually = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes.  This is used in evolve() and calcQm() and probably isn't much use elsewhere.  Note that if num_sexes_to_calc!=2 and num_genotypes_to_calc!=num_genotypes, then Y and Y' will not be fully populated (this occurs during calcQm, for instance)"""
 
-    cpdef void calcCompetition(self, unsigned some_males, float [:] pops_and_params)
-    """Calculates C = competition (= self.comp), given some_males (whether there are any males whatsoever in the delayed pops_and_params), and pops_and_params.  This is used in evolve() and probably isn't much use elsewhere"""
+    cpdef void calcCompetition(self, unsigned some_males)
+    """Calculates C = competition (= self.comp), given some_males (whether there are any males whatsoever in the delayed pops_and_params).  This uses Y internally, so calcYYprime() should usually precede the call to this function.  This is used in evolve() and probably isn't much use elsewhere"""
 
     cpdef setNumGenotypesToCalc(self, unsigned num_genotypes_to_calc)
     """Sets number of genotypes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
