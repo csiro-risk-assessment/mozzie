@@ -63,25 +63,25 @@ cdef class CellDynamicsBase:
         self.num_parameters = 0
         self.small_value = 0.0
 
-    cdef unsigned getNumberOfPopulations(self):
+    def unsigned getNumberOfPopulations(self):
         return self.num_populations
 
-    cdef unsigned getNumberOfDiffusingPopulations(self):
+    def unsigned getNumberOfDiffusingPopulations(self):
         return self.num_diffusing
 
-    cdef array.array getDiffusingIndices(self):
+    def array.array getDiffusingIndices(self):
         return self.diffusing_indices
 
-    cdef unsigned getNumberOfAdvectingPopulations(self):
+    def unsigned getNumberOfAdvectingPopulations(self):
         return self.num_advecting
 
-    cdef array.array getAdvectingIndices(self):
+    def array.array getAdvectingIndices(self):
         return self.advecting_indices
 
-    cdef array.array getAdvectionClass(self):
+    def array.array getAdvectionClass(self):
         return self.advection_class
 
-    cdef setAdvectionClass(self, unsigned population_index, unsigned new_class):
+    def setAdvectionClass(self, unsigned population_index, unsigned new_class):
         cdef int found = 0
         for ai in range(self.num_advecting):
             if self.advecting_indices[ai] == population_index:
@@ -89,23 +89,23 @@ cdef class CellDynamicsBase:
                 return
         raise ValueError("setAdvectionClass: population index " + str(population_index) + " has not defined to be advecting")
 
-    cdef unsigned getNumberOfParameters(self):
+    def unsigned getNumberOfParameters(self):
         return self.num_parameters
 
-    cdef void setSmallValue(self, float small_value):
+    def void setSmallValue(self, float small_value):
         self.small_value = small_value
 
-    cdef float getSmallValue(self):
+    def float getSmallValue(self):
         return self.small_value
 
-    cdef void evolve(self, float timestep, float[:] pops_and_params):
+    def void evolve(self, float timestep, float[:] pops_and_params):
         return
 
-    cdef array.array calcQm(self, float[:] eqm_pops_and_params):
+    def array.array calcQm(self, float[:] eqm_pops_and_params):
         """Not defined for this class"""
         return
 
-    cdef unsigned getNumSpecies(self):
+    def unsigned getNumSpecies(self):
         return 0
     
 
@@ -123,16 +123,16 @@ cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
         self.advection_class = array.array('I', [0, 0, 0])
         self.num_parameters = 2
 
-    cdef void evolve(self, float timestep, float[:] pops_and_params):
+    def void evolve(self, float timestep, float[:] pops_and_params):
         """No dynamics here"""
         
         return
     
-    cdef array.array calcQm(self, float[:] eqm_pops_and_params):
+    def array.array calcQm(self, float[:] eqm_pops_and_params):
         """Not defined for this class"""
         return
 
-    cdef unsigned getNumSpecies(self):
+    def unsigned getNumSpecies(self):
         return 1
     
 cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
@@ -150,18 +150,18 @@ cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
         self.num_parameters = 1
         self.growth_rate = 0.01 # fixed for this example
 
-    cdef void evolve(self, float timestep, float[:] pops_and_params):
+    def void evolve(self, float timestep, float[:] pops_and_params):
         # explicit time-stepping of logistic growth
         # as defined in the doco for "evolve",
         # pops_and_params[0] is the current population
         # pops_and_params[1] is the carrying capacity
         pops_and_params[0] = pops_and_params[0] + timestep * self.growth_rate * pops_and_params[0] * (1.0 - pops_and_params[0] / pops_and_params[1])
 
-    cdef array.array calcQm(self, float[:] eqm_pops_and_params):
+    def array.array calcQm(self, float[:] eqm_pops_and_params):
         """Not defined for this class"""
         return
 
-    cdef unsigned getNumSpecies(self):
+    def unsigned getNumSpecies(self):
         return 1
     
 
@@ -185,77 +185,77 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         self.w = 0.05
         self.small = 0.1
 
-    cdef void setMuX(self, float mux):
+    def void setMuX(self, float mux):
         self.mux = mux
 
-    cdef void setMuY(self, float muy):
+    def void setMuY(self, float muy):
         self.muy = muy
 
-    cdef void setGaX(self, float gax):
+    def void setGaX(self, float gax):
         self.gax = gax
 
-    cdef void setGaY(self, float gay):
+    def void setGaY(self, float gay):
         self.gay = gay
 
-    cdef void setAxy(self, float axy):
+    def void setAxy(self, float axy):
         self.axy = axy
 
-    cdef void setAyx(self, float ayx):
+    def void setAyx(self, float ayx):
         self.ayx = ayx
 
-    cdef void setW(self, float w):
+    def void setW(self, float w):
         self.w = w
 
-    cdef void setSmall(self, float small):
+    def void setSmall(self, float small):
         self.small = small
 
-    cdef float getMuX(self):
+    def float getMuX(self):
         return self.mux
 
-    cdef float getMuY(self):
+    def float getMuY(self):
         return self.muy
 
-    cdef float getGaX(self):
+    def float getGaX(self):
         return self.gax
 
-    cdef float getGaY(self):
+    def float getGaY(self):
         return self.gay
 
-    cdef float getAxy(self):
+    def float getAxy(self):
         return self.axy
 
-    cdef float getAyx(self):
+    def float getAyx(self):
         return self.ayx
 
-    cdef float getW(self):
+    def float getW(self):
         return self.w
 
-    cdef float getSmall(self):
+    def float getSmall(self):
         return self.small
 
 
-    cdef void evolve(self, float timestep, float[:] pops_and_params):
+    def void evolve(self, float timestep, float[:] pops_and_params):
         # explicit time-stepping of Beeton et al.'s equations
         # as defined in the doco for "evolve",
         # pops_and_params[0] is the current x
         # pops_and_params[1] is the current y
         # pops_and_params[2] is the carrying capacity Kx
         # pops_and_params[3] is the carrying capacity Ky
-        cdef float x = pops_and_params[0]
-        cdef float y = pops_and_params[1]
-        cdef float kx = pops_and_params[2]
-        cdef float ky = pops_and_params[3]
-        cdef float f = - self.mux + (1.0 - (x + self.axy * y) / (kx + self.small)) * (x / (x + self.w * y + self.small)) * self.gax
-        cdef float g = - self.muy + (1.0 - (self.ayx * x + y) / (ky + self.small)) * (self.gay + self.w * x / (x + self.w * y + self.small) * self.gax)
+        def float x = pops_and_params[0]
+        def float y = pops_and_params[1]
+        def float kx = pops_and_params[2]
+        def float ky = pops_and_params[3]
+        def float f = - self.mux + (1.0 - (x + self.axy * y) / (kx + self.small)) * (x / (x + self.w * y + self.small)) * self.gax
+        def float g = - self.muy + (1.0 - (self.ayx * x + y) / (ky + self.small)) * (self.gay + self.w * x / (x + self.w * y + self.small) * self.gax)
         # max means (x,y) doesn't stray outside physical quadrant, even if timestep is too large
         pops_and_params[0] = max(0.0, x + timestep * f * x)
         pops_and_params[1] = max(0.0, y + timestep * g * y)
 
-    cdef array.array calcQm(self, float[:] eqm_pops_and_params):
+    def array.array calcQm(self, float[:] eqm_pops_and_params):
         """Not defined for this class"""
         return
 
-    cdef unsigned getNumSpecies(self):
+    def unsigned getNumSpecies(self):
         return 2
     
 cdef class CellDynamicsMosquito23(CellDynamicsBase):
@@ -426,37 +426,37 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         # because genotypeRapidAccess depends on accuracy (through fecundity_proportion), we need to set it:
         self.setGenotypeRapidAccess()
 
-    cdef setMinimumDt(self, float value):
+    def setMinimumDt(self, float value):
         self.min_dt = value
 
-    cdef float getMinimumDt(self):
+    def float getMinimumDt(self):
         return self.min_dt
 
-    cdef setAdaptive(self, unsigned value):
+    def setAdaptive(self, unsigned value):
         self.adaptive = value
 
-    cdef unsigned getAdaptive(self):
+    def unsigned getAdaptive(self):
         return self.adaptive
 
-    cdef setZeroCutoff(self, float value):
+    def setZeroCutoff(self, float value):
         self.zero_cutoff = value
 
-    cdef float getZeroCutoff(self):
+    def float getZeroCutoff(self):
         return self.zero_cutoff
 
-    cdef setMinCarryingCapacity(self, float value):
+    def setMinCarryingCapacity(self, float value):
         self.min_cc = value
         self.one_over_min_cc = 1.0 / self.min_cc
 
-    cdef float getMinCarryingCapacity(self):
+    def float getMinCarryingCapacity(self):
         return self.min_cc
 
-    cdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value):
+    def setAlphaComponent(self, unsigned sp0, unsigned sp1, float value):
         if sp0 >= self.num_species or sp1 >= self.num_species:
             raise ValueError("sp0 " + str(sp0) + " and sp1 " + str(sp1) + " must be less than the number of species, " + str(self.num_species))
         self.alpha.data.as_floats[sp0 + sp1 * self.num_species] = value
 
-    cdef setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value):
+    def setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value):
         if species_father >= self.num_species or species_mother >= self.num_species or species_offspring >= self.num_species:
             raise ValueError("All species numbers, " + str(species_father) + ", " + str(species_mother) + ", " + str(species_offspring) + " must be less than the number of species, " + str(self.num_species))
         self.hyb.data.as_floats[species_father + species_mother * self.num_species + species_offspring * self.num_species2] = value
@@ -468,18 +468,18 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             raise ValueError("All species numbers, " + str(species_father) + ", " + str(species_mother) + ", " + str(species_offspring) + " must be less than the number of species, " + str(self.num_species))
         return self.getHybridisationRate(species_father, species_mother, species_offspring)
 
-    cdef setMatingComponent(self, unsigned species_father, unsigned species_mother, float value):
+    def setMatingComponent(self, unsigned species_father, unsigned species_mother, float value):
         if species_father >= self.num_species or species_mother >= self.num_species:
             raise ValueError("species_father " + str(species_father) + " and species_mother " + str(species_mother) + " must be less than the number of species, " + str(self.num_species))
         self.mating.data.as_floats[species_father + species_mother * self.num_species] = value
 
-    cdef setFitnessComponent(self, unsigned genotype, float value):
+    def setFitnessComponent(self, unsigned genotype, float value):
         if genotype >= self.num_genotypes:
             raise ValueError("genotype " + str(genotype) + " must be less than the number of genotypes " + str(self.num_genotypes))
         self.fitness.data.as_floats[genotype] = value
         self.setGenotypeRapidAccess()
 
-    cdef void setGenotypeRapidAccess(self):
+    def void setGenotypeRapidAccess(self):
         if len(self.genotypeRapidAccess) != self.num_sexes * self.num_genotypes2:
             raise ValueError("self.genotypeRapidAccess.size() != self.num_sexes * self.num_genotypes2 in setFitnessComponent.  Perhaps the code does not set num_sexes correctly")
         cdef unsigned ind1, sex, gtf, gtm
@@ -498,37 +498,37 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             raise ValueError("Genotype " + str(genotype) + " must be less than the number of genotypes, " + str(self.num_genotypes))
         return self.getFitnessComponent(genotype)
 
-    cdef void setMuLarvae(self, float mu_larvae):
+    def void setMuLarvae(self, float mu_larvae):
         self.mu_larvae = mu_larvae
 
-    cdef float getMuLarvae(self):
+    def float getMuLarvae(self):
         return self.mu_larvae
     
-    cdef void setMuAdult(self, float mu_adult):
+    def void setMuAdult(self, float mu_adult):
         self.mu_adult = mu_adult
 
-    cdef float getMuAdult(self):
+    def float getMuAdult(self):
         return self.mu_adult
     
-    cdef void setFecundity(self, float fecundity):
+    def void setFecundity(self, float fecundity):
         self.fecundity = fecundity
 
-    cdef float getFecundity(self):
+    def float getFecundity(self):
         return self.fecundity
     
-    cdef void setAgingRate(self, float aging_rate):
+    def void setAgingRate(self, float aging_rate):
         self.aging_rate = aging_rate
 
-    cdef float getAgingRate(self):
+    def float getAgingRate(self):
         return self.aging_rate
     
-    cdef void setNumAges(self, unsigned num_ages):
+    def void setNumAges(self, unsigned num_ages):
         self.setInternalParameters(num_ages, self.num_species, self.accuracy)
 
-    cdef unsigned getNumAges(self):
+    def unsigned getNumAges(self):
         return self.num_ages
     
-    cdef void setNumSpecies(self, unsigned num_species):
+    def void setNumSpecies(self, unsigned num_species):
         self.setInternalParameters(self.num_ages, num_species, self.accuracy)
         self.alpha = array.clone(array.array('f', []), num_species * num_species, zero = True)
         cdef unsigned species
@@ -543,7 +543,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.comp = array.clone(array.array('f', []), num_species, zero = False)
         self.denom = array.clone(array.array('f', []), num_species, zero = False)
 
-    cdef void setNumGenotypes(self, unsigned num_sexes, unsigned num_genotypes):
+    def void setNumGenotypes(self, unsigned num_sexes, unsigned num_genotypes):
         if num_sexes != self.num_sexes:
             raise ValueError("setNumGenotypes: num_sexes != self.num_sexes.  " + str(num_sexes) + "!=" + str(self.num_sexes) + ".  Probably there is a bug in the code")
 
@@ -578,13 +578,13 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             raise ValueError("All genotypes, " + str(gt_father) + ", " + str(gt_mother) + ", " + str(gt_offspring) + " must be less than the number of genotypes, " + str(self.num_genotypes))
         return self.getInheritance(gt_father, gt_mother, gt_offspring)
 
-    cdef unsigned getNumSpecies(self):
+    def unsigned getNumSpecies(self):
         return self.num_species
     
-    cdef void setAccuracy(self, float accuracy):
+    def void setAccuracy(self, float accuracy):
         self.setInternalParameters(self.num_ages, self.num_species, accuracy)
 
-    cdef float getAccuracy(self):
+    def float getAccuracy(self):
         return self.accuracy
 
     cdef void computeRHS(self, float[:] x):
@@ -757,7 +757,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
 
 
-    cdef void evolve(self, float timestep, float[:] pops_and_params):
+    def void evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
         cdef unsigned sp
 
@@ -806,7 +806,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
             if pops_and_params[ind] < self.zero_cutoff:
                 pops_and_params[ind] = 0.0
 
-    cdef array.array calcQm(self, float[:] eqm_pops_and_params):
+    def array.array calcQm(self, float[:] eqm_pops_and_params):
         """Not defined for this class"""
         return
 
@@ -860,7 +860,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                 cchange[ind] = (1.0 / 6.0) * (self.rk1.data.as_floats[ind] + 2 * self.rk2.data.as_floats[ind] + 2 * self.rk3.data.as_floats[ind] + self.rk4.data.as_floats[ind])
 
 
-    cdef setTimeIntegrationMethod(self, str method):
+    def setTimeIntegrationMethod(self, str method):
         if method == "explicit_euler":
             self.time_integration_method = 0
         elif method == "solve_ivp":
@@ -1124,7 +1124,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
                 for gt_offspring in range(self.num_genotypes):
                     self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + gt_offspring * self.num_genotypes2] = inheritance_list[gt_father][gt_mother][gt_offspring]
 
-    cdef setFitnessComponents26(self, float h_e, float h_n, float s_e, float s_n):
+    def setFitnessComponents26(self, float h_e, float h_n, float s_e, float s_n):
         if self.num_genotypes != 6:
             raise ValueError("setFitnessComponents26 can only be used if the number of genotypes is 6")
         self.setFitnessComponent(0, 1) # ww
@@ -1134,7 +1134,7 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
         self.setFitnessComponent(4, (1 - h_e * s_e) * (1 - h_n * s_n)) # cr
         self.setFitnessComponent(5, 1) # rr
 
-    cdef setInheritance26(self, float k_c, float k_j, float k_ne):
+    def setInheritance26(self, float k_c, float k_j, float k_ne):
         if self.num_genotypes != 6:
             raise ValueError("setInheritance26 can only be used if the number of genotypes is 6")
         self.w_prob = 0.5 * (1 - k_c)
@@ -1170,13 +1170,13 @@ cdef class CellDynamicsDelayBase(CellDynamicsBase):
         self.delay = delay
         self.current_index = current_index % (delay + 1)
 
-    cdef unsigned getDelay(self):
+    def unsigned getDelay(self):
         return self.delay
 
-    cdef void incrementCurrentIndex(self):
+    def void incrementCurrentIndex(self):
         self.current_index = (self.current_index + 1) % (self.delay + 1)
 
-    cdef unsigned getCurrentIndex(self):
+    def unsigned getCurrentIndex(self):
         return self.current_index
 
 cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
@@ -1264,7 +1264,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
 
         self.have_precalculated = 0
 
-    cdef void incrementCurrentIndex(self):
+    def void incrementCurrentIndex(self):
         # don't know why i can't super().incrementCurrentIndex()
         self.current_index = (self.current_index + 1) % (self.delay + 1)
         cdef unsigned sex, genotype, species, offset
@@ -1277,7 +1277,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
                     self.advecting_indices.data.as_uints[ind] = offset
                     ind = ind + 1
 
-    cdef setDeathRate(self, list death_rate):
+    def setDeathRate(self, list death_rate):
         self.death_rate = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
         if len(death_rate) != self.num_sexes:
             raise ValueError("size of death_rate, " + str(len(death_rate)) + ", must be equal to " + str(self.num_sexes))
@@ -1292,10 +1292,10 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
                         raise ValueError("all death rates must be positive")
                     self.death_rate[m + g * self.num_species + s * self.num_species * self.num_genotypes] = death_rate[s][g][m]
 
-    cdef list getDeathRate(self):
+    def list getDeathRate(self):
         return [[[self.death_rate[m + g * self.num_species + s * self.num_species * self.num_genotypes] for m in range(self.num_species)] for g in range(self.num_genotypes)] for s in range(self.num_sexes)]
                      
-    cdef setCompetition(self, list competition):
+    def setCompetition(self, list competition):
         self.competition = array.clone(array.array('f', []), self.num_species * self.num_species, zero = False)
         if len(competition) != self.num_species:
             raise ValueError("size of competition, " + str(len(competition)) + ", must be equal to " + str(self.num_species))
@@ -1305,10 +1305,10 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
             for mprime in range(self.num_species):
                 self.competition[mprime + m * self.num_species] = competition[m][mprime]
             
-    cdef list getCompetition(self):
+    def list getCompetition(self):
         return [[self.competition[mprime + m * self.num_species] for mprime in range(self.num_species)] for m in range(self.num_species)]
 
-    cdef setEmergenceRate(self, list emergence_rate):
+    def setEmergenceRate(self, list emergence_rate):
         if len(emergence_rate) != self.num_species:
             raise ValueError("size of emergence_rate, " + str(len(emergence_rate)) + ", must be equal to " + str(self.num_species))
         for er in emergence_rate:
@@ -1317,10 +1317,10 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         self.emergence_rate = array.array('f', emergence_rate)
         self.have_precalculated = 0
 
-    cdef list getEmergenceRate(self):
+    def list getEmergenceRate(self):
         return [self.emergence_rate[i] for i in range(self.num_species)]
                      
-    cdef setActivity(self, list activity):
+    def setActivity(self, list activity):
         self.activity = array.clone(array.array('f', []), self.num_species * self.num_species, zero = False)
         if len(activity) != self.num_species:
             raise ValueError("size of activity, " + str(len(activity)) + ", must be equal to " + str(self.num_species))
@@ -1332,10 +1332,10 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
                     raise ValueError("all activity values must be non-negative")
                 self.activity[mM + mF * self.num_species] = activity[mF][mM]
 
-    cdef list getActivity(self):
+    def list getActivity(self):
         return [[self.activity[mM + mF * self.num_species] for mM in range(self.num_species)] for mF in range(self.num_species)]
                      
-    cdef void evolveTrial(self, float timestep, float[:] pops_and_params):
+    def void evolveTrial(self, float timestep, float[:] pops_and_params):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
         discretises to x[t + dt] = x[t - delay * dt] / death_rate + (x[t] - x[t - delay * dt] / death_rate) * exp(-death_rate * dt)
         This function is not optimised!"""
@@ -1390,10 +1390,10 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
                 self.inheritance_cube.data.as_floats[gt_father + gt_mother * self.num_genotypes + 5 * self.num_genotypes2] = allele_list[gt_father][2] * allele_list[gt_mother][2] # rr offspring
         self.have_precalculated = 0
 
-    cdef array.array getInheritance(self):
+    def array.array getInheritance(self):
         return self.inheritance_cube
 
-    cdef void setFecundityP(self, float sex_ratio, float female_bias):
+    def void setFecundityP(self, float sex_ratio, float female_bias):
         self.sex_ratio = sex_ratio
         self.female_bias = female_bias
         self.fecundity_p = array.array('f', [0.5] * self.num_sexes * self.num_genotypes2)
@@ -1416,16 +1416,16 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
 
         self.have_precalculated = 0
 
-    cdef float getSexRatio(self):
+    def float getSexRatio(self):
         return self.sex_ratio
 
-    cdef float getFemaleBias(self):
+    def float getFemaleBias(self):
         return self.female_bias
 
-    cdef list getFecundityP(self):
+    def list getFecundityP(self):
         return [[[self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes * self.num_genotypes] for s in range(self.num_sexes)] for gF in range(self.num_genotypes)] for gM in range(self.num_genotypes)]
 
-    cdef setReduction(self, list reduction):
+    def setReduction(self, list reduction):
         self.reduction = array.clone(array.array('f', []), self.num_genotypes2, zero = False)
         if len(reduction) != self.num_genotypes:
             raise ValueError("size of reduction, " + str(len(reduction)) + ", must be equal to " + str(self.num_genotypes))
@@ -1437,10 +1437,10 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
         self.have_precalculated = 0
         
 
-    cdef list getReduction(self):
+    def list getReduction(self):
         return [[self.reduction[gF + gM * self.num_genotypes] for gF in range(self.num_genotypes)] for gM in range(self.num_genotypes)]
 
-    cdef setHybridisation(self, list hybridisation):
+    def setHybridisation(self, list hybridisation):
         self.hybridisation = array.clone(array.array('f', []), self.num_species2 * self.num_species, zero = False)
         if len(hybridisation) != self.num_species:
             raise ValueError("size of hybridisation, " + str(len(hybridisation)) + ", must be equal to " + str(self.num_species))
@@ -1454,10 +1454,10 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
                     self.hybridisation[m + mF * self.num_species + mM * self.num_species2] = hybridisation[mM][mF][m]
         self.have_precalculated = 0
 
-    cdef list getHybridisation(self):
+    def list getHybridisation(self):
         return [[[self.hybridisation[m + mF * self.num_species + mM * self.num_species * self.num_species] for m in range(self.num_species)] for mF in range(self.num_species)] for mM in range(self.num_species)]
 
-    cdef setOffspringModifier(self, list offspring_modifier):
+    def setOffspringModifier(self, list offspring_modifier):
         self.offspring_modifier = array.clone(array.array('f', []), self.num_species2 * self.num_sexes, zero = False)
         if len(offspring_modifier) != self.num_sexes:
             raise ValueError("size of offspring_modifier, " + str(len(offspring_modifier)) + ", must be equal to " + str(self.num_sexes))
@@ -1471,19 +1471,19 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
                     self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] = offspring_modifier[s][mM][mF]
         self.have_precalculated = 0
 
-    cdef list getOffspringModifier(self):
+    def list getOffspringModifier(self):
         return [[[self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] for mF in range(self.num_species)] for mM in range(self.num_species)] for s in range(self.num_sexes)]
 
-    cdef void setMinCarryingCapacity(self, float value):
+    def void setMinCarryingCapacity(self, float value):
         self.min_cc = value
 
-    cdef float getMinCarryingCapacity(self):
+    def float getMinCarryingCapacity(self):
         return self.min_cc
 
-    cdef precalculate(self):
+    def precalculate(self):
         self.have_precalculated = 1
 
-    cdef unsigned getNumSpecies(self):
+    def unsigned getNumSpecies(self):
         return self.num_species
     
 cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
@@ -1540,7 +1540,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
         self.min_cc = min_cc
         self.precalculate()
 
-    cdef void evolve(self, float timestep, float[:] pops_and_params):
+    def void evolve(self, float timestep, float[:] pops_and_params):
         """This function is not optimised"""
 
         if self.have_precalculated == 0:
@@ -1620,17 +1620,17 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
                     delayed_ind = delayed_base + ind
                     pops_and_params[delayed_ind] = self.new_pop[ind]
 
-    cdef array.array calcQm(self, float[:] eqm_pops_and_params):
+    def array.array calcQm(self, float[:] eqm_pops_and_params):
         """Not defined for this class"""
         return
 
-    cdef void setMinCarryingCapacity(self, float value):
+    def void setMinCarryingCapacity(self, float value):
         self.min_cc = value
 
-    cdef float getMinCarryingCapacity(self):
+    def float getMinCarryingCapacity(self):
         return self.min_cc
 
-    cdef precalculate(self):
+    def precalculate(self):
         cdef unsigned mM, mF, m, gM, gF, g, s, ind
         array.zero(self.precalc)
         array.zero(self.precalcp)
@@ -1705,31 +1705,31 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.genotype_present = array.clone(array.array('B', []), self.num_genotypes, zero = False)
         self.precalculate()
 
-    cdef setNumGenotypesToCalc(self, unsigned num_genotypes_to_calc):
+    def setNumGenotypesToCalc(self, unsigned num_genotypes_to_calc):
         if num_genotypes_to_calc > self.num_genotypes:
             raise ValueError("setNumGenotypesToCalc: num_genotypes_to_calc must be <= " + str(self.num_genotypes))
         self.num_genotypes_to_calc = num_genotypes_to_calc
 
-    cdef unsigned getNumGenotypesToCalc(self):
+    def unsigned getNumGenotypesToCalc(self):
         return self.num_genotypes_to_calc
 
-    cdef setNumSexesToCalc(self, unsigned num_sexes_to_calc):
+    def setNumSexesToCalc(self, unsigned num_sexes_to_calc):
         if num_sexes_to_calc > self.num_sexes:
             raise ValueError("setNumSexesToCalc: num_sexes_to_calc must be <= " + str(self.num_sexes))
         self.num_sexes_to_calc = num_sexes_to_calc
 
-    cdef unsigned getNumSexesToCalc(self):
+    def unsigned getNumSexesToCalc(self):
         return self.num_sexes_to_calc
 
-    cdef setUseQm(self, unsigned use_qm):
+    def setUseQm(self, unsigned use_qm):
         if not (use_qm == 0 or use_qm == 1):
             raise ValueError("setUseQm: use_qm must be 0 or 1")
         self.use_qm = use_qm
 
-    cdef unsigned getUseQm(self):
+    def unsigned getUseQm(self):
         return self.use_qm
 
-    cdef void evolve(self, float timestep, float[:] pops_and_params):
+    def void evolve(self, float timestep, float[:] pops_and_params):
 
         if self.have_precalculated == 0:
             self.precalculate()
@@ -1835,7 +1835,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     # better:
                     pops_and_params[delayed_ind] = self.new_pop.data.as_floats[ind]
 
-    cdef precalculate(self):
+    def precalculate(self):
         cdef unsigned mM, mF, m, gM, gF, g, s, ind
         array.zero(self.precalc)
         array.zero(self.precalcp)
@@ -1851,7 +1851,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                                     self.precalcp[ind] += self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] * self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
         self.have_precalculated = 1
         
-    cdef array.array calcQm(self, float[:] eqm_pops_and_params):
+    def array.array calcQm(self, float[:] eqm_pops_and_params):
         if self.have_precalculated == 0:
             self.precalculate()
 
@@ -1892,7 +1892,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
 
         return self.qm_vals
 
-    cdef unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params):
+    def unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params):
         cdef unsigned some_males = 0 # zero if there are no delayed males whatsoever
         cdef unsigned mF, sex, gprime, mprime, delayed_index, ind, gM, mM, inda
         cdef float denom, one_over_denom
@@ -1927,7 +1927,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                             self.xprimeM.data.as_floats[ind] = self.activity.data.as_floats[inda] * pops_and_params[delayed_index] * one_over_denom
         return some_males
 
-    cdef void calcYYprime(self, unsigned some_males, unsigned delayed_base, float[:] pops_and_params):
+    def void calcYYprime(self, unsigned some_males, unsigned delayed_base, float[:] pops_and_params):
         cdef unsigned s, g, m, yy_ind, mF, gF, f_ind, mM, gM, xprime_ind, precalc_ind
         cdef float xF
         array.zero(self.yy)
@@ -1958,7 +1958,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                                                             self.yy.data.as_floats[yy_ind] = self.yy.data.as_floats[yy_ind] + self.precalc.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
                                                             self.yyp.data.as_floats[yy_ind] = self.yyp.data.as_floats[yy_ind] + self.precalcp.data.as_floats[precalc_ind] * xF * self.xprimeM.data.as_floats[xprime_ind]
 
-    cdef void calcCompetition(self, unsigned some_males):
+    def void calcCompetition(self, unsigned some_males):
         cdef unsigned m, mprime, alpha_ind, s, g, yy_ind
         cdef float alpha
         array.zero(self.comp)

@@ -46,7 +46,7 @@ cdef class Wind:
         self.uint_template = array.array('I', [])
         self.float_template = array.array('f', [])
 
-    cdef parseRawFile(self):
+    def parseRawFile(self):
         """Parse the raw wind file specified in the constructor, then processes this data to produce advection_from, etc"""
         self.windParser = SpatialDependence(self.xmin, self.ymin, self.cell_size, self.nx, self.ny)
         if self.binary_file_format == 0:
@@ -63,7 +63,7 @@ cdef class Wind:
         self.processRawVelocities()
         self.processed_data_computed = 1
 
-    cdef parseProcessedFile(self):
+    def parseProcessedFile(self):
         """Parse the processed wind file specified in the constructor, putting the results in advection_from, etc"""
         self.windParser = SpatialDependence(self.xmin, self.ymin, self.cell_size, self.nx, self.ny)
         if self.binary_file_format == 0:
@@ -158,7 +158,7 @@ cdef class Wind:
         array.resize(self.advection_p, self.num_advection)
             
 
-    cdef outputProcessedCSV(self):
+    def outputProcessedCSV(self):
         "Outputs the active information to a file"""
         cdef unsigned ind
         cdef float* float_data = NULL
@@ -192,58 +192,58 @@ cdef class Wind:
             free(float_data)
             free(uint)
 
-    cdef str getRawWindFilename(self):
+    def str getRawWindFilename(self):
         """Returns the raw wind filename"""
         return self.raw_wind_fn
 
-    cdef str getProcessedWindFilename(self):
+    def str getProcessedWindFilename(self):
         """Returns the raw wind filename"""
         return self.processed_wind_fn
 
-    cdef list getPDF(self):
+    def list getPDF(self):
         """Returns the probability distribution for advection"""
         return self.pdf
 
-    cdef Grid getGrid(self):
+    def Grid getGrid(self):
         """Returns the Grid object that this class depends on"""
         return self.Grid
 
-    cdef int getProcessedDataComputed(self):
+    def int getProcessedDataComputed(self):
         """Returns 1 if processed advection data has been computed"""
         return self.processed_data_computed
 
-    cdef array.array getAdvectionFrom(self):
+    def array.array getAdvectionFrom(self):
         """Before calling this, check that getProcessedDataComputed() == 1.
         Returns an array containing active cell indices from which advection occurs.
         For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
         getAdvectionTo()[i] with probability getAdvectionP()[i]"""
         return self.advection_from
     
-    cdef array.array getAdvectionTo(self):
+    def array.array getAdvectionTo(self):
         """Before calling this, check that getProcessedDataComputed() == 1.
         Returns an array containing active cell indices to which advection occurs.
         For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
         getAdvectionTo()[i] with probability getAdvectionP()[i]"""
         return self.advection_to
     
-    cdef array.array getAdvectionP(self):
+    def array.array getAdvectionP(self):
         """Before calling this, check that getProcessedDataComputed() == 1.
         Returns an array containing advection probability.active cell indices to which advection occurs.
         For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
         getAdvectionTo()[i] with probability getAdvectionP()[i]"""
         return self.advection_p
 
-    cdef unsigned getNumAdvection(self):
+    def unsigned getNumAdvection(self):
         """Returns the size of the advection_from array (= size of advection_to array = size of advection_p array)"""
         return self.num_advection
     
 
-    cdef setBinaryFileFormat(self, unsigned value):
+    def setBinaryFileFormat(self, unsigned value):
         if not (value == 0 or value == 1):
             raise ValueError("FileFormat must be 0 or 1")
         self.binary_file_format = value
 
-    cdef unsigned getBinaryFileFormat(self):
+    def unsigned getBinaryFileFormat(self):
         return self.binary_file_format
 
         

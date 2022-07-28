@@ -7,44 +7,44 @@ cdef class Grid:
     See methods below, in particular internal_global_index and setActiveAndInactive for numbering schemes"""
 
     # lower-left corner
-    cdef float xmin, ymin
+    def float xmin, ymin
 
     # cell side-length
-    cdef float cell_size
+    def float cell_size
 
     # number of cells in x and y directions
-    cdef unsigned nx, ny
+    def unsigned nx, ny
 
     # number of cells
-    cdef unsigned num_cells
+    def unsigned num_cells
 
     # a template for making an unsigned integer arrays quickly
-    cdef array.array uint_template
+    def array.array uint_template
 
     # whether a cell is active (1) or not (0)
-    cdef array.array active
+    def array.array active
 
     # number of active cells
-    cdef unsigned num_active_cells
+    def unsigned num_active_cells
 
     # global_index[i] = global index of the active cell index i.  Here i ranges from 0 to num_active_cells - 1, and the global_index values will be between 0 and num_cells - 1
-    cdef array.array global_index
+    def array.array global_index
 
     # active_index[i] = active cell index of the global cell index i.  Here i ranges from 0 to num_cells - 1, and active_index values will range from 0 to num_active_cells - 1
-    cdef array.array active_index
+    def array.array active_index
 
     # connectivity information: connect_from[i] is a cell number that connects to cell number connect_to[i].  These arrays contain only active cells
-    cdef array.array connect_from
-    cdef array.array connect_to
+    def array.array connect_from
+    def array.array connect_to
 
     # total size of connect_from (which contains only the active set)
-    cdef unsigned num_connections
+    def unsigned num_connections
 
     # filename that defines the active cells (defaults to "None")
-    cdef str active_filename
+    def str active_filename
 
     # the parser that provides the active cells by parsing active_filename
-    cdef SpatialDependence activeParser
+    def SpatialDependence activeParser
 
     cdef unsigned internal_global_index(self, unsigned x_ind, unsigned y_ind)
     """provides the index used in this class, given x and y cell number.
@@ -55,7 +55,7 @@ cdef class Grid:
     (x_ind, y_ind) = (nx - 1, ny - 1) corresponds to the upper right-hand cell, which is internal_global_index = (ny - 1) * nx + nx - 1
     """
 
-    cdef setActiveAndInactive(self, filename)
+    def setActiveAndInactive(self, filename)
     """Parses filename to determine the active and inactive cells.
     Updates connectivity information, so getConnectionsFrom, etc, only returns active cells.
     filename must have the following format:
@@ -78,48 +78,48 @@ cdef class Grid:
     cdef void buildAdjacency(self)
     """Builds connect_from and connect_to, and num_connections, based on the self.active"""
 
-    cdef str getActiveFilename(self)
+    def str getActiveFilename(self)
     """Returns filename that defined the active/inactive cells"""
 
-    cdef float getXmin(self)
+    def float getXmin(self)
     """Returns x coord of the lower-left corner"""
 
-    cdef float getYmin(self)
+    def float getYmin(self)
     "Returns y coord of the lower-left corner"""
 
-    cdef float getCellSize(self)
+    def float getCellSize(self)
     "Returns cell side length"""
 
-    cdef unsigned getNx(self)
+    def unsigned getNx(self)
     "Returns number of cells in x direction"""
 
-    cdef unsigned getNy(self)
+    def unsigned getNy(self)
     "Returns number of cells in y direction"""
 
-    cdef unsigned getNumCells(self)
+    def unsigned getNumCells(self)
     """Returns the total number of cells"""
 
-    cdef unsigned getNumActiveCells(self)
+    def unsigned getNumActiveCells(self)
     """Returns the number of active cells"""
 
-    cdef unsigned getNumConnections(self)
+    def unsigned getNumConnections(self)
     """Returns the number of connections within the active set of cells"""
 
-    cdef array.array getConnectionsFrom(self)
+    def array.array getConnectionsFrom(self)
     """Returns the connections from the active cells"""
 
-    cdef array.array getConnectionsTo(self)
+    def array.array getConnectionsTo(self)
     """Returns the connections to the active cells"""
 
-    cdef array.array getGlobalIndex(self)
+    def array.array getGlobalIndex(self)
     """Returns the global index of the active cells
     The returned array is global_index[i] = global cell index of the active cell index i.
     Here i ranges from 0 to num_active_cells - 1, and the values of global_index range from 0 to num_cells - 1"""
 
-    cdef array.array getActiveIndex(self)
+    def array.array getActiveIndex(self)
     """Returns the active index of the the global cell array.
     The returned array is active_index[i] = active cell index of the global cell index i.
     Here i ranges from 0 to num_cells - 1, and the values of active_index range from 0 to num_active_cells - 1"""
 
-    cdef outputActiveCSV(self, str filename)
+    def outputActiveCSV(self, str filename)
     "Outputs the active information to a file"""

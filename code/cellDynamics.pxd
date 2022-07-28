@@ -9,81 +9,81 @@ cdef class CellDynamicsBase:
     """Manipulates information at a single cell, in particular this class solves lifecycle ODEs"""
 
     # number of populations (maleGw, femaleGG, larvaeMaleGw, whatever) in the Cell dynamics
-    cdef unsigned num_populations
+    def unsigned num_populations
 
     # number of populations that diffuse
-    cdef unsigned num_diffusing
+    def unsigned num_diffusing
 
     # diffusing_indices[i] is the i^th population that is diffusing
     # 0 <= diffusing_indices[i] < num_populations.  0 <= i < num_diffusing
-    cdef array.array diffusing_indices
+    def array.array diffusing_indices
 
     # number of populations that advect
-    cdef unsigned num_advecting
+    def unsigned num_advecting
 
     # advecting_indices[i] is the i^th population that is advecting
     # 0 <= advecting_indices[i] < num_populations.  0 <= i < num_advecting
-    cdef array.array advecting_indices
+    def array.array advecting_indices
 
     # advection_class[i] is the class of the i^th population that is advecting
     # 0 <= advection_class[i], with 0 <= i < num_advecting
     # This allows for different types of advection, for instance, males (class = 0) advecting with a different probability than females (class = 1)
-    cdef array.array advection_class
+    def array.array advection_class
 
     # number of parameters (carrying capacity, mortality rate, etc) in the Cell dynamics
-    cdef unsigned num_parameters
+    def unsigned num_parameters
 
     # A value that can be used as a lower bound on population numbers, carrying capacities, or anything else, to eliminate underflows or to zero populations when they reach a threshold
-    cdef float small_value
+    def float small_value
     
-    cdef unsigned getNumberOfPopulations(self)
+    def unsigned getNumberOfPopulations(self)
     """Returns number of populations (maleGw, femaleGG, larvaeMaleGw, whatever) in the Cell dynamics"""
 
-    cdef unsigned getNumberOfDiffusingPopulations(self)
+    def unsigned getNumberOfDiffusingPopulations(self)
     """Returns the number of populations that diffuse"""
 
-    cdef array.array getDiffusingIndices(self)
+    def array.array getDiffusingIndices(self)
     """Returns: diffusing_indices[i] is the i^th populations that is diffusing
     0 <= diffusing_indices[i] < num_populations.  0 <= i < num_diffusing"""
 
-    cdef unsigned getNumberOfAdvectingPopulations(self)
+    def unsigned getNumberOfAdvectingPopulations(self)
     """Returns the number of populations that advect"""
 
-    cdef array.array getAdvectingIndices(self)
+    def array.array getAdvectingIndices(self)
     """Returns: advecting_indices[i] is the i^th populations that is advecting
     0 <= advecting_indices[i] < num_populations.  0 <= i < num_advecting"""
 
-    cdef array.array getAdvectionClass(self)
+    def array.array getAdvectionClass(self)
     """Returns: advection_class[i], which is the class of the i^th population that is advecting
     0 <= advection_class[i], with 0 <= i < num_advecting.  This allows for different types of
     advection, for instance, males (class = 0) advecting with a different probability than
     females (class = 1)"""
 
-    cdef setAdvectionClass(self, unsigned population_index, unsigned new_class)
+    def setAdvectionClass(self, unsigned population_index, unsigned new_class)
     """Sets the advection class of the given population_index to new_class.  0 <= population_index < num_populations.
     This will raise a ValueError if the population_index has not been defined to be advecting"""
 
 
 
-    cdef unsigned getNumberOfParameters(self)
+    def unsigned getNumberOfParameters(self)
     """Returns the number of parameters (carrying capacity, mortality rate, etc) in the cell dynamics"""
 
-    cdef void setSmallValue(self, float small_value)
+    def void setSmallValue(self, float small_value)
     """Sets the small_value"""
 
-    cdef float getSmallValue(self)
+    def float getSmallValue(self)
     """Gets self.small_value"""
 
-    cdef void evolve(self, float timestep, float[:] pops_and_params)
+    def void evolve(self, float timestep, float[:] pops_and_params)
     """Performs one timestep of evolution
     Note: pops_and_params is a pointer to an array of floats, so any changes made to its values will be evident to the calling function
     Note: pops_and_params will be of size num_populations + num_parameters, and should not be resized
     Note: the first num_populations entries of pops_and_params will be the population values, while the remainder are the parameter values"""
 
-    cdef array.array calcQm(self, float[:] eqm_pops_and_params)
+    def array.array calcQm(self, float[:] eqm_pops_and_params)
     """This currently only works for CellDynamicsMosquitoBH26Delay.  Given the eqm_pops_and_params, which is an array containing the populations at equilibrium, return the qm values.  Only the 'current_index' and wild-type entries of eqm_pops_and_params are used in this calculation.  This function assumes the equilibrium populations for male equal those for females.  You must make sure the entries corresponding to adults of species M, genotype=0, sex S are correct (they have index = M + 0 * num_species + S * num_species * num_genotypes + current_index * num_species * num_genotypes * num_sexes).  This function does not work if the equilibrium populations contain genotype!=0 mosquitoes, and only works if male=female=carrying_capacity/2.  This function does not check that eqm_pops_and_params is actually an equilibrium: if you feed it garbage, it will produce garbage!"""
 
-    cdef unsigned getNumSpecies(self)
+    def unsigned getNumSpecies(self)
     """Get number of species"""
 
 cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
@@ -103,61 +103,61 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
     Beeton, Hosack, Wilkins, Forbes, Ickowicz and Hayes, Journal of Theoretical Biology 2019.
     There are 2 parameters, which are the carrying capacities Kx and Ky.
     The dynamics is defined in Eqns(4.1) and (4.2) in Beeton et al."""
-    cdef float mux # mu_x
-    cdef float muy # mu_y
-    cdef float gax # gamma_x
-    cdef float gay # gamma_y
-    cdef float axy # alpha_{xy}
-    cdef float ayx # alpha_{yx}
-    cdef float w   # w
-    cdef float small
+    def float mux # mu_x
+    def float muy # mu_y
+    def float gax # gamma_x
+    def float gay # gamma_y
+    def float axy # alpha_{xy}
+    def float ayx # alpha_{yx}
+    def float w   # w
+    def float small
 
-    cdef void setMuX(self, float mux)
+    def void setMuX(self, float mux)
     """Sets mu_x"""
 
-    cdef void setMuY(self, float muy)
+    def void setMuY(self, float muy)
     """Sets mu_y"""
 
-    cdef void setGaX(self, float gax)
+    def void setGaX(self, float gax)
     """Sets gamma_x"""
 
-    cdef void setGaY(self, float gay)
+    def void setGaY(self, float gay)
     """Sets gamma_y"""
 
-    cdef void setAxy(self, float axy)
+    def void setAxy(self, float axy)
     """Sets alpha_{xy}"""
 
-    cdef void setAyx(self, float ayx)
+    def void setAyx(self, float ayx)
     """Sets alpha_{yx}"""
 
-    cdef void setW(self, float w)
+    def void setW(self, float w)
     """Sets w"""
 
-    cdef void setSmall(self, float small)
+    def void setSmall(self, float small)
     """Sets small"""
 
-    cdef float getMuX(self)
+    def float getMuX(self)
     """Gets mu_x"""
 
-    cdef float getMuY(self)
+    def float getMuY(self)
     """Gets mu_y"""
 
-    cdef float getGaX(self)
+    def float getGaX(self)
     """Gets gamma_x"""
 
-    cdef float getGaY(self)
+    def float getGaY(self)
     """Gets gamma_y"""
 
-    cdef float getAxy(self)
+    def float getAxy(self)
     """Gets alpha_{xy}"""
 
-    cdef float getAyx(self)
+    def float getAyx(self)
     """Gets alpha_{yx}"""
 
-    cdef float getW(self)
+    def float getW(self)
     """Gets w"""
 
-    cdef float getSmall(self)
+    def float getSmall(self)
     """Gets small"""
 
 cdef class CellDynamicsMosquito23(CellDynamicsBase):
@@ -317,41 +317,41 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     cdef void setInternalParameters(self, unsigned num_ages, unsigned num_species, float accuracy)
     """Given num_ages, num_species and accuracy, set all internal parameters (num_populations, diffusing_indices, fecundity_proportion, etc) that depend on these"""
 
-    cdef setMinimumDt(self, float value)
+    def setMinimumDt(self, float value)
     """Sets the minimum allowed timestep to value"""
 
-    cdef float getMinimumDt(self)
+    def float getMinimumDt(self)
     """Gets the minimum allowed timestep"""
 
-    cdef setAdaptive(self, unsigned value)
+    def setAdaptive(self, unsigned value)
     """Sets adaptive to value.  If value == 0 then do no adaptive timestepping"""
 
-    cdef unsigned getAdaptive(self)
+    def unsigned getAdaptive(self)
     """Gets the minimum allowed timestep"""
 
-    cdef setZeroCutoff(self, float value)
+    def setZeroCutoff(self, float value)
     """Sets zero_cutoff to value.  If any population is less than this value at the end of the time-step, it is set to zero"""
 
-    cdef float getZeroCutoff(self)
+    def float getZeroCutoff(self)
     """Gets the value of zero_cutoff"""
 
-    cdef setMinCarryingCapacity(self, float value)
+    def setMinCarryingCapacity(self, float value)
     """Sets min_cc to value.  If the carrying capacity is less than this value, no new larvae are produced"""
 
-    cdef float getMinCarryingCapacity(self)
+    def float getMinCarryingCapacity(self)
     """Gets the value of min_cc"""
 
-    cdef setAlphaComponent(self, unsigned sp0, unsigned sp1, float value)
+    def setAlphaComponent(self, unsigned sp0, unsigned sp1, float value)
     """Sets alpha[sp0][sp1] = value (for inter-specific competition).  Note, if you setNumSpecies, alpha will be re-initialised to the identity"""
 
     cdef inline float getAlphaComponent(self, unsigned sp0, unsigned sp1):
         """Gets alpha[sp0][sp1]: the inter-specific competition"""
         return self.alpha.data.as_floats[sp0 + sp1 * self.num_species]
 
-    cdef setMatingComponent(self, unsigned species_father, unsigned species_mother, float value)
+    def setMatingComponent(self, unsigned species_father, unsigned species_mother, float value)
     """Sets mating[species_father][species_father] = value (for relative probability of inter-specific mating).  Note, if you setNumSpecies, mating will be re-initialised to the identity"""
 
-    cdef setFitnessComponent(self, unsigned genotype, float value)
+    def setFitnessComponent(self, unsigned genotype, float value)
     """Sets fitness[genotype] = value (for relative reproductive fitness of males of each genotype).  Note, if you setNumGenotypes, fitness will be re-initialised to the identity"""
 
     cdef inline float getMatingComponent(self, unsigned species_father, unsigned species_mother):
@@ -362,49 +362,49 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         """Gets fitness[genotype]: the relative reproductive fitness of males of each genotype"""
         return self.fitness.data.as_floats[genotype]
 
-    cdef void setMuLarvae(self, float mu_larvae)
+    def void setMuLarvae(self, float mu_larvae)
     """Set mu_larvae"""
 
-    cdef float getMuLarvae(self)
+    def float getMuLarvae(self)
     """Get mu_larvae"""
     
-    cdef void setMuAdult(self, float mu_adult)
+    def void setMuAdult(self, float mu_adult)
     """Set mu_adult"""
 
-    cdef float getMuAdult(self)
+    def float getMuAdult(self)
     """Get mu_adult"""
     
-    cdef void setFecundity(self, float fecundity)
+    def void setFecundity(self, float fecundity)
     """Set fecundity"""
 
-    cdef float getFecundity(self)
+    def float getFecundity(self)
     """Get fecundity"""
     
-    cdef void setAgingRate(self, float aging_rate)
+    def void setAgingRate(self, float aging_rate)
     """Set aging_rate"""
 
-    cdef float getAgingRate(self)
+    def float getAgingRate(self)
     """Get aging_rate"""
     
-    cdef void setNumAges(self, unsigned num_ages)
+    def void setNumAges(self, unsigned num_ages)
     """Set number of ages (larvae0, larvae1, ...., adults.  This calls setInternalParameters to appropriately set other parameters, given num_ages"""
 
-    cdef unsigned getNumAges(self)
+    def unsigned getNumAges(self)
     """Get number of ages"""
     
-    cdef void setNumSpecies(self, unsigned num_species)
+    def void setNumSpecies(self, unsigned num_species)
     """Set number of species.  This calls setInternalParameters to appropriately set other parameters, given num_species.  It also reinitialises the alpha, hybridisation and mating matrices"""
 
-    cdef void setNumGenotypes(self, unsigned num_sexes, unsigned num_genotypes)
+    def void setNumGenotypes(self, unsigned num_sexes, unsigned num_genotypes)
     """Set number of genotypes. This calls setInheritance and setFitnessComponent to appropriately initialise the inheritance tensor and fitness vector.  This depends on num_sexes because it also sizes and calculates genotypeRapidAccess, and you should ensure that self.num_sexes is set appropriately before calling setNumGenotypes"""
 
-    cdef void setGenotypeRapidAccess(self)
+    def void setGenotypeRapidAccess(self)
     """Sets the values in self.genotypeRapidAccess.  Before calling this, self.num_sexes should have been set, since self.genotypeRapidAccess depends on that parameter.  Also, self.num_genotypes should have been set using setNumGenotypes(...).  Also, self.accuracy should not be zero.  Please see extended comments associated with the genotypeRapidAccess array"""
 
-    cdef void setAccuracy(self, float accuracy)
+    def void setAccuracy(self, float accuracy)
     """Set accuracy of PMB.  This calls setInternalParameters to appropriately set other parameters, given accuracy"""
 
-    cdef float getAccuracy(self)
+    def float getAccuracy(self)
     """Get accuracy"""
 
     cdef float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt)
@@ -414,7 +414,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         """Returns the hybridisation rate for given father, mother and offspring"""
         return self.hyb.data.as_floats[species_father + species_mother * self.num_species + species_offspring * self.num_species2]
 
-    cdef setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value)
+    def setHybridisationRate(self, unsigned species_father, unsigned species_mother, unsigned species_offspring, float value)
     """Sets the hybridisation rate for the given father, mother and offspring.  Note, if you setNumSpecies, this will be reinitialised to its default value of 1 if species_father=species_mother=species_offspring, and 0 otherwise"""
 
     cdef void computeRHS(self, float[:] x)
@@ -425,7 +425,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
     For explicit-Euler timestepping, this is just timestep * rhs.
     For Runge-Kutta4 timestepping, this is given by the usual formula (1/6)(k_1 + 2k_2 + 2k_3 + k_4)"""
 
-    cdef setTimeIntegrationMethod(self, str method)
+    def setTimeIntegrationMethod(self, str method)
     """Sets the time integration method to be explicit_euler, solve_ivp, runge_kutta4"""
 
 
@@ -481,10 +481,10 @@ cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""
 
-    cdef setFitnessComponents26(self, float h_e, float h_n, float s_e, float s_n)
+    def setFitnessComponents26(self, float h_e, float h_n, float s_e, float s_n)
     """sets FitnessParams assuming there are 6 genotypes: fitness(0) = fitness(2) = fitness(5) = 1; fitness(1) = fitness(3) = (1 - h_e * s_e) * (1 - h_n * s_n); fitness(4) = (1 - s_e) * (1 - s_n)"""
 
-    cdef setInheritance26(self, float k_c, float k_j, float k_ne)
+    def setInheritance26(self, float k_c, float k_j, float k_ne)
     """sets the inheritance cube based on k_c, k_j and k_ne, assuming there are 6 genotypes"""
 
 cdef class CellDynamicsDelayBase(CellDynamicsBase):
@@ -518,13 +518,13 @@ cdef class CellDynamicsDelayBase(CellDynamicsBase):
     # index of the current adult population.  (Set to zero in constructor)
     cdef unsigned current_index
 
-    cdef unsigned getDelay(self)
+    def unsigned getDelay(self)
     """Returns delay"""
 
-    cdef void incrementCurrentIndex(self)
+    def void incrementCurrentIndex(self)
     """Sets current_index = (current_index + 1) % (delay + 1).  In derived classes, this will also update advecting_indices and diffusing_indices"""
 
-    cdef unsigned getCurrentIndex(self)
+    def unsigned getCurrentIndex(self)
     """returns current_index"""
 
 cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
@@ -622,84 +622,84 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     # whether precalculate() has been called with the most up-to-date information concerning number of species, emergence rates, inheritance, fecundity, reduction, hybridisation, offspring_modifier (have_precalculated = 0 means precalculate() has not been called with the most up-to-date information)
     cdef int have_precalculated
 
-    cdef setDeathRate(self, list death_rate)
+    def setDeathRate(self, list death_rate)
     """sets self.death_rate to death_rate.
     The death_rate list must be of the form death_rate[sex][genotype][mosquito_species]
     All elements must be positive.
     Note that evolve uses exp(-death_rate * dt).  You must ensure that death_rate and dt are set to this does not overflow."""
 
-    cdef list getDeathRate(self)
+    def list getDeathRate(self)
     """Returns death_rate[sex][genotype][mosquito_species]"""
 
-    cdef setCompetition(self, list competition)
+    def setCompetition(self, list competition)
     """sets self.competition to competition[species][species_prime]
     This is called "alpha" is the documentation"""
 
-    cdef list getCompetition(self)
+    def list getCompetition(self)
     """Returns competition[species][species_prime].  This is called "alpha" is the documentation"""
 
-    cdef setEmergenceRate(self, list emergence_rate)
+    def setEmergenceRate(self, list emergence_rate)
     """sets self.emergence_rate to emergence_rate.
     The emergence_rate list must be num_species in length, and must be a list of non-negative floats."""
 
-    cdef list getEmergenceRate(self)
+    def list getEmergenceRate(self)
     """Returns emergence_rate[species]"""
 
-    cdef setActivity(self, list activity)
+    def setActivity(self, list activity)
     """sets self.activity to activity[speciesFemale][speciesMale].
     Each element must be a list of non-negative floats."""
 
-    cdef list getActivity(self)
+    def list getActivity(self)
     """Returns activity[speciesFemale][speciesMale]"""
 
-    cdef setReduction(self, list reduction)
+    def setReduction(self, list reduction)
     """sets self.reduction to reduction[gM][gF]"""
 
-    cdef list getReduction(self)
+    def list getReduction(self)
     """returns reduction[gM][gF]"""
 
-    cdef setHybridisation(self, list hybridisation)
+    def setHybridisation(self, list hybridisation)
     """sets self.hybridisation to hybridisation[mM][mF][m]"""
 
-    cdef list getHybridisation(self)
+    def list getHybridisation(self)
     """returns hybridisation[mM][mF][m]"""
 
-    cdef setOffspringModifier(self, list offspring_modifier)
+    def setOffspringModifier(self, list offspring_modifier)
     """sets self.offspring_modifier to offspring_modifier[s][mM][mF]"""
 
-    cdef list getOffspringModifier(self)
+    def list getOffspringModifier(self)
     """returns offspring_modifier[s][mM][mF]"""
 
     cdef void setInheritance(self)
     """Version of setInheritance for 6 genotypes"""
 
-    cdef array.array getInheritance(self)
+    def array.array getInheritance(self)
     """returns inheritance_cube"""
 
-    cdef void evolveTrial(self, float timestep, float[:] pops_and_params)
+    def void evolveTrial(self, float timestep, float[:] pops_and_params)
     """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt]: used for testing
     If desired, it can be removed in production code"""
 
-    cdef void setFecundityP(self, float sex_ratio, float female_bias)
+    def void setFecundityP(self, float sex_ratio, float female_bias)
     """Sets sex_ratio, female_bias and fecundity_p"""
 
-    cdef float getSexRatio(self)
+    def float getSexRatio(self)
     """Returns sex_ratio"""
 
-    cdef float getFemaleBias(self)
+    def float getFemaleBias(self)
     """Returns female_bias"""        
 
-    cdef list getFecundityP(self)
+    def list getFecundityP(self)
     """Returns fecundity[gM][gF][s] = proportion (male gM + female gF) producing offspring of sex s.  This is a vector with index = gM + gF * num_genotypes + s * num_genotypes * num_genotypes
 """
 
-    cdef void setMinCarryingCapacity(self, float value)
+    def void setMinCarryingCapacity(self, float value)
     """Sets min_cc to value.  If the carrying capacity is less than this value, no new larvae are produced"""
 
-    cdef float getMinCarryingCapacity(self)
+    def float getMinCarryingCapacity(self)
     """Gets the value of min_cc"""
 
-    cdef precalculate(self)
+    def precalculate(self)
     """Sets have_precalculated = 1.  This method may be over-ridden by derived classes in order to calculate spatially-independent things after number of species, emergence rates, inheritance, fecundity, reduction, hybridsation or offspring_modifier have changed"""
 
 cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
@@ -764,10 +764,10 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
 
     cdef float min_cc
     
-    cdef void setMinCarryingCapacity(self, float value)
+    def void setMinCarryingCapacity(self, float value)
     """Sets min_cc to value.  If the carrying capacity is less than this value, no new larvae are produced"""
 
-    cdef float getMinCarryingCapacity(self)
+    def float getMinCarryingCapacity(self)
     """Gets the value of min_cc"""
 
 cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
@@ -855,29 +855,29 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     # Used in evolve if use_qm = 0.  This array stores the equilibrium populations and parameters
     cdef array.array eqm_pops_and_params
 
-    cdef unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params)
+    def unsigned calcXprimeM(self, unsigned delayed_base, float[:] pops_and_params)
     """Calculates X'_M (= self.xprimeM), given the pops_and_params, and the delayed_base, which usually = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes.  Returns 0 if there are no male mosquitoes whatsoever in the delayed pops_and_params slots, and returns 1 otherwise.  This is used in evolve() and probably isn't much use elsewhere"""
 
-    cdef void calcYYprime(self, unsigned some_males, unsigned delayed_base, float[:] pops_and_params)
+    def void calcYYprime(self, unsigned some_males, unsigned delayed_base, float[:] pops_and_params)
     """Calculates Y (= self.yy) and Y' (= self.yyp), given some_males (whether there are any males whatsoever in the delayed pops_and_params), and pops_and_params, and the delayed_base, which usually = (self.current_index + 1) % (self.delay + 1) * self.num_species * self.num_genotypes * self.num_sexes.  This is used in evolve() and calcQm() and probably isn't much use elsewhere.  Note that if num_sexes_to_calc!=2 and num_genotypes_to_calc!=num_genotypes, then Y and Y' will not be fully populated (this occurs during calcQm, for instance)"""
 
-    cdef void calcCompetition(self, unsigned some_males)
+    def void calcCompetition(self, unsigned some_males)
     """Calculates C = competition (= self.comp), given some_males (whether there are any males whatsoever in the delayed pops_and_params).  This uses Y internally, so calcYYprime() should usually precede the call to this function.  This is used in evolve() and probably isn't much use elsewhere"""
 
-    cdef setNumGenotypesToCalc(self, unsigned num_genotypes_to_calc)
+    def setNumGenotypesToCalc(self, unsigned num_genotypes_to_calc)
     """Sets number of genotypes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
 
-    cdef unsigned getNumGenotypesToCalc(self)
+    def unsigned getNumGenotypesToCalc(self)
     """Gets the value of num_genotypes_to_calc"""
 
-    cdef setNumSexesToCalc(self, unsigned num_sexes_to_calc)
+    def setNumSexesToCalc(self, unsigned num_sexes_to_calc)
     """Sets number of sexes to be calculated in calcXprimeM, calcYYprime and calcCompetition. Saves computation when calculating these with no genotypes and equal sexes as in carrying capacity."""
     
-    cdef unsigned getNumSexesToCalc(self)
+    def unsigned getNumSexesToCalc(self)
     """Gets the value of num_sexes_to_calc"""
 
-    cdef setUseQm(self, unsigned use_qm)
+    def setUseQm(self, unsigned use_qm)
     """Sets the use_qm constant to determine whether the parameters in pops_and_params represent the carrying capacity or q_m."""
     
-    cdef unsigned getUseQm(self)
+    def unsigned getUseQm(self)
     """Gets the value of use_qm"""
