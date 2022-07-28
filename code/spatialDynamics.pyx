@@ -16,25 +16,25 @@ cdef class SpatialDynamics:
     cdef CellDynamicsBase cell
 
     # all the quantities (populations and parameters) of all active cells
-    cpdef array.array all_quantities
+    cdef array.array all_quantities
 
     # number of active cells
     cdef unsigned num_active_cells
 
     # Number of quantities (populations and parameters) at a single Cell
-    cpdef unsigned num_quantities_at_cell
+    cdef unsigned num_quantities_at_cell
 
     # size-length of the cells
     cdef float cell_size
 
     # Number of diffusing populations at a single Cell
-    cpdef unsigned num_diffusing_populations_at_cell
+    cdef unsigned num_diffusing_populations_at_cell
 
     # The diffusing population indices
-    cpdef array.array diffusing_indices
+    cdef array.array diffusing_indices
 
     # Total number of diffusing populations over all cells
-    cpdef unsigned num_diffusing_populations_total
+    cdef unsigned num_diffusing_populations_total
 
     # change of the diffusing populations.  This is a class variable to avoid repeated allocations every time diffuse() is called
     cdef array.array change_diff
@@ -52,16 +52,16 @@ cdef class SpatialDynamics:
     cdef unsigned num_connections
 
     # Number of advecting populations at a single Cell
-    cpdef unsigned num_advecting_populations_at_cell
+    cdef unsigned num_advecting_populations_at_cell
 
     # The advecting population indices
-    cpdef array.array advecting_indices
+    cdef array.array advecting_indices
 
     # The advection classes of the advecting populations
-    cpdef array.array advection_classes
+    cdef array.array advection_classes
 
     # Total number of advecting populations over all cells
-    cpdef unsigned num_advecting_populations_total
+    cdef unsigned num_advecting_populations_total
 
     # change of the advecting populations.  This is a class variable to avoid repeated allocations every time advect() is called
     cdef array.array change_adv
@@ -121,7 +121,7 @@ cdef class SpatialDynamics:
         self.c_cell_params_and_props = self.cell_params_and_props
 
 
-    cpdef void diffuse(self, float dt, float diffusion_coeff):
+    cdef void diffuse(self, float dt, float diffusion_coeff):
         """One timestep of diffusion"""
 
         # fraction of population that diffuses to nearest neighbour
@@ -129,9 +129,9 @@ cdef class SpatialDynamics:
         # diffusion_d = (diffusion_coefficient) * 4 * dt / (dx)^2
         # (the 4 comes from the number of nearest neighbours: evaluating the laplacian on a square grid)
         cdef int num_nearest_neighbours = 4
-        cpdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
+        cdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
         # diffusion_d / 4
-        cpdef float diff_d = diffusion_d / num_nearest_neighbours
+        cdef float diff_d = diffusion_d / num_nearest_neighbours
 
         # active cell index
         cdef unsigned ind
@@ -171,7 +171,7 @@ cdef class SpatialDynamics:
                 k = j + self.diffusing_indices.data.as_uints[p]
                 self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
                 
-    cpdef advect(self, float [:] advection_fraction, Wind wind):
+    cdef advect(self, float [:] advection_fraction, Wind wind):
         """One timestep of advection, using the given wind.
         advection_fraction of all populations that the Cell has labelled as 'advecting' will experience advection.  advection_class = i will experience advection_fraction[i]"""
         if wind.getProcessedDataComputed() != 1:
@@ -220,7 +220,7 @@ cdef class SpatialDynamics:
                 self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_adv.data.as_floats[i + p]
 
 
-    cpdef evolveCells(self, float timestep):
+    cdef evolveCells(self, float timestep):
         """Evolves all the cells in the grid using the method defined in self.cell"""
 
         # active cell index
@@ -241,7 +241,7 @@ cdef class SpatialDynamics:
             for p in range(self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
 
-    cpdef calcQm(self):
+    cdef calcQm(self):
         """Calculates qm at all the cells in the grid, assuming that the populations on the grid are at equilibrium"""
 
         # active cell index
@@ -266,7 +266,7 @@ cdef class SpatialDynamics:
             for p in range(num_pops, self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = qm_vals.data.as_floats[p - num_pops]
 
-    cpdef outputCSV(self, str filename, unsigned pop_or_param, str inactive_value, str additional_header_lines):
+    cdef outputCSV(self, str filename, unsigned pop_or_param, str inactive_value, str additional_header_lines):
         """Outputs cell information for given population or parameter number to filename in CSV format.
         the value inactive_value (as a string) is used in the CSV file for inactive cells.
         A header line containing the current time will be written to the file
@@ -312,7 +312,7 @@ cdef class SpatialDynamics:
 
         
         
-    cpdef void diffuse_stoc(self, float dt, float diffusion_coeff):
+    cdef void diffuse_stoc(self, float dt, float diffusion_coeff):
         """One timestep of stochastic diffusion"""
 
         # ANDY QUESTION: probably lots of code duplication here
@@ -321,10 +321,10 @@ cdef class SpatialDynamics:
         # diffusion_d = (diffusion_coefficient) * 4 * dt / (dx)^2
         # (the 4 comes from the number of nearest neighbours: evaluating the laplacian on a square grid)
         cdef int num_nearest_neighbours = 4
-        cpdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
+        cdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
         # diffusion_d / 4
-        cpdef float diff_d = diffusion_d / num_nearest_neighbours
-        cpdef float tmp
+        cdef float diff_d = diffusion_d / num_nearest_neighbours
+        cdef float tmp
 
         # active cell index
         cdef unsigned ind
@@ -366,7 +366,7 @@ cdef class SpatialDynamics:
                 k = j + self.diffusing_indices.data.as_uints[p]
                 self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
 
-    cpdef advect_stoc(self, float advection_fraction, Wind wind):
+    cdef advect_stoc(self, float advection_fraction, Wind wind):
         """One timestep of stochastic advection, using the given wind.
         advection_fraction of all populations that the Cell has labelled as 'advecting' will experience advection."""
         if wind.getProcessedDataComputed() != 1:

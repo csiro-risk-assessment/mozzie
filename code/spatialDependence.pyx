@@ -20,7 +20,7 @@ cdef class SpatialDependence:
         self.float_template = array.array('f', [])
 
 
-    cpdef parse(self, str filename, str filetype, list required_additional_headers):
+    cdef parse(self, str filename, str filetype, list required_additional_headers):
         if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed" or filetype == "generic_float" or filetype == "active_inactive_binary" or filetype == "wind_raw_binary" or filetype == "wind_processed_binary" or filetype == "generic_float_binary"):
             raise ValueError("filetype not recognized")
         self.filetype = filetype
@@ -107,7 +107,7 @@ cdef class SpatialDependence:
             free(fdata)
             return
 
-    cpdef parseWithPython(self, str filename, str filetype, list required_additional_headers):
+    cdef parseWithPython(self, str filename, str filetype, list required_additional_headers):
         if not (filetype == "active_inactive" or filetype == "wind_raw" or filetype == "wind_processed" or filetype == "generic_float"):
             raise ValueError("filetype not recognized")
         self.filetype = filetype
@@ -217,14 +217,14 @@ cdef class SpatialDependence:
             raise ValueError("Header lines in " + filename + " must include " + "\n".join(required_headers))
 
 
-    cpdef array.array getData0(self):
+    cdef array.array getData0(self):
         return self.data0
-    cpdef array.array getData1(self):
+    cdef array.array getData1(self):
         return self.data1
-    cpdef array.array getData2(self):
+    cdef array.array getData2(self):
         return self.data2
 
-    cpdef void restrictToActive(self, array.array global_index):
+    cdef void restrictToActive(self, array.array global_index):
         cdef array.array c0
         cdef array.array c1
         cdef unsigned num_active = len(global_index)
@@ -249,7 +249,7 @@ cdef class SpatialDependence:
             self.data0 = c0
         
 
-    cpdef outputCSV(self, str filename, array.array active, str inactive_value, str additional_header_lines):
+    cdef outputCSV(self, str filename, array.array active, str inactive_value, str additional_header_lines):
         f = open(filename, 'w')
         f.write("#File written at: " + time.asctime() + "\n")
         f.write(self.required_header + "\n")

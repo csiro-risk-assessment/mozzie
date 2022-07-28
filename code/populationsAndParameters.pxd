@@ -33,31 +33,31 @@ cdef class PopulationsAndParameters:
     # the array of quantity (a temporary array to store quantities from a single cell), which is of length num_quantities_per_cell
     cdef array.array quantity
 
-    cpdef array.array getQuantities(self)
+    cdef array.array getQuantities(self)
     """returns the quantities array"""
 
-    cpdef CellDynamicsBase getCell(self)
+    cdef CellDynamicsBase getCell(self)
     """returns a reference to the cell used in the constructor"""
 
     cdef unsigned getIndexOfCell(self, unsigned active_cell_index)
     """returns the index in self.pop that corresponds to the 0th population at the given active_cell_index"""
 
-    cpdef setPopulationAndParameters(self, unsigned active_cell_index, list pop)
+    cdef setPopulationAndParameters(self, unsigned active_cell_index, list pop)
     """Sets the populations and parameters at active_cell_index to the numbers given in the list 'pop_and_params'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
-    cpdef setPopulationAndParametersFromXY(self, float x, float y, list pop_and_params)
+    cdef setPopulationAndParametersFromXY(self, float x, float y, list pop_and_params)
     """Sets the populations and parameters at given (x, y) to the numbers given in the list 'pop_and_params'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
-    cpdef array.array getPopulationAndParameters(self, unsigned active_cell_index)
+    cdef array.array getPopulationAndParameters(self, unsigned active_cell_index)
     """Gets the populations and parameters at active_cell_index and returns the list 'self.quantity'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
-    cpdef array.array getPopulationAndParametersFromXY(self, float x, float y)
+    cdef array.array getPopulationAndParametersFromXY(self, float x, float y)
     """Gets the populations and parameters at given (x, y) and returns the list 'self.quantity'
     This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
 
-    cpdef setOverActiveGrid(self, unsigned pop_and_param_number, array.array pop_or_param_array)
+    cdef setOverActiveGrid(self, unsigned pop_and_param_number, array.array pop_or_param_array)
     """pop_or_param_array is a float array defined over the entire active grid.
     The population or parameter with number pop_and_param_number is set to this array"""
