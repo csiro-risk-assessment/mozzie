@@ -46,7 +46,7 @@ cdef class SpatialDependence:
     # float array template, for faster building of arrays
     cdef array.array float_template
 
-    def parse(self, str filename, str filetype, list required_additional_headers)
+    cpdef parse(self, str filename, str filetype, list required_additional_headers)
     """Parses filename and places data into self.data internal data structures.
     Note that this uses parseWithC(...) which Andy feels might fail at some stage due to some subtle anomaly.
     If this occurs, and your data in filename is plaintext (not binary) then use parseWithPython(...) instead.
@@ -62,20 +62,20 @@ cdef class SpatialDependence:
     - Each row must typically have nx comma-separated entries (depending on filetype)
     - The entries must sometimes obey bounds (depending on filetype)"""
 
-    def parseWithPython(self, str filename, str filetype, list required_additional_headers)
+    cpdef parseWithPython(self, str filename, str filetype, list required_additional_headers)
     """Pure python version of parse(...)
     This is slower than parse(...) but is retained in the code because Andy feels that parse(...) is likely to fail due to some subtle anomaly"""
 
     cdef checkHeader(self, str header_data, str filename, list required_headers)
     """Checks the header, which is contained in a long \n-separated string.  If any errors, then a ValueError exception is raised.  Otherwise the header is fine and data reading may proceed"""
 
-    def array.array getData0(self)
+    cpdef array.array getData0(self)
 
-    def array.array getData1(self)
+    cpdef array.array getData1(self)
 
-    def array.array getData2(self)
+    cpdef array.array getData2(self)
 
-    def void restrictToActive(self, array.array global_index)
+    cpdef void restrictToActive(self, array.array global_index)
     """Restrict the data so it only occurs on active cells.
     Usually you should set global_index = grid.getGlobalIndex()
     Here global_index[i] = the global cell index of active cell i
@@ -83,7 +83,7 @@ cdef class SpatialDependence:
     NOTE: YOU WILL HAVE TO getData AFTER CALLING THIS METHOD
     """
 
-    def outputCSV(self, str filename, array.array active, str inactive_value, str additional_header_lines)
+    cpdef outputCSV(self, str filename, array.array active, str inactive_value, str additional_header_lines)
     """Outputs data0 to a CSV file.
     Usually you should set active = grid.getActiveIndex()
     Usually the data will have been restricted to the active cells, so

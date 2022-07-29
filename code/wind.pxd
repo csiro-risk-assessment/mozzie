@@ -63,66 +63,66 @@ cdef class Wind:
     cdef unsigned num_advection
 
     # unsigned array template to make array creation faster
-    def array.array uint_template
+    cdef array.array uint_template
 
     # float array template to make array creation faster
-    def array.array float_template
+    cdef array.array float_template
 
     # the parser that provides the wind information by parsing either raw_wind_fn or processed_wind_fn
-    def SpatialDependence windParser
+    cdef SpatialDependence windParser
 
-    def parseRawFile(self)
+    cpdef parseRawFile(self)
     """Parse the raw wind file specified in the constructor, then processes this data to produce advection_from, etc"""
 
-    def parseProcessedFile(self)
+    cpdef parseProcessedFile(self)
     """Parse the processed wind file specified in the constructor, putting the results in advection_from, etc"""
 
     cdef void processRawVelocities(self)
     "works out which active cells the advected mosquitoes will end up in"""
 
-    def outputProcessedCSV(self)
+    cpdef outputProcessedCSV(self)
     "Outputs the advection information to a file, ready for later reading by parseProcessedFile()"""
 
-    def str getRawWindFilename(self)
+    cpdef str getRawWindFilename(self)
     """Returns the raw wind filename"""
 
-    def str getProcessedWindFilename(self)
+    cpdef str getProcessedWindFilename(self)
     """Returns the raw wind filename"""
 
-    def list getPDF(self)
+    cpdef list getPDF(self)
     """Returns the probability distribution for advection"""
 
-    def Grid getGrid(self)
+    cpdef Grid getGrid(self)
     """Returns the Grid object that this class depends on"""
 
-    def int getProcessedDataComputed(self)
+    cpdef int getProcessedDataComputed(self)
     """Returns 1 if processed advection data has been computed"""
 
-    def array.array getAdvectionFrom(self)
+    cpdef array.array getAdvectionFrom(self)
     """Before calling this, check that getProcessedDataComputed() == 1.
     Returns an array containing active cell indices from which advection occurs.
     For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
     getAdvectionTo()[i] with probability getAdvectionP()[i]"""
     
-    def array.array getAdvectionTo(self)
+    cpdef array.array getAdvectionTo(self)
     """Before calling this, check that getProcessedDataComputed() == 1.
     Returns an array containing active cell indices to which advection occurs.
     For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
     getAdvectionTo()[i] with probability getAdvectionP()[i]"""
     
-    def array.array getAdvectionP(self)
+    cpdef array.array getAdvectionP(self)
     """Before calling this, check that getProcessedDataComputed() == 1.
     Returns an array containing advection probability.active cell indices to which advection occurs.
     For each i, getAdvectionFrom()[i] is an active cell index.  Mosquitoes advect from this cell to
     getAdvectionTo()[i] with probability getAdvectionP()[i]"""
 
-    def unsigned getNumAdvection(self)
+    cpdef unsigned getNumAdvection(self)
     """Returns the size of the advection_from array (= size of advection_to array = size of advection_p array)"""
 
-    def setBinaryFileFormat(self, unsigned value)
+    cpdef setBinaryFileFormat(self, unsigned value)
     """set binary_file_format to value, which must be 0 (indicating ascii plaintext CSV) or 1 (indicating binary)"""
     
-    def unsigned getBinaryFileFormat(self)
+    cpdef unsigned getBinaryFileFormat(self)
     """returns binary_file_format"""
     
 

@@ -24,17 +24,17 @@ cdef class PopulationsAndParameters:
         self.quantity = array.clone(array.array('f', []), self.num_quantities_per_cell, zero = True)
 
 
-    def array.array getQuantities(self):
+    cpdef array.array getQuantities(self):
         return self.quantities
 
-    def CellDynamicsBase getCell(self):
+    cpdef CellDynamicsBase getCell(self):
         return self.cell
 
     cdef unsigned getIndexOfCell(self, unsigned active_cell_index):
         """returns the index in self.quantities that corresponds to the 0th population at the given active_cell_index"""
         return active_cell_index * self.num_quantities_per_cell
 
-    def setPopulationAndParameters(self, unsigned active_cell_index, list pop_and_params):
+    cpdef setPopulationAndParameters(self, unsigned active_cell_index, list pop_and_params):
         """Sets the populations and parameters at active_cell_index to the numbers given in the list 'pop_and_params'
         This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
         if len(pop_and_params) != self.num_quantities_per_cell:
@@ -46,7 +46,7 @@ cdef class PopulationsAndParameters:
         for i in range(self.num_quantities_per_cell):
             self.quantities.data.as_floats[start_index + i] = pop_and_params[i]
 
-    def setPopulationAndParametersFromXY(self, float x, float y, list pop_and_params):
+    cpdef setPopulationAndParametersFromXY(self, float x, float y, list pop_and_params):
         """Sets the populations and parameters at given (x, y) to the numbers given in the list 'pop_and_params'
         This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
         if x < self.grid.getXmin() or x > self.grid.getXmin() + self.grid.getCellSize() * self.grid.getNx() or y < self.grid.getYmin() or y > self.grid.getYmin() + self.grid.getCellSize() * self.grid.getNy():
@@ -57,7 +57,7 @@ cdef class PopulationsAndParameters:
         cdef unsigned active_ind = self.grid.active_index[global_ind]
         self.setPopulationAndParameters(active_ind, pop_and_params)
 
-    def array.array getPopulationAndParameters(self, unsigned active_cell_index):
+    cpdef array.array getPopulationAndParameters(self, unsigned active_cell_index):
         """Gets the populations and parameters at active_cell_index and returns the list 'self.quantity'
         This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
         if active_cell_index >= self.num_active_cells:
@@ -68,7 +68,7 @@ cdef class PopulationsAndParameters:
             self.quantity[i] = self.quantities.data.as_floats[start_index + i]
         return self.quantity
 
-    def array.array getPopulationAndParametersFromXY(self, float x, float y):
+    cpdef array.array getPopulationAndParametersFromXY(self, float x, float y):
         """Gets the populations and parameters at given (x, y) and returns the list 'self.quantity'
         This is a slower method than accessing self.quantities directly because there is a lot of bounds checking"""
         if x < self.grid.getXmin() or x > self.grid.getXmin() + self.grid.getCellSize() * self.grid.getNx() or y < self.grid.getYmin() or y > self.grid.getYmin() + self.grid.getCellSize() * self.grid.getNy():
@@ -79,7 +79,7 @@ cdef class PopulationsAndParameters:
         cdef unsigned active_ind = self.grid.active_index[global_ind]
         return self.getPopulationAndParameters(active_ind)
 
-    def setOverActiveGrid(self, unsigned pop_and_param_number, array.array pop_or_param_array):
+    cpdef setOverActiveGrid(self, unsigned pop_and_param_number, array.array pop_or_param_array):
         """pop_or_param_array is a float array defined over the entire active grid.
         The population or parameter with number pop_and_param_number is set to this array"""
         if pop_and_param_number >= self.num_quantities_per_cell:

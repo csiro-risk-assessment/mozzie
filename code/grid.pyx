@@ -58,7 +58,7 @@ cdef class Grid:
         """
         return y_ind * self.nx + x_ind
 
-    def setActiveAndInactive(self, filename):
+    cpdef setActiveAndInactive(self, filename):
         """Parses filename to determine the active and inactive cells.
         Updates connectivity information, so getConnectionsFrom, etc, only returns active cells.
         filename must have the following format:
@@ -147,60 +147,60 @@ cdef class Grid:
 
 
 
-    def str getActiveFilename(self):
+    cpdef str getActiveFilename(self):
         "Returns filename that defined the active/inactive cells"""
         return self.active_filename
     
 
-    def float getXmin(self):
+    cpdef float getXmin(self):
         "Returns x coord of the lower-left corner"""
         return self.xmin
 
-    def float getYmin(self):
+    cpdef float getYmin(self):
         "Returns y coord of the lower-left corner"""
         return self.ymin
 
-    def float getCellSize(self):
+    cpdef float getCellSize(self):
         "Returns cell side length"""
         return self.cell_size
 
-    def unsigned getNx(self):
+    cpdef unsigned getNx(self):
         "Returns number of cells in x direction"""
         return self.nx
 
-    def unsigned getNy(self):
+    cpdef unsigned getNy(self):
         "Returns number of cells in y direction"""
         return self.ny
 
-    def unsigned getNumCells(self):
+    cpdef unsigned getNumCells(self):
         """Returns the total number of cells"""
         return self.num_cells
 
-    def unsigned getNumActiveCells(self):
+    cpdef unsigned getNumActiveCells(self):
         """Returns the number of active cells"""
         return self.num_active_cells
 
-    def unsigned getNumConnections(self):
+    cpdef unsigned getNumConnections(self):
         """Returns the number of connections within the active set of cells"""
         return self.num_connections
 
-    def array.array getConnectionsFrom(self):
+    cpdef array.array getConnectionsFrom(self):
         """Returns the connections from the active cells"""
         return self.connect_from
 
-    def array.array getConnectionsTo(self):
+    cpdef array.array getConnectionsTo(self):
         """Returns the connections to the active cells"""
         return self.connect_to
 
-    def array.array getGlobalIndex(self):
+    cpdef array.array getGlobalIndex(self):
         """Returns the global index of the active cells"""
         return self.global_index
 
-    def array.array getActiveIndex(self):
+    cpdef array.array getActiveIndex(self):
         """Returns the active index of the the global cell array"""
         return self.active_index
 
-    def outputActiveCSV(self, str filename):
+    cpdef outputActiveCSV(self, str filename):
         "Outputs the active information to a file"""
         f = open(filename, 'w')
         f.write("#Active cell information written at: " + time.asctime() + "\n")
