@@ -82,6 +82,34 @@ class TestEvolveCells(unittest.TestCase):
                for s in range(2):
                   ind = m + g * self.num_species + s * self.num_species * 6
                   self.assertTrue(abs(self.all_quantities.getQuantities()[active_cell * num_params_pops + ind] - self.cell_cc[active_cell][ind]), 1E-6)
+
+
+   def testEvolveCells2(self):
+      # put carrying capacity data in cell parameters
+      g = 0
+      s = 0
+      num_pops = self.cell.getNumberOfPopulations()
+      for active_cell in range(self.num_active_cells):
+         pap = self.all_quantities.getPopulationAndParameters(active_cell)
+         for m in range(self.num_species):
+            ind = m + g * self.num_species + s * self.num_species * 6
+            pap[num_pops + m] = 2.0 * pap[ind] # carrying capacity double number of males
+         self.all_quantities.setPopulationAndParameters(active_cell, pap.tolist())
+         
+      # set evolve to use given carrying capacity instead of qm
+      self.cell.setUseQm(0)
+
+      # evolve with large timestep
+      self.spatial.evolveCells(1E6)
+
+      # check that the equilibrium in self.cc is preserved
+      num_params_pops = self.cell.getNumberOfPopulations() + self.cell.getNumberOfParameters()
+      for active_cell in range(self.num_active_cells):
+         for m in range(self.num_species):
+            for g in range(1): # only ww genotype
+               for s in range(2):
+                  ind = m + g * self.num_species + s * self.num_species * 6
+                  self.assertTrue(abs(self.all_quantities.getQuantities()[active_cell * num_params_pops + ind] - self.cell_cc[active_cell][ind]), 1E-6)
       
 if __name__ == '__main__':
    unittest.main()
