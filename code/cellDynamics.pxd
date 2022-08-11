@@ -840,6 +840,9 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     # comp used in evolve.  comp[m]
     cdef array.array comp
 
+    # birth_terms passed to output via evolveCells.  birth_terms[sex][genotype][m] has index m + genotype * num_species + sex * num_species * num_genotypes
+    cdef array.array birth_terms
+
     # death_terms used in calcQm.  death_terms[m]
     cdef array.array death_terms
 

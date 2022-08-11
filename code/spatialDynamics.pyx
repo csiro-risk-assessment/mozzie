@@ -18,6 +18,9 @@ cdef class SpatialDynamics:
     # all the quantities (populations and parameters) of all active cells
     cdef array.array all_quantities
 
+    # all the birth terms (by sex, genotype and species) of all active cells
+    cdef array.array birth_quantities
+
     # number of active cells
     cdef unsigned num_active_cells
 
@@ -79,7 +82,6 @@ cdef class SpatialDynamics:
         self.grid = grid
         self.cell = pap.getCell()
         self.all_quantities = pap.quantities
-
         cdef unsigned i
 
         self.num_active_cells = self.grid.getNumActiveCells()
@@ -90,8 +92,8 @@ cdef class SpatialDynamics:
         self.cell_size = self.grid.getCellSize()
         
         cdef array.array float_template = array.array('f', [])
-
         self.num_diffusing_populations_at_cell = self.cell.getNumberOfDiffusingPopulations()
+        self.birth_quantities = array.clone(array.array('f', []), self.num_active_cells * self.num_diffusing_populations_at_cell, zero = False)
         self.diffusing_indices = self.cell.getDiffusingIndices()
         self.num_diffusing_populations_total = self.num_active_cells * self.num_diffusing_populations_at_cell
         # initialize change_diff
@@ -228,10 +230,11 @@ cdef class SpatialDynamics:
         # population index
         cdef unsigned p
         # utility index
-        cdef unsigned i
+        cdef unsigned i, j
 
         for ind in range(self.num_active_cells):
             i = ind * self.num_quantities_at_cell
+            j = ind * self.num_diffusing_populations_at_cell
             # copy into the c_cell_params_and_props local array
             for p in range(self.num_quantities_at_cell):
                 self.c_cell_params_and_props[p] = self.all_quantities.data.as_floats[i + p]
@@ -240,6 +243,9 @@ cdef class SpatialDynamics:
             # copy back
             for p in range(self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
+            if hasattr(self.cell, "yyp"): # currently only run code for CellDynamicsMosquitoBH26Delay
+                for p in range(self.num_diffusing_populations_at_cell):
+                    self.birth_quantities.data.as_floats[j + p] = self.cell.yyp.data.as_floats[p]
 
     cpdef calcQm(self):
         """Calculates qm at all the cells in the grid, assuming that the populations on the grid are at equilibrium"""
@@ -266,15 +272,17 @@ cdef class SpatialDynamics:
             for p in range(num_pops, self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = qm_vals.data.as_floats[p - num_pops]
 
-    cpdef outputCSV(self, str filename, unsigned pop_or_param, str inactive_value, str additional_header_lines):
+    cpdef outputCSV(self, str filename, int pop_or_param, str inactive_value, str additional_header_lines):
         """Outputs cell information for given population or parameter number to filename in CSV format.
         the value inactive_value (as a string) is used in the CSV file for inactive cells.
         A header line containing the current time will be written to the file
         A header line of the form #xmin... will be written to the file
         additional_header_lines will be written verbatim (including any \n, etc) into the file"""
 
-        if pop_or_param >= self.num_quantities_at_cell:
+        if pop_or_param >= int(self.num_quantities_at_cell):
             raise ValueError("You requested pop_or_param number " + str(pop_or_param) + " but there are only " + str(self.num_quantities_at_cell) + " at each cell")
+        elif pop_or_param < -1*int(self.num_diffusing_populations_at_cell):
+            raise ValueError("You requested Y' number " + str(-pop_or_param-1) + " but there are only " + str(self.num_diffusing_populations_at_cell) + " at each cell")
         # x index, y index
         cdef unsigned x_ind, y_ind
         # max of x
@@ -298,16 +306,20 @@ cdef class SpatialDynamics:
                 if active_ind == num_cells:
                     # inactive cell
                     f.write("0,")
-                else:
+                elif pop_or_param >= 0:
                     f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + ",")
+                else:
+                    f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + ",") # (currently actually Y')
             x_ind = x_max - 1
             ind = self.grid.internal_global_index(x_ind, y_ind)
             active_ind = active[ind]
             if active_ind == num_cells:
                 # inactive cell
                 f.write("0\n")
-            else:
+            elif pop_or_param >= 0:
                 f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + "\n")
+            else:
+                f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + "\n")
         f.close()
 
         

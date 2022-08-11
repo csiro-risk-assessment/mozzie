@@ -1696,6 +1696,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.precalcp = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes2 * self.num_genotypes * self.num_species2 * self.num_species, zero = False)
         self.eqm_pops_and_params = array.clone(array.array('f', []), self.num_populations + self.num_parameters, zero = False)
         self.comp = array.clone(array.array('f', []), self.num_species, zero = False)
+        self.birth_terms = array.clone(array.array('f', []), self.num_sexes * self.num_genotypes * self.num_species, zero = False)
         self.death_terms = array.clone(array.array('f', []), self.num_species, zero = False)
         self.qm_vals = array.clone(array.array('f', []), self.num_species, zero = False)
         self.num_genotypes_to_calc = self.num_genotypes
@@ -1820,9 +1821,12 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     else:
                         bb = qm * self.yyp.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
                     current_index = adult_base + ind
+                    self.birth_terms.data.as_floats[ind] = bb
                     self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
                     if self.new_pop.data.as_floats[ind] <= self.small_value:
                         self.new_pop.data.as_floats[ind] = 0.0
+                        self.birth_terms.data.as_floats[ind] = 0.0
+                        self.yyp.data.as_floats[ind] = 0.0
 
         # put the new_pop in the correct slots in pops_and_params in readiness for incrementCurrentIndex
         for s in range(self.num_sexes):
