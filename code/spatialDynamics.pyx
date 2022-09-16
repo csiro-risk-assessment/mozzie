@@ -188,6 +188,13 @@ cdef class SpatialDynamics:
         # diffusion_d = (diffusion_coefficient) * 4 * dt / (dx)^2
         # (the 4 comes from the number of nearest neighbours: evaluating the laplacian on a square grid)
         cdef int num_nearest_neighbours = 4
+        # active cell index
+        cdef unsigned ind
+        # population counter
+        cdef unsigned p
+        # utility indeces
+        cdef unsigned i, j, k
+
         cdef array.array diffusion_d = array.clone(array.array('f', []), self.num_diffusing_populations_at_cell, zero = False)
         cdef array.array diff_d = array.clone(array.array('f', []), self.num_diffusing_populations_at_cell, zero = False)
         #cdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
@@ -197,13 +204,6 @@ cdef class SpatialDynamics:
         for p in range(self.num_diffusing_populations_at_cell):
             diffusion_d.data.as_floats[p] = diffusion_coeffs[p] * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
             diff_d.data.as_floats[p] = diffusion_coeffs[p] * dt / (self.cell_size * self.cell_size)
-
-        # active cell index
-        cdef unsigned ind
-        # population counter
-        cdef unsigned p
-        # utility indeces
-        cdef unsigned i, j, k
 
         # grab all the diffusing populations
         for ind in range(self.num_active_cells):
