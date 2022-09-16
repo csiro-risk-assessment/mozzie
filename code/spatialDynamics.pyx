@@ -180,6 +180,66 @@ cdef class SpatialDynamics:
                 k = j + self.diffusing_indices.data.as_uints[p]
                 self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
                 
+    cpdef void diffuseVarying(self, float dt, float [:] diffusion_coeffs):
+        """One timestep of diffusion"""
+
+        # fraction of population that diffuses to nearest neighbour
+        # in comparison to the diffusion equation,
+        # diffusion_d = (diffusion_coefficient) * 4 * dt / (dx)^2
+        # (the 4 comes from the number of nearest neighbours: evaluating the laplacian on a square grid)
+        cdef int num_nearest_neighbours = 4
+        cdef array.array diffusion_d = array.clone(array.array('f', []), self.num_diffusing_populations_at_cell, zero = False)
+        cdef array.array diff_d = array.clone(array.array('f', []), self.num_diffusing_populations_at_cell, zero = False)
+        #cdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
+        # diffusion_d / 4
+        #cdef float diff_d = diffusion_d / num_nearest_neighbours
+
+        for p in range(self.num_diffusing_populations_at_cell):
+            diffusion_d.data.as_floats[p] = diffusion_coeffs[p] * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
+            diff_d.data.as_floats[p] = diffusion_coeffs[p] * dt / (self.cell_size * self.cell_size)
+
+        # active cell index
+        cdef unsigned ind
+        # population counter
+        cdef unsigned p
+        # utility indeces
+        cdef unsigned i, j, k
+
+        # grab all the diffusing populations
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_diffusing_populations_at_cell
+            j = ind * self.num_quantities_at_cell
+            for p in range(self.num_diffusing_populations_at_cell):
+                self.all_diffusing_populations.data.as_floats[i + p] = self.all_quantities.data.as_floats[j + self.diffusing_indices.data.as_uints[p]]
+
+        # initialise the self.change_diff in populations, which is just the amount that comes out of the cells
+        #for i in range(self.num_diffusing_populations_total):
+            #self.change_diff.data.as_floats[i] = - diffusion_d * self.all_diffusing_populations.data.as_floats[i]
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_diffusing_populations_at_cell
+            for p in range(self.num_diffusing_populations_at_cell):
+                self.change_diff.data.as_floats[i + p] = - diffusion_d.data.as_floats[p] * self.all_diffusing_populations.data.as_floats[i + p]
+                
+        # disperse diff_d * population to neighbours
+        cdef unsigned from_index
+        cdef unsigned to_index
+        for i in range(self.num_connections):
+            # Note(1): This is why the optimisation was performed above.  Now we don't have to do:
+            # Note(1): from_index = self.num_diffusing_populations_at_cell * self.connections_from.data.as_uints[i]
+            # Note(1): to_index = self.num_diffusing_populations_at_cell * self.connections_to.data.as_uints[i]
+            from_index = self.connections_from.data.as_uints[i]
+            to_index = self.connections_to.data.as_uints[i]
+            for p in range(self.num_diffusing_populations_at_cell):
+                self.change_diff.data.as_floats[to_index + p] = self.change_diff.data.as_floats[to_index + p] + diff_d.data.as_floats[p] * self.all_diffusing_populations.data.as_floats[from_index + p]
+
+        # add the result to the populations
+        for ind in range(self.num_active_cells):
+            i = ind * self.num_diffusing_populations_at_cell
+            j = ind * self.num_quantities_at_cell
+            for p in range(self.num_diffusing_populations_at_cell):
+                k = j + self.diffusing_indices.data.as_uints[p]
+                self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
+                
     cpdef advect(self, float [:] advection_fraction, Wind wind):
         """One timestep of advection, using the given wind.
         advection_fraction of all populations that the Cell has labelled as 'advecting' will experience advection.  advection_class = i will experience advection_fraction[i]"""
