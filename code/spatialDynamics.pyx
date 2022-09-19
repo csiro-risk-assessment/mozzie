@@ -350,6 +350,7 @@ cdef class SpatialDynamics:
 
     cpdef outputCSVsubset(self, unsigned x1, unsigned y1, unsigned x2, unsigned y2, str filename, int pop_or_param, str inactive_value, str additional_header_lines):
         """Outputs cell information for given population or parameter number to filename in CSV format.
+        Performs this for grid cells with x1 <= x < x2 and y1 <= y < y2.
         the value inactive_value (as a string) is used in the CSV file for inactive cells.
         A header line containing the current time will be written to the file
         A header line of the form #xmin... will be written to the file
@@ -373,7 +374,7 @@ cdef class SpatialDynamics:
         cdef array.array active = self.grid.getActiveIndex()
         
         if x2 > x_max or y2 > y_max:
-            raise ValueError("Cell range (" + str(x1) + "," + str(y1) + ") to (" + str(x2) + "," + str(y2) + ") outside range of grid with x_max = " + str(x_max) + "and y_max = " + str(y_max))
+            raise ValueError("Cell range (" + str(x1) + "," + str(y1) + ") to (" + str(x2) + "," + str(y2) + ") outside range of grid with x_max = " + str(x_max) + " and y_max = " + str(y_max))
         
         f = open(filename, "w")
         f.write("#File written at: " + time.asctime() + "\n")
@@ -385,7 +386,7 @@ cdef class SpatialDynamics:
                 active_ind = active[ind]
                 if active_ind == num_cells:
                     # inactive cell
-                    f.write("0,")
+                    f.write(inactive_value + ",")
                 elif pop_or_param >= 0:
                     f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + ",")
                 else:
@@ -395,7 +396,7 @@ cdef class SpatialDynamics:
             active_ind = active[ind]
             if active_ind == num_cells:
                 # inactive cell
-                f.write("0\n")
+                f.write(inactive_value + "\n")
             elif pop_or_param >= 0:
                 f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + "\n")
             else:

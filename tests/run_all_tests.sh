@@ -3,6 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 python3 ${DIR}/TestGrid.py
+python3 ${DIR}/TestSpatialDynamics.py
 python3 ${DIR}/TestCellDynamicsStatic15_9_3_2.py
 python3 ${DIR}/TestCellDynamicsLogistic1_1.py
 python3 ${DIR}/TestCellDynamicsBeeton2_2.py
