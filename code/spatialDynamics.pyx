@@ -346,48 +346,7 @@ cdef class SpatialDynamics:
         A header line of the form #xmin... will be written to the file
         additional_header_lines will be written verbatim (including any \n, etc) into the file"""
 
-        if pop_or_param >= int(self.num_quantities_at_cell):
-            raise ValueError("You requested pop_or_param number " + str(pop_or_param) + " but there are only " + str(self.num_quantities_at_cell) + " at each cell")
-        elif pop_or_param < -1*int(self.num_diffusing_populations_at_cell):
-            raise ValueError("You requested Y' number " + str(-pop_or_param-1) + " but there are only " + str(self.num_diffusing_populations_at_cell) + " at each cell")
-        # x index, y index
-        cdef unsigned x_ind, y_ind
-        # max of x
-        cdef unsigned x_max = self.grid.getNx()
-        # max of y
-        cdef unsigned y_max = self.grid.getNy()
-        # global cell index, active cell index
-        cdef unsigned ind, active_ind
-        # total number of cells
-        cdef unsigned num_cells = self.grid.getNumCells()
-        # active cell index, given global cell index
-        cdef array.array active = self.grid.getActiveIndex()
-        f = open(filename, "w")
-        f.write("#File written at: " + time.asctime() + "\n")
-        f.write("#xmin=" + str(self.grid.getXmin()) + ",ymin=" + str(self.grid.getYmin()) + ",cell_size=" + str(self.grid.getCellSize()) + ",nx=" + str(x_max) + ",ny=" + str(y_max) + "\n")
-        f.write(additional_header_lines)
-        for y_ind in range(y_max):
-            for x_ind in range(x_max - 1):
-                ind = self.grid.internal_global_index(x_ind, y_ind)
-                active_ind = active[ind]
-                if active_ind == num_cells:
-                    # inactive cell
-                    f.write("0,")
-                elif pop_or_param >= 0:
-                    f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + ",")
-                else:
-                    f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + ",") # (currently actually Y')
-            x_ind = x_max - 1
-            ind = self.grid.internal_global_index(x_ind, y_ind)
-            active_ind = active[ind]
-            if active_ind == num_cells:
-                # inactive cell
-                f.write("0\n")
-            elif pop_or_param >= 0:
-                f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + "\n")
-            else:
-                f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + "\n")
-        f.close()
+        self.outputCSVsubset(0, 0, self.grid.getNx(), self.grid.getNy(), filename, pop_or_param, inactive_value, additional_header_lines)
 
     cpdef outputCSVsubset(self, unsigned x1, unsigned y1, unsigned x2, unsigned y2, str filename, int pop_or_param, str inactive_value, str additional_header_lines):
         """Outputs cell information for given population or parameter number to filename in CSV format.
@@ -406,22 +365,22 @@ cdef class SpatialDynamics:
         cdef unsigned x_max = self.grid.getNx()
         # max of y
         cdef unsigned y_max = self.grid.getNy()
-        
-        if x1 < 0 or y1 < 0 or x2 > x_max or y2 > y_max:
-            raise ValueError("Cell range (" + str(x1) + "," + str(y1) + ") to (" + str(x2) + "," + str(y2) + ") outside range of grid with x_max = " + str(x_max) + "and y_max = " + str(y_max))
-        
         # global cell index, active cell index
         cdef unsigned ind, active_ind
         # total number of cells
         cdef unsigned num_cells = self.grid.getNumCells()
         # active cell index, given global cell index
         cdef array.array active = self.grid.getActiveIndex()
+        
+        if x2 > x_max or y2 > y_max:
+            raise ValueError("Cell range (" + str(x1) + "," + str(y1) + ") to (" + str(x2) + "," + str(y2) + ") outside range of grid with x_max = " + str(x_max) + "and y_max = " + str(y_max))
+        
         f = open(filename, "w")
         f.write("#File written at: " + time.asctime() + "\n")
         f.write("#xmin=" + str(self.grid.getXmin()) + ",ymin=" + str(self.grid.getYmin()) + ",cell_size=" + str(self.grid.getCellSize()) + ",nx=" + str(x_max) + ",ny=" + str(y_max) + "\n")
         f.write(additional_header_lines)
-        for y_ind in range(y1, y2):#y_max):
-            for x_ind in range(x1, x2 - 1): #x_max - 1):
+        for y_ind in range(y1, y2):
+            for x_ind in range(x1, x2 - 1):
                 ind = self.grid.internal_global_index(x_ind, y_ind)
                 active_ind = active[ind]
                 if active_ind == num_cells:
@@ -431,7 +390,7 @@ cdef class SpatialDynamics:
                     f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + ",")
                 else:
                     f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + ",") # (currently actually Y')
-            x_ind = x2 - 1 #x_max - 1
+            x_ind = x2 - 1
             ind = self.grid.internal_global_index(x_ind, y_ind)
             active_ind = active[ind]
             if active_ind == num_cells:
