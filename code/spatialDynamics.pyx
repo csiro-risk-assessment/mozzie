@@ -45,6 +45,12 @@ cdef class SpatialDynamics:
     # all the diffusing populations.  This is a class variable to avoid repeated allocations every time diffuse() is called
     cdef array.array all_diffusing_populations
 
+    # diffusion_coefficient * num_nearest_neighbours * dt / cell_size^2.  This is a class variable to avoid repeated allocations every time diffuse() is called
+    cdef array.array diffusion_d
+
+    # diffusion_coefficient * dt / cell_size^2.  This is a class variable to avoid repeated allocations every time diffuse() is called
+    cdef array.array diff_d
+
     # connections_from
     cdef array.array connections_from
 
@@ -101,6 +107,9 @@ cdef class SpatialDynamics:
         self.change_diff = array.clone(float_template, self.num_diffusing_populations_total, zero = False)
         # initialize all_diffusing_populations
         self.all_diffusing_populations = array.clone(float_template, self.num_diffusing_populations_total, zero = False)
+        # initialize diffusion_d and diff_d
+        self.diffusion_d = array.clone(float_template, self.num_diffusing_populations_at_cell, zero = False)
+        self.diff_d = array.clone(float_template, self.num_diffusing_populations_at_cell, zero = False)
 
         self.connections_from = array.copy(self.grid.getConnectionsFrom())
         self.connections_to = array.copy(self.grid.getConnectionsTo())
@@ -138,72 +147,40 @@ cdef class SpatialDynamics:
         # diffusion_d = (diffusion_coefficient) * 4 * dt / (dx)^2
         # (the 4 comes from the number of nearest neighbours: evaluating the laplacian on a square grid)
         cdef int num_nearest_neighbours = 4
-        cdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
-        # diffusion_d / 4
-        cdef float diff_d = diffusion_d / num_nearest_neighbours
-
-        # active cell index
-        cdef unsigned ind
-        # population counter
         cdef unsigned p
-        # utility indeces
-        cdef unsigned i, j, k
+        for p in range(self.num_diffusing_populations_at_cell):
+            self.diffusion_d.data.as_floats[p] = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
+            self.diff_d.data.as_floats[p] = diffusion_coeff * dt / (self.cell_size * self.cell_size)
 
-        # grab all the diffusing populations
-        for ind in range(self.num_active_cells):
-            i = ind * self.num_diffusing_populations_at_cell
-            j = ind * self.num_quantities_at_cell
-            for p in range(self.num_diffusing_populations_at_cell):
-                self.all_diffusing_populations.data.as_floats[i + p] = self.all_quantities.data.as_floats[j + self.diffusing_indices.data.as_uints[p]]
+        self.diffuseAll()
 
-        # initialise the self.change_diff in populations, which is just the amount that comes out of the cells
-        for i in range(self.num_diffusing_populations_total):
-            self.change_diff.data.as_floats[i] = - diffusion_d * self.all_diffusing_populations.data.as_floats[i]
+    cpdef diffuseVarying(self, float dt, float [:] diffusion_coeffs):
+        """One timestep of diffusion with diffusion_coeffs that depend on population type (eg, sex)
+        NOTE: diffusion_coeffs"""
 
-        # disperse diff_d * population to neighbours
-        cdef unsigned from_index
-        cdef unsigned to_index
-        for i in range(self.num_connections):
-            # Note(1): This is why the optimisation was performed above.  Now we don't have to do:
-            # Note(1): from_index = self.num_diffusing_populations_at_cell * self.connections_from.data.as_uints[i]
-            # Note(1): to_index = self.num_diffusing_populations_at_cell * self.connections_to.data.as_uints[i]
-            from_index = self.connections_from.data.as_uints[i]
-            to_index = self.connections_to.data.as_uints[i]
-            for p in range(self.num_diffusing_populations_at_cell):
-                self.change_diff.data.as_floats[to_index + p] = self.change_diff.data.as_floats[to_index + p] + diff_d * self.all_diffusing_populations.data.as_floats[from_index + p]
-
-        # add the result to the populations
-        for ind in range(self.num_active_cells):
-            i = ind * self.num_diffusing_populations_at_cell
-            j = ind * self.num_quantities_at_cell
-            for p in range(self.num_diffusing_populations_at_cell):
-                k = j + self.diffusing_indices.data.as_uints[p]
-                self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
-                
-    cpdef void diffuseVarying(self, float dt, float [:] diffusion_coeffs):
-        """One timestep of diffusion"""
-
+        if len(diffusion_coeffs) != self.num_diffusing_populations_at_cell:
+            raise ValueError("diffusion_coeffs incorrectly sized")
         # fraction of population that diffuses to nearest neighbour
         # in comparison to the diffusion equation,
         # diffusion_d = (diffusion_coefficient) * 4 * dt / (dx)^2
         # (the 4 comes from the number of nearest neighbours: evaluating the laplacian on a square grid)
         cdef int num_nearest_neighbours = 4
+        cdef unsigned p
+        for p in range(self.num_diffusing_populations_at_cell):
+            self.diffusion_d.data.as_floats[p] = diffusion_coeffs[p] * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
+            self.diff_d.data.as_floats[p] = diffusion_coeffs[p] * dt / (self.cell_size * self.cell_size)
+        self.diffuseAll()
+
+
+    cpdef void diffuseAll(self):
+        """One timestep of diffusion"""
+
         # active cell index
         cdef unsigned ind
         # population counter
         cdef unsigned p
-        # utility indeces
+        # utility indices
         cdef unsigned i, j, k
-
-        cdef array.array diffusion_d = array.clone(array.array('f', []), self.num_diffusing_populations_at_cell, zero = False)
-        cdef array.array diff_d = array.clone(array.array('f', []), self.num_diffusing_populations_at_cell, zero = False)
-        #cdef float diffusion_d = diffusion_coeff * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
-        # diffusion_d / 4
-        #cdef float diff_d = diffusion_d / num_nearest_neighbours
-
-        for p in range(self.num_diffusing_populations_at_cell):
-            diffusion_d.data.as_floats[p] = diffusion_coeffs[p] * num_nearest_neighbours * dt / (self.cell_size * self.cell_size)
-            diff_d.data.as_floats[p] = diffusion_coeffs[p] * dt / (self.cell_size * self.cell_size)
 
         # grab all the diffusing populations
         for ind in range(self.num_active_cells):
@@ -213,13 +190,11 @@ cdef class SpatialDynamics:
                 self.all_diffusing_populations.data.as_floats[i + p] = self.all_quantities.data.as_floats[j + self.diffusing_indices.data.as_uints[p]]
 
         # initialise the self.change_diff in populations, which is just the amount that comes out of the cells
-        #for i in range(self.num_diffusing_populations_total):
-            #self.change_diff.data.as_floats[i] = - diffusion_d * self.all_diffusing_populations.data.as_floats[i]
         for ind in range(self.num_active_cells):
             i = ind * self.num_diffusing_populations_at_cell
             for p in range(self.num_diffusing_populations_at_cell):
-                self.change_diff.data.as_floats[i + p] = - diffusion_d.data.as_floats[p] * self.all_diffusing_populations.data.as_floats[i + p]
-                
+                self.change_diff.data.as_floats[i + p] = - self.diffusion_d.data.as_floats[p] * self.all_diffusing_populations.data.as_floats[i + p]
+
         # disperse diff_d * population to neighbours
         cdef unsigned from_index
         cdef unsigned to_index
@@ -230,7 +205,7 @@ cdef class SpatialDynamics:
             from_index = self.connections_from.data.as_uints[i]
             to_index = self.connections_to.data.as_uints[i]
             for p in range(self.num_diffusing_populations_at_cell):
-                self.change_diff.data.as_floats[to_index + p] = self.change_diff.data.as_floats[to_index + p] + diff_d.data.as_floats[p] * self.all_diffusing_populations.data.as_floats[from_index + p]
+                self.change_diff.data.as_floats[to_index + p] = self.change_diff.data.as_floats[to_index + p] + self.diff_d.data.as_floats[p] * self.all_diffusing_populations.data.as_floats[from_index + p]
 
         # add the result to the populations
         for ind in range(self.num_active_cells):
@@ -239,6 +214,7 @@ cdef class SpatialDynamics:
             for p in range(self.num_diffusing_populations_at_cell):
                 k = j + self.diffusing_indices.data.as_uints[p]
                 self.all_quantities.data.as_floats[k] = self.all_quantities.data.as_floats[k] + self.change_diff.data.as_floats[i + p]
+                
                 
     cpdef advect(self, float [:] advection_fraction, Wind wind):
         """One timestep of advection, using the given wind.
@@ -310,7 +286,7 @@ cdef class SpatialDynamics:
             # copy back
             for p in range(self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
-            if hasattr(self.cell, "yyp"): # currently only run code for CellDynamicsMosquitoBH26Delay
+            if hasattr(self.cell, "yyp"): # currently only run code for CellDynamicsMosquitoBH26Delay.  TODO: make this more robust
                 yyp = self.cell.getYYprime()
                 for p in range(self.num_diffusing_populations_at_cell):
                     self.birth_quantities.data.as_floats[j + p] = yyp.data.as_floats[p]
@@ -342,56 +318,20 @@ cdef class SpatialDynamics:
 
     cpdef outputCSV(self, str filename, int pop_or_param, str inactive_value, str additional_header_lines):
         """Outputs cell information for given population or parameter number to filename in CSV format.
+        If pop_or_param >= 0 then it indicates the population (or parameter) number that should be outputted
+        If pop_or_param < 0 then it indicates the birth_quantity that should be outputted (TODO: change this API)
         the value inactive_value (as a string) is used in the CSV file for inactive cells.
         A header line containing the current time will be written to the file
         A header line of the form #xmin... will be written to the file
         additional_header_lines will be written verbatim (including any \n, etc) into the file"""
 
-        if pop_or_param >= int(self.num_quantities_at_cell):
-            raise ValueError("You requested pop_or_param number " + str(pop_or_param) + " but there are only " + str(self.num_quantities_at_cell) + " at each cell")
-        elif pop_or_param < -1*int(self.num_diffusing_populations_at_cell):
-            raise ValueError("You requested Y' number " + str(-pop_or_param-1) + " but there are only " + str(self.num_diffusing_populations_at_cell) + " at each cell")
-        # x index, y index
-        cdef unsigned x_ind, y_ind
-        # max of x
-        cdef unsigned x_max = self.grid.getNx()
-        # max of y
-        cdef unsigned y_max = self.grid.getNy()
-        # global cell index, active cell index
-        cdef unsigned ind, active_ind
-        # total number of cells
-        cdef unsigned num_cells = self.grid.getNumCells()
-        # active cell index, given global cell index
-        cdef array.array active = self.grid.getActiveIndex()
-        f = open(filename, "w")
-        f.write("#File written at: " + time.asctime() + "\n")
-        f.write("#xmin=" + str(self.grid.getXmin()) + ",ymin=" + str(self.grid.getYmin()) + ",cell_size=" + str(self.grid.getCellSize()) + ",nx=" + str(x_max) + ",ny=" + str(y_max) + "\n")
-        f.write(additional_header_lines)
-        for y_ind in range(y_max):
-            for x_ind in range(x_max - 1):
-                ind = self.grid.internal_global_index(x_ind, y_ind)
-                active_ind = active[ind]
-                if active_ind == num_cells:
-                    # inactive cell
-                    f.write("0,")
-                elif pop_or_param >= 0:
-                    f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + ",")
-                else:
-                    f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + ",") # (currently actually Y')
-            x_ind = x_max - 1
-            ind = self.grid.internal_global_index(x_ind, y_ind)
-            active_ind = active[ind]
-            if active_ind == num_cells:
-                # inactive cell
-                f.write("0\n")
-            elif pop_or_param >= 0:
-                f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + "\n")
-            else:
-                f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + "\n")
-        f.close()
+        self.outputCSVsubset(0, 0, self.grid.getNx(), self.grid.getNy(), filename, pop_or_param, inactive_value, additional_header_lines)
 
     cpdef outputCSVsubset(self, unsigned x1, unsigned y1, unsigned x2, unsigned y2, str filename, int pop_or_param, str inactive_value, str additional_header_lines):
         """Outputs cell information for given population or parameter number to filename in CSV format.
+        Performs this for grid cells with x1 <= x < x2 and y1 <= y < y2.
+        If pop_or_param >= 0 then it indicates the population (or parameter) number that should be outputted
+        If pop_or_param < 0 then it indicates the birth_quantity that should be outputted (TODO: change this API)
         the value inactive_value (as a string) is used in the CSV file for inactive cells.
         A header line containing the current time will be written to the file
         A header line of the form #xmin... will be written to the file
@@ -407,37 +347,37 @@ cdef class SpatialDynamics:
         cdef unsigned x_max = self.grid.getNx()
         # max of y
         cdef unsigned y_max = self.grid.getNy()
-        
-        if x1 < 0 or y1 < 0 or x2 > x_max or y2 > y_max:
-            raise ValueError("Cell range (" + str(x1) + "," + str(y1) + ") to (" + str(x2) + "," + str(y2) + ") outside range of grid with x_max = " + str(x_max) + "and y_max = " + str(y_max))
-        
         # global cell index, active cell index
         cdef unsigned ind, active_ind
         # total number of cells
         cdef unsigned num_cells = self.grid.getNumCells()
         # active cell index, given global cell index
         cdef array.array active = self.grid.getActiveIndex()
+        
+        if x2 > x_max or y2 > y_max:
+            raise ValueError("Cell range (" + str(x1) + "," + str(y1) + ") to (" + str(x2) + "," + str(y2) + ") outside range of grid with x_max = " + str(x_max) + " and y_max = " + str(y_max))
+        
         f = open(filename, "w")
         f.write("#File written at: " + time.asctime() + "\n")
         f.write("#xmin=" + str(self.grid.getXmin()) + ",ymin=" + str(self.grid.getYmin()) + ",cell_size=" + str(self.grid.getCellSize()) + ",nx=" + str(x_max) + ",ny=" + str(y_max) + "\n")
         f.write(additional_header_lines)
-        for y_ind in range(y1, y2):#y_max):
-            for x_ind in range(x1, x2 - 1): #x_max - 1):
+        for y_ind in range(y1, y2):
+            for x_ind in range(x1, x2 - 1):
                 ind = self.grid.internal_global_index(x_ind, y_ind)
                 active_ind = active[ind]
                 if active_ind == num_cells:
                     # inactive cell
-                    f.write("0,")
+                    f.write(inactive_value + ",")
                 elif pop_or_param >= 0:
                     f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + ",")
                 else:
                     f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + ",") # (currently actually Y')
-            x_ind = x2 - 1 #x_max - 1
+            x_ind = x2 - 1
             ind = self.grid.internal_global_index(x_ind, y_ind)
             active_ind = active[ind]
             if active_ind == num_cells:
                 # inactive cell
-                f.write("0\n")
+                f.write(inactive_value + "\n")
             elif pop_or_param >= 0:
                 f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + "\n")
             else:

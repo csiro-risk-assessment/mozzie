@@ -1,4 +1,5 @@
 py TestGrid.py
+py TestSpatialDynamics.py
 py TestCellDynamicsStatic15_9_3_2.py
 py TestCellDynamicsLogistic1_1.py
 py TestCellDynamicsBeeton2_2.py
