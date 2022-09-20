@@ -1825,7 +1825,10 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                         bb = qm * self.yyp.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
                     current_index = adult_base + ind
                     self.birth_terms.data.as_floats[ind] = bb
-                    self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
+                    ## Andy method
+                    #self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
+                    ## Geoff method:
+                    self.new_pop.data.as_floats[ind] = bb + pops_and_params[current_index] * expdrdt
                     if self.new_pop.data.as_floats[ind] <= self.small_value:
                         self.new_pop.data.as_floats[ind] = 0.0
                         self.birth_terms.data.as_floats[ind] = 0.0
