@@ -884,3 +884,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     
     cpdef unsigned getUseQm(self)
     """Gets the value of use_qm"""
+    
+    cpdef array.array getYYprime(self)
+    """Gets the value of yyp"""
+    

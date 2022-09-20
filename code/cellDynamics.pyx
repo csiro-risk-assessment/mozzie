@@ -1729,6 +1729,9 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
 
     cpdef unsigned getUseQm(self):
         return self.use_qm
+        
+    cpdef array.array getYYprime(self):
+        return self.yyp
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
 

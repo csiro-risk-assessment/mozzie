@@ -311,8 +311,9 @@ cdef class SpatialDynamics:
             for p in range(self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
             if hasattr(self.cell, "yyp"): # currently only run code for CellDynamicsMosquitoBH26Delay
+                yyp = self.cell.getYYprime()
                 for p in range(self.num_diffusing_populations_at_cell):
-                    self.birth_quantities.data.as_floats[j + p] = self.cell.yyp.data.as_floats[p]
+                    self.birth_quantities.data.as_floats[j + p] = yyp.data.as_floats[p]
 
     cpdef calcQm(self):
         """Calculates qm at all the cells in the grid, assuming that the populations on the grid are at equilibrium"""
