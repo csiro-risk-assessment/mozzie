@@ -287,8 +287,12 @@ cdef class SpatialDynamics:
             for p in range(self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
             #if hasattr(self.cell, "yyp"): # currently only run code for CellDynamicsMosquitoBH26Delay.  TODO: make this more robust
-            if isinstance(self.cell, CellDynamicsMosquitoBH26Delay):
+            #if isinstance(self.cell, CellDynamicsMosquitoBH26Delay):
+            try:
                 yyp = self.cell.getYYprime()
+            except:
+                sys.stderr.write("no getYYprime() method\n")
+            else:
                 for p in range(self.num_diffusing_populations_at_cell):
                     self.birth_quantities.data.as_floats[j + p] = yyp.data.as_floats[p]
 
