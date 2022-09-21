@@ -27,6 +27,10 @@ cdef class PopulationsAndParameters:
     cpdef array.array getQuantities(self):
         return self.quantities
 
+    cpdef setQuantities(self, list quantities):
+        for i in range(self.num_quantities):
+            self.quantities.data.as_floats[i] = quantities[i]
+
     cpdef CellDynamicsBase getCell(self):
         return self.cell
 

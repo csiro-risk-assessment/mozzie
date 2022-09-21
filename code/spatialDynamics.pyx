@@ -231,7 +231,7 @@ cdef class SpatialDynamics:
         cdef unsigned ind
         # population counter
         cdef unsigned p
-        # utility indeces
+        # utility indices
         cdef unsigned i, j, k
 
         # grab all the advecting populations
@@ -286,7 +286,8 @@ cdef class SpatialDynamics:
             # copy back
             for p in range(self.num_quantities_at_cell):
                 self.all_quantities.data.as_floats[i + p] = self.c_cell_params_and_props[p]
-            if hasattr(self.cell, "yyp"): # currently only run code for CellDynamicsMosquitoBH26Delay.  TODO: make this more robust
+            #if hasattr(self.cell, "yyp"): # currently only run code for CellDynamicsMosquitoBH26Delay.  TODO: make this more robust
+            if isinstance(self.cell, CellDynamicsMosquitoBH26Delay):
                 yyp = self.cell.getYYprime()
                 for p in range(self.num_diffusing_populations_at_cell):
                     self.birth_quantities.data.as_floats[j + p] = yyp.data.as_floats[p]

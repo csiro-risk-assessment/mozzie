@@ -24,7 +24,7 @@ cdef class PopulationsAndParameters:
     # number of quantities (populations and parameters) at each cell
     cdef unsigned num_quantities_per_cell
 
-    # total number of quantites handled by this class ( = num_active_cells * num_quantities_per_cell)
+    # total number of quantities handled by this class ( = num_active_cells * num_quantities_per_cell)
     cdef unsigned num_quantities
 
     # the array of quantities, which is of length num_quantities
@@ -35,6 +35,9 @@ cdef class PopulationsAndParameters:
 
     cpdef array.array getQuantities(self)
     """returns the quantities array"""
+
+    cpdef setQuantities(self, list quantities)
+    """sets the quantities array"""
 
     cpdef CellDynamicsBase getCell(self)
     """returns a reference to the cell used in the constructor"""
