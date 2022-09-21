@@ -295,7 +295,7 @@ cdef class SpatialDynamics:
                 sys.stderr.write("no getYYprime() method\n")
             else:
                 for p in range(self.num_diffusing_populations_at_cell):
-                    self.birth_quantities.data.as_floats[j + p] = yyp.data.as_floats[p]
+                    self.birth_quantities.data.as_floats[j + p] = yyp[p]
 
     cpdef calcQm(self):
         """Calculates qm at all the cells in the grid, assuming that the populations on the grid are at equilibrium"""
