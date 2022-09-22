@@ -1753,7 +1753,6 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
                     current_index = adult_base + ind
                     self.eqm_pops_and_params[current_index] = 0.5 * pops_and_params[self.num_populations + m] # 0.5 comes from half males and half females
-
             self.qm_vals = self.calcQm(self.eqm_pops_and_params)
 
         # Calculate indicators whether a given species or genotype is present
@@ -1857,7 +1856,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                             for g in range(self.num_genotypes):
                                 for s in range(self.num_sexes):
                                     ind = s + self.num_sexes * (g + self.num_genotypes * (gF + self.num_genotypes * (gM + self.num_genotypes * (m + self.num_species * (mF + self.num_species * mM)))))
-                                    self.precalc[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
+                                    self.precalc[ind] += self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
                                     self.precalcp[ind] += self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] * self.hybridisation[m + mF * self.num_species + mM * self.num_species2] * self.emergence_rate[mF] * self.inheritance_cube[gM + gF * self.num_genotypes + g * self.num_genotypes2] * self.fecundity_p[gM + gF * self.num_genotypes + s * self.num_genotypes2] * self.reduction[gF + gM * self.num_genotypes]
         self.have_precalculated = 1
         
