@@ -27,6 +27,9 @@ cdef class SpatialDynamics:
 
     # Number of quantities (populations and parameters) at a single Cell
     cdef unsigned num_quantities_at_cell
+    
+    # Number of quantities (populations and parameters) at all cells
+    cdef unsigned num_quantities_total
 
     # size-length of the cells
     cdef float cell_size
