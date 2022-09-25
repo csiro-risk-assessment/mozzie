@@ -93,7 +93,9 @@ cdef class SpatialDynamics:
 
         self.num_active_cells = self.grid.getNumActiveCells()
         self.num_quantities_at_cell = self.cell.getNumberOfPopulations() + self.cell.getNumberOfParameters()
-        if len(self.all_quantities) != self.num_active_cells * self.num_quantities_at_cell:
+        self.num_quantities_total = self.num_active_cells * self.num_quantities_at_cell:
+        
+        if len(self.all_quantities) != self.num_quantities_total:
             raise ValueError("Incorrect size of all_quantities: " + str(len(self.all_quantities)) + " which should be the product of " + str(self.num_active_cells) + " and " + str(self.num_quantities_at_cell))
         
         self.cell_size = self.grid.getCellSize()
@@ -139,6 +141,14 @@ cdef class SpatialDynamics:
     cpdef void setBirthQuantities(self, list birth_quantities):
         for i in range(self.num_diffusing_populations_total):
             self.birth_quantities.data.as_floats[i] = birth_quantities[i]
+
+    cpdef array.array getAllQuantities(self):
+        return self.all_quantities
+        
+    cpdef void setAllQuantities(self, list all_quantities):
+        for i in range(self.num_quantities_total):
+            self.all_quantities.data.as_floats[i] = all_quantities[i]
+
 
     cpdef void diffuse(self, float dt, float diffusion_coeff):
         """One timestep of diffusion"""
