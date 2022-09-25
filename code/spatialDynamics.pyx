@@ -93,7 +93,7 @@ cdef class SpatialDynamics:
 
         self.num_active_cells = self.grid.getNumActiveCells()
         self.num_quantities_at_cell = self.cell.getNumberOfPopulations() + self.cell.getNumberOfParameters()
-        self.num_quantities_total = self.num_active_cells * self.num_quantities_at_cell:
+        self.num_quantities_total = self.num_active_cells * self.num_quantities_at_cell
         
         if len(self.all_quantities) != self.num_quantities_total:
             raise ValueError("Incorrect size of all_quantities: " + str(len(self.all_quantities)) + " which should be the product of " + str(self.num_active_cells) + " and " + str(self.num_quantities_at_cell))
