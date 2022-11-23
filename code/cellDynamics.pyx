@@ -1610,7 +1610,6 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
                     dr = self.death_rate[ind]
                     bb = self.comp[m] * self.yyp[ind]
                     current_index = adult_base + ind
-                    self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr) * exp(- dr * timestep)
 
         # put the new_pop in the correct slots in pops_and_params in readyness for incrementCurrentIndex
         for g in range(self.num_genotypes):
@@ -1729,9 +1728,12 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
 
     cpdef unsigned getUseQm(self):
         return self.use_qm
-        
+
     cpdef array.array getYYprime(self):
         return self.yyp
+
+    cpdef array.array getB(self):
+        return self.birth_terms
 
     cpdef void evolve(self, float timestep, float[:] pops_and_params):
 

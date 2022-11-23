@@ -22,6 +22,9 @@ cdef class SpatialDynamics:
     # all the birth terms (by sex, genotype and species) of all active cells
     cdef array.array birth_quantities
 
+    # all the Y' terms (by sex, genotype and species) of all active cells
+    cdef array.array yyp_quantities
+
     # number of active cells
     cdef unsigned num_active_cells
 
@@ -108,6 +111,7 @@ cdef class SpatialDynamics:
         self.diffusing_indices = self.cell.getDiffusingIndices()
         self.num_diffusing_populations_total = self.num_active_cells * self.num_diffusing_populations_at_cell
         self.birth_quantities = array.clone(array.array('f', []), self.num_diffusing_populations_total, zero = False)
+        self.yyp_quantities = array.clone(array.array('f', []), self.num_diffusing_populations_total, zero = False)
 
         # initialize change_diff
         self.change_diff = array.clone(float_template, self.num_diffusing_populations_total, zero = False)
@@ -140,14 +144,21 @@ cdef class SpatialDynamics:
 
     cpdef array.array getBirthQuantities(self):
         return self.birth_quantities
-        
+
+    cpdef array.array getyypQuantities(self):
+        return self.yyp_quantities
+
     cpdef void setBirthQuantities(self, list birth_quantities):
         for i in range(self.num_diffusing_populations_total):
             self.birth_quantities.data.as_floats[i] = birth_quantities[i]
 
+    cpdef void setyypQuantities(self, list yyp_quantities):
+        for i in range(self.num_diffusing_populations_total):
+            self.yyp_quantities.data.as_floats[i] = yyp_quantities[i]    
+
     cpdef array.array getAllQuantities(self):
         return self.all_quantities
-        
+
     cpdef void setAllQuantities(self, list all_quantities):
         for i in range(self.num_quantities_total):
             self.all_quantities.data.as_floats[i] = all_quantities[i]
@@ -303,12 +314,14 @@ cdef class SpatialDynamics:
             #if hasattr(self.cell, "yyp"): # currently only run code for CellDynamicsMosquitoBH26Delay.  TODO: make this more robust
             #if isinstance(self.cell, CellDynamicsMosquitoBH26Delay):
             try:
+                b = self.cell.getB()
                 yyp = self.cell.getYYprime()
             except:
-                sys.stderr.write("no getYYprime() method\n")
+                sys.stderr.write("no getYYprime() or getB() method\n")
             else:
                 for p in range(self.num_diffusing_populations_at_cell):
-                    self.birth_quantities.data.as_floats[j + p] = yyp[p]
+                    self.birth_quantities.data.as_floats[j + p] = b[p]
+                    self.yyp_quantities.data.as_floats[j + p] = yyp[p]
 
     cpdef calcQm(self):
         """Calculates qm at all the cells in the grid, assuming that the populations on the grid are at equilibrium"""
@@ -350,7 +363,8 @@ cdef class SpatialDynamics:
         """Outputs cell information for given population or parameter number to filename in CSV format.
         Performs this for grid cells with x1 <= x < x2 and y1 <= y < y2.
         If pop_or_param >= 0 then it indicates the population (or parameter) number that should be outputted
-        If pop_or_param < 0 then it indicates the birth_quantity that should be outputted (TODO: change this API)
+        If self.num_diffusing_populations_at_cell <= pop_or_param < 0 then it indicates the birth_quantity that should be outputted (TODO: change this API)
+        If 2*self.num_diffusing_populations_at_cell <= pop_or_param < self.num_diffusing_populations_at_cell then it indicates the yyp that should be outputted (TODO: change this API)
         the value inactive_value (as a string) is used in the CSV file for inactive cells.
         A header line containing the current time will be written to the file
         A header line of the form #xmin... will be written to the file
@@ -358,8 +372,8 @@ cdef class SpatialDynamics:
 
         if pop_or_param >= int(self.num_quantities_at_cell):
             raise ValueError("You requested pop_or_param number " + str(pop_or_param) + " but there are only " + str(self.num_quantities_at_cell) + " at each cell")
-        elif pop_or_param < -1*int(self.num_diffusing_populations_at_cell):
-            raise ValueError("You requested Y' number " + str(-pop_or_param-1) + " but there are only " + str(self.num_diffusing_populations_at_cell) + " at each cell")
+        elif pop_or_param < -2*int(self.num_diffusing_populations_at_cell):
+            raise ValueError("You requested pop_or_param number " + str(pop_or_param) + " but the minimum accepted value is " + str(-2*int(self.num_diffusing_populations_at_cell)))
         # x index, y index
         cdef unsigned x_ind, y_ind
         # max of x
@@ -389,8 +403,10 @@ cdef class SpatialDynamics:
                     f.write(inactive_value + ",")
                 elif pop_or_param >= 0:
                     f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + ",")
+                elif pop_or_param >= -1*int(self.num_diffusing_populations_at_cell):
+                    f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + ",") # (B)
                 else:
-                    f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + ",") # (currently actually Y')
+                    f.write(str(self.yyp_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - self.num_diffusing_populations_at_cell - 1]) + ",") # (Y')
             x_ind = x2 - 1
             ind = self.grid.internal_global_index(x_ind, y_ind)
             active_ind = active[ind]
@@ -399,8 +415,10 @@ cdef class SpatialDynamics:
                 f.write(inactive_value + "\n")
             elif pop_or_param >= 0:
                 f.write(str(self.all_quantities[active_ind * self.num_quantities_at_cell + pop_or_param]) + "\n")
-            else:
+            elif pop_or_param >= -1*int(self.num_diffusing_populations_at_cell):
                 f.write(str(self.birth_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - 1]) + "\n")
+            else:
+                f.write(str(self.yyp_quantities[active_ind * self.num_diffusing_populations_at_cell - pop_or_param - self.num_diffusing_populations_at_cell - 1]) + "\n")
         f.close()
 
         

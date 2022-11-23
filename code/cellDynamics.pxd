@@ -888,3 +888,6 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     cpdef array.array getYYprime(self)
     """Gets the value of yyp"""
     
+    cpdef array.array getB(self)
+    """Gets the value of B"""    
+    
