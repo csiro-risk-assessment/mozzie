@@ -145,14 +145,14 @@ cdef class SpatialDynamics:
     cpdef array.array getBirthQuantities(self):
         return self.birth_quantities
 
-    cpdef array.array getyypQuantities(self):
+    cpdef array.array getYypQuantities(self):
         return self.yyp_quantities
 
     cpdef void setBirthQuantities(self, list birth_quantities):
         for i in range(self.num_diffusing_populations_total):
             self.birth_quantities.data.as_floats[i] = birth_quantities[i]
 
-    cpdef void setyypQuantities(self, list yyp_quantities):
+    cpdef void setYypQuantities(self, list yyp_quantities):
         for i in range(self.num_diffusing_populations_total):
             self.yyp_quantities.data.as_floats[i] = yyp_quantities[i]    
 
