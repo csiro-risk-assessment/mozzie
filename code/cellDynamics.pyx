@@ -1824,6 +1824,13 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                         bb = 0
                     else:
                         bb = qm * self.yyp.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
+                        #if g == 0:
+                            #sys.stdout.write("*** BB ***\n")
+                            #sys.stdout.write("s: "+str(s)+"\n")
+                            #sys.stdout.write("m: "+str(m)+"\n")
+                            #sys.stdout.write("qm: "+str(qm)+"\n")
+                            #sys.stdout.write("yyp: "+str(self.yyp.data.as_floats[ind])+"\n")
+                            #sys.stdout.write("comp: "+str(self.comp.data.as_floats[m])+"\n")
                     current_index = adult_base + ind
                     self.birth_terms.data.as_floats[ind] = bb
                     ## Andy method
@@ -1984,10 +1991,16 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                     for s in range(self.num_sexes_to_calc):
                         for g in range(self.num_genotypes_to_calc):
                             if self.genotype_present.data.as_uchars[g] == 1:
-                                yy_ind = m + g * self.num_species + s * self.num_species * self.num_genotypes
+                                yy_ind = mprime + g * self.num_species + s * self.num_species * self.num_genotypes
                                 # unoptimised:
                                 #self.comp[m] += alpha * self.yy[yy_ind]
                                 # better:
                                 self.comp.data.as_floats[m] = self.comp.data.as_floats[m] + alpha * self.yy.data.as_floats[yy_ind]
+                                #if g == 0:
+                                    #sys.stdout.write("*** C ***\n")
+                                    #sys.stdout.write("s: "+str(s)+"\n")
+                                    #sys.stdout.write("m: "+str(m)+"\n")
+                                    #sys.stdout.write("alpha: "+str(alpha)+"\n")
+                                    #sys.stdout.write("yy: "+str(self.yy.data.as_floats[yy_ind])+"\n")
                 if self.num_sexes_to_calc == 1: # assume male=female populations
                     self.comp.data.as_floats[m] = 2.0 * self.comp.data.as_floats[m]
