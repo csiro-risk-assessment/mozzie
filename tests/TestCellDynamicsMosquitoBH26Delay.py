@@ -509,7 +509,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       lambda_m = emergence_rate # > 2
       # note that because lambda_m > 2 and death_rate <= 1, the steady_state is positive
       num_sexes = 2
-      steady_state = (1.0 / (num_sexes * competition) / (HORXprimeM * lambda_m)) * qm * (HORXprimeM * o_m * lambda_m / death_rate[1][0][0] - 1)
+      steady_state = (1.0 / (num_sexes * competition) / HORXprimeM) * qm * (HORXprimeM * o_m * lambda_m / death_rate[1][0][0] - 1)
 
 
       # initialise very small populations
