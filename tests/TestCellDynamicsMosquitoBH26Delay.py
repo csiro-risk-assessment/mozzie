@@ -421,7 +421,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
          xprimeM = [gold[delayed_base + g] / denom for g in range(6)]
 
          # compute y[s][g] and C
-         y = [[sum([sum([hybridisation * emergence_rate * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
+         y = [[sum([sum([hybridisation * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
          yp = [[sum([sum([hybridisation * offspring_modifier[s][0][0] * emergence_rate * o_times_r[gM][gF][g][s] * gold[delayed_base + gF + 1 * 6] * xprimeM[gM] for gF in range(6)]) for gM in range(6)]) for g in range(6)] for s in range(2)]
          cc = competition * sum([sum(y[s]) for s in range(2)])
 
