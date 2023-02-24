@@ -1610,6 +1610,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
                     dr = self.death_rate[ind]
                     bb = self.comp[m] * self.yyp[ind]
                     current_index = adult_base + ind
+                    self.new_pop[ind] = bb / dr + (pops_and_params[current_index] - bb / dr) * exp(- dr * timestep)
 
         # put the new_pop in the correct slots in pops_and_params in readyness for incrementCurrentIndex
         for g in range(self.num_genotypes):
@@ -1701,6 +1702,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
         self.num_genotypes_to_calc = self.num_genotypes
         self.num_sexes_to_calc = self.num_sexes
         self.use_qm = 1
+        self.Geoff_method = 1
         self.species_present = array.clone(array.array('B', []), self.num_species, zero = False) 
         self.genotype_present = array.clone(array.array('B', []), self.num_genotypes, zero = False)
         self.precalculate()
@@ -1728,6 +1730,14 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
 
     cpdef unsigned getUseQm(self):
         return self.use_qm
+
+    cpdef setGeoffMethod(self, unsigned Geoff_method):
+        if not (Geoff_method == 0 or Geoff_method == 1):
+            raise ValueError("setGeoffMethod: Geoff_method must be 0 or 1")
+        self.Geoff_method = Geoff_method
+
+    cpdef unsigned getGeoffMethod(self):
+        return self.Geoff_method
 
     cpdef array.array getYYprime(self):
         return self.yyp
@@ -1824,19 +1834,17 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                         bb = 0
                     else:
                         bb = qm * self.yyp.data.as_floats[ind] / (qm + self.comp.data.as_floats[m])
-                        #if g == 0:
-                            #sys.stdout.write("*** BB ***\n")
-                            #sys.stdout.write("s: "+str(s)+"\n")
-                            #sys.stdout.write("m: "+str(m)+"\n")
-                            #sys.stdout.write("qm: "+str(qm)+"\n")
-                            #sys.stdout.write("yyp: "+str(self.yyp.data.as_floats[ind])+"\n")
-                            #sys.stdout.write("comp: "+str(self.comp.data.as_floats[m])+"\n")
+
                     current_index = adult_base + ind
                     self.birth_terms.data.as_floats[ind] = bb
-                    ## Andy method
-                    #self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
-                    ## Geoff method:
-                    self.new_pop.data.as_floats[ind] = bb + pops_and_params[current_index] * expdrdt
+                    
+                    if (self.Geoff_method == 1):
+                        # Geoff method:
+                        self.new_pop.data.as_floats[ind] = bb + pops_and_params[current_index] * expdrdt
+                    else:
+                        # Andy method
+                        self.new_pop.data.as_floats[ind] = bb * one_over_dr + (pops_and_params[current_index] - bb * one_over_dr) * expdrdt
+
                     if self.new_pop.data.as_floats[ind] <= self.small_value:
                         self.new_pop.data.as_floats[ind] = 0.0
                         self.birth_terms.data.as_floats[ind] = 0.0
@@ -1996,11 +2004,5 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
                                 #self.comp[m] += alpha * self.yy[yy_ind]
                                 # better:
                                 self.comp.data.as_floats[m] = self.comp.data.as_floats[m] + alpha * self.yy.data.as_floats[yy_ind]
-                                #if g == 0:
-                                    #sys.stdout.write("*** C ***\n")
-                                    #sys.stdout.write("s: "+str(s)+"\n")
-                                    #sys.stdout.write("m: "+str(m)+"\n")
-                                    #sys.stdout.write("alpha: "+str(alpha)+"\n")
-                                    #sys.stdout.write("yy: "+str(self.yy.data.as_floats[yy_ind])+"\n")
                 if self.num_sexes_to_calc == 1: # assume male=female populations
                     self.comp.data.as_floats[m] = 2.0 * self.comp.data.as_floats[m]

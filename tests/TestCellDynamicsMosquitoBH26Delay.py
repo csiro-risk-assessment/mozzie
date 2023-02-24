@@ -395,6 +395,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       m_w = random.random()
       m_c = random.random()
       tiny = CellDynamicsMosquitoBH26Delay(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = [[competition]], emergence_rate = [emergence_rate], activity = [[activity]], reduction = reduction, hybridisation = [[[hybridisation]]], offspring_modifier = offspring_modifier, sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c)
+      tiny.setGeoffMethod(0)
 
       # precalculate O * R.  Since other tests have shown inheritance, fecundity and reduction are OK, just use them here
       ic = [[[tiny.getInheritance()[gM + gF * 6 + g * 36] for g in range(6)] for gF in range(6)] for gM in range(6)]
@@ -496,6 +497,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       m_w = 0.0 # so only ww mosquitos
       m_c = random.random()
       tiny = CellDynamicsMosquitoBH26Delay(num_species = num_species, delay = delay, current_index = current_index, death_rate = death_rate, competition = [[competition]], emergence_rate = [emergence_rate], activity = [[activity]], reduction = reduction, hybridisation = [[[hybridisation]]], offspring_modifier = offspring_modifier, sex_ratio = sex_ratio, female_bias = female_bias, m_w = m_w, m_c = m_c)
+      tiny.setGeoffMethod(0)
       qm = 1.0 + random.random()
 
       # calculate steady-state adult population
@@ -561,6 +563,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       num_species = 4
       wild = CellDynamicsMosquitoBH26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[[1.0, 2.0, 3.0, 4.0]] * 6] * 2, competition = [[1, 2, 3, 4], [5, 6, 7, 8], [6, 5, 4, 3], [3, 2, 3, 2]], emergence_rate = [41.0, 32.0, 23.0, 14.0], activity = [[0.125, 0.25, 0.75, 1], [1.25, 1, 0.625, 0.25], [0.25, 0.375, 0.5, 0.625], [0.385, 0.5, 0.125, 0.25]], reduction = self.red, hybridisation = [[[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]] * 4, offspring_modifier = [[[1] * 4] * 4] * 2, m_w = 0)
       initial_condition = [0 for i in range(wild.getNumberOfPopulations() + wild.getNumberOfParameters())]
+      wild.setGeoffMethod(0)
 
       # first do something that will raise a division-by-zero error
       ss = [10000 * i for i in range(num_species)] # assumed steady-state populations (there are 10000 wild-type males and 10000 wild-type females of species=1, for instance).  Note, there are zero mosquitoes for species = 0, which will raise the error
@@ -631,6 +634,7 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       # Test that use_qm=0 and use_qm=1 produce the same results (at least for the following parameters: note m_w = 0)
       num_species = 4
       wild = CellDynamicsMosquitoBH26Delay(num_species = num_species, delay = 7, current_index = 2, death_rate = [[[1.0, 2.0, 3.0, 4.0], [0.5, 0.75, 0.25, 0.125], [2, 3, 4, 5], [3, 4, 5, 6], [2.5, 3.5, 4.5, 5.5], [1.5, 2.5, 3.5, 4.5]]] * 2, competition = [[1, 2, 3, 4], [5, 6, 7, 8], [6, 5, 4, 3], [3, 2, 3, 2]], emergence_rate = [41.0, 32.0, 23.0, 14.0], activity = [[0.125, 0.25, 0.75, 1], [1.25, 1, 0.625, 0.25], [0.25, 0.375, 0.5, 0.625], [0.375, 0.5, 0.125, 0.25]], reduction = self.red, hybridisation = [[[1, 0.5, 0.25, 0.125], [0.5, 1, 0.375, 0.375], [0.125, 0.625, 1, 0.125], [0.0625, 0.125, 0.25, 0.75]]] * 4, offspring_modifier = [[[1.25, 1, 0.625, 0.5], [0.625, 0.5, 0.375, 1], [0.375, 0.375, 0.625, 0.25], [1.275, 1.375, 1.625, 1.25]], [[1.25, 1, 0.625, 0.5], [0.625, 0.5, 0.375, 1], [0.375, 0.375, 0.625, 0.25], [1.275, 1.375, 1.625, 1.25]]] , sex_ratio = 0.625, female_bias = 0.75, m_w = 0.0, m_c = 0.125)
+      wild.setGeoffMethod(0)
       initial_condition = [0 for i in range(wild.getNumberOfPopulations() + wild.getNumberOfParameters())]
 
       # assumed qm values:

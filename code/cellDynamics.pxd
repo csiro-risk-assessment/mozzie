@@ -35,7 +35,7 @@ cdef class CellDynamicsBase:
 
     # A value that can be used as a lower bound on population numbers, carrying capacities, or anything else, to eliminate underflows or to zero populations when they reach a threshold
     cdef float small_value
-    
+
     cpdef unsigned getNumberOfPopulations(self)
     """Returns number of populations (maleGw, femaleGG, larvaeMaleGw, whatever) in the Cell dynamics"""
 
@@ -819,6 +819,9 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     # determines whether the parameters in pops_and_params represent the carrying capacity or q_m."""
     cdef unsigned use_qm
 
+    # defines whether a discrete approach is used (Geoff method) or a continuous approximation (Andy method)
+    cdef unsigned Geoff_method
+
     # Array to indicate presence or absence of species, sized to num_species
     cdef array.array species_present
 
@@ -884,7 +887,13 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     
     cpdef unsigned getUseQm(self)
     """Gets the value of use_qm"""
+
+    cpdef setGeoffMethod(self, unsigned Geoff_method)
+    """Sets the Geoff_method constant to determine whether Geoff's method is used """
     
+    cpdef unsigned getGeoffMethod(self)
+    """Gets the value of Geoff_method"""
+
     cpdef array.array getYYprime(self)
     """Gets the value of yyp"""
     
