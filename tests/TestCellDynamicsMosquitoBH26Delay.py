@@ -189,6 +189,14 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
             for g in range(6):
                self.assertTrue(abs(gold[gM][gF][g] - ic[gM + gF * 6 + g * 36]) < 1E-6)
  
+   def testSetGetGeoffMethod(self):
+      self.assertEqual(self.c.getGeoffMethod(), 1)
+      self.c.setGeoffMethod(0)
+      self.assertEqual(self.c.getGeoffMethod(), 0)
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setGeoffMethod(2)
+      self.assertEqual(str(the_err.exception), "setGeoffMethod: Geoff_method must be 0 or 1")
+
    def testEvolve1(self):
       # Tests evolve doesn't crash
 
