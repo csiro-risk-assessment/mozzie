@@ -11,6 +11,8 @@ from cellDynamics import CellDynamicsLogistic1_1
 from spatialDynamics import SpatialDynamics
 from populationsAndParameters import PopulationsAndParameters
 
+delete_output = True
+
 def arrayfuzzyequal(a, b, eps):
    return (len(a) == len(b)) and all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(min(len(a), len(b)))])
 
@@ -37,27 +39,35 @@ class TestEvolveCells(unittest.TestCase):
    def testEvolveCells1(self):
       # evolve with timestep = 12
       self.spatial.evolveCells(12)
-      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_1.csv"), 0, "0", "")
-      with open(os.path.join(findbin, "2D_evolution_out_1.csv")) as f:
+      fn = os.path.join(findbin, "2D_evolution_out_1.csv")
+      self.spatial.outputCSV(fn, 0, "0", "")
+      with open(fn) as f:
          data = f.readlines()
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [0.0, 1.06, 0.0, 1.24, 2.0, 2.56], 1E-5))
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
 
-      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_2.csv"), 1, "0", "")
-      with open(os.path.join(findbin, "2D_evolution_out_2.csv")) as f:
+      fn = os.path.join(findbin, "2D_evolution_out_2.csv")
+      self.spatial.outputCSV(fn, 1, "0", "")
+      with open(fn) as f:
          data = f.readlines()
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [1.0, 2.0, 2.0, -1.0, 2.0, 1.0], 1E-5))
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
 
       # evolve with timestep = 3
       self.spatial.evolveCells(3)
-      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_3.csv"), 0, "0", "")
-      with open(os.path.join(findbin, "2D_evolution_out_3.csv")) as f:
+      fn = os.path.join(findbin, "2D_evolution_out_3.csv")
+      self.spatial.outputCSV(fn, 0, "0", "")
+      with open(fn) as f:
          data = f.readlines()
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [0.0, 1.0749459, 0.0, 1.323328, 2.0, 2.44019198], 1E-5))
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
 
-      self.spatial.outputCSV(os.path.join(findbin, "2D_evolution_out_4.csv"), 1, "0", "")
-      with open(os.path.join(findbin, "2D_evolution_out_4.csv")) as f:
+      fn = os.path.join(findbin, "2D_evolution_out_4.csv")
+      self.spatial.outputCSV(fn, 1, "0", "")
+      with open(fn) as f:
          data = f.readlines()
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [1.0, 2.0, 2.0, -1.0, 2.0, 1.0], 1E-5))
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
 
 
 if __name__ == '__main__':

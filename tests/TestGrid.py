@@ -8,6 +8,8 @@ sys.path.append(findbin + "/../code")
 
 from grid import Grid
 
+delete_output = True
+
 def arrayequal(a, b):
    return (len(a) == len(b)) and all([a[i] == b[i] for i in range(min(len(a), len(b)))])
 
@@ -130,8 +132,8 @@ class TestGrid(unittest.TestCase):
          self.assertEqual(str(the_err.exception), "The data entries in " + os.path.join(findbin, "bad_inactive_active" + num + ".csv must be either 0 or 1"))
 
    def testOutputActiveCSV(self):
-      fn = os.path.join(findbin, "active_output.csv")
-      if os.path.isfile(fn): os.remove(fn)
+      fn = os.path.join(findbin, "active_out_put.csv")
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
       self.g2.outputActiveCSV(fn)
       f = open(fn, 'r')
       data = f.readlines()
@@ -140,6 +142,7 @@ class TestGrid(unittest.TestCase):
       self.assertTrue(data[3] == "1,0,1,1\n")
       self.assertTrue(data[4] == "1,0,1,0\n")
       self.assertTrue(data[5] == "0,0,1,1\n")
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
 
 
 if __name__ == '__main__':

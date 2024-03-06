@@ -11,6 +11,8 @@ from cellDynamics import CellDynamicsStatic15_9_3_2
 from spatialDynamics import SpatialDynamics
 from populationsAndParameters import PopulationsAndParameters
 
+delete_output = True
+
 def arrayfuzzyequal(a, b, eps):
    return (len(a) == len(b)) and all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(min(len(a), len(b)))])
 
@@ -37,23 +39,27 @@ class TestDiffusion_2(unittest.TestCase):
    def testDiffuse1(self):
       # diffuse with timestep = 0.5 and diffusion coefficient = 0.075, hence diffusion_d = 0.6
       self.spatial.diffuse(0.5, 0.075)
-      self.spatial.outputCSV(os.path.join(findbin, "2D_diffusion_out_3.csv"), 2, "0", "")
-      with open(os.path.join(findbin, "2D_diffusion_out_3.csv")) as f:
+      fn = os.path.join(findbin, "2D_diffusion_out_3.csv")
+      self.spatial.outputCSV(fn, 2, "0", "")
+      with open(fn) as f:
          data = f.readlines()
       for row in [2, 3, 4, 5, 8, 9]:
          self.assertTrue(arrayfuzzyequal([float(d) for d in data[row].strip().split(",")], [0.0] * 8, 1E-5))
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[6].strip().split(",")], [0, 0, 0, 0.3, 0.8, 0.3, 0, 0], 1E-5))
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[7].strip().split(",")], [0, 0, 0, 0, 0.3, 0, 0, 0], 1E-5))
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
       
       self.spatial.diffuse(0.5, 0.075)
-      self.spatial.outputCSV(os.path.join(findbin, "2D_diffusion_out_4.csv"), 2, "0", "")
-      with open(os.path.join(findbin, "2D_diffusion_out_4.csv")) as f:
+      fn = os.path.join(findbin, "2D_diffusion_out_4.csv")
+      self.spatial.outputCSV(fn, 2, "0", "")
+      with open(fn) as f:
          data = f.readlines()
       for row in [2, 3, 4, 5, 9]:
          self.assertTrue(arrayfuzzyequal([float(d) for d in data[row].strip().split(",")], [0.0] * 8, 1E-5))
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[6].strip().split(",")], [0, 0, 0.045, 0.24, 0.455, 0.24, 0, 0], 1E-5))
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[7].strip().split(",")], [0, 0, 0, 0.09, 0.24, 0.09, 0, 0], 1E-5))
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[8].strip().split(",")], [0, 0, 0, 0, 0.045, 0, 0, 0], 1E-5))
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
 
 if __name__ == '__main__':
    unittest.main()

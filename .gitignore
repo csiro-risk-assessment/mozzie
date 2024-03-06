@@ -1,5 +1,13 @@
-PMB_Risk_Assessment.pdf
 wind1_processed.bin
 wind2_processed.bin
 wind2_processed.csv
+code/*.c
+code/*.html
+code/*.so
+code/auxillary/ab_convert
+code/auxillary/*.o
+code/auxillary/t
+tests/*_out_*
+
+
 

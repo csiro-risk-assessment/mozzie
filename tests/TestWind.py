@@ -9,6 +9,8 @@ sys.path.append(findbin + "/../code")
 from wind import Wind
 from grid import Grid
 
+delete_output = True
+
 def arrayequal(a, b):
    return (len(a) == len(b)) and all([a[i] == b[i] for i in range(min(len(a), len(b)))])
 
@@ -22,6 +24,7 @@ class TestWind(unittest.TestCase):
       self.w1 = Wind(os.path.join(findbin, "wind1.csv"), os.path.join(findbin, "wind1_processed.csv"), [[1.0, 0.3], [2.0, 0.7]], self.g1)
       self.g2 = Grid(1.0, 2.0, 3.0, 4, 3)
       self.g2.setActiveAndInactive(os.path.join(findbin, "inactive_active.csv"))
+      self.w2_static = Wind(os.path.join(findbin, "wind1.csv"), os.path.join(findbin, "wind2_processed_static.csv"), [[1.0, 0.3], [2.0, 0.7]], self.g2)
       self.w2 = Wind(os.path.join(findbin, "wind1.csv"), os.path.join(findbin, "wind2_processed.csv"), [[1.0, 0.3], [2.0, 0.7]], self.g2)
 
       self.w1b = Wind(os.path.join(findbin, "wind1.bin"), os.path.join(findbin, "wind1_processed.bin"), [[1.0, 0.3], [2.0, 0.7]], self.g1)
@@ -140,9 +143,9 @@ class TestWind(unittest.TestCase):
       self.w1.parseRawFile()
       self.assertEqual(self.w1.getProcessedDataComputed(), 1)
 
-      self.assertEqual(self.w2.getProcessedDataComputed(), 0)
-      self.w2.parseProcessedFile()
-      self.assertEqual(self.w2.getProcessedDataComputed(), 1)
+      self.assertEqual(self.w2_static.getProcessedDataComputed(), 0)
+      self.w2_static.parseProcessedFile()
+      self.assertEqual(self.w2_static.getProcessedDataComputed(), 1)
 
    def testAdvection(self):
       self.w1.parseRawFile()
@@ -170,11 +173,12 @@ class TestWind(unittest.TestCase):
       self.assertEqual(self.w2b.getNumAdvection(), 8)
 
    def testOutputProcessedCSV(self):
-      w3 = Wind(os.path.join(findbin, "wind1.csv"), os.path.join(findbin, "wind3_processed.csv"), [[1.0, 0.3], [2.0, 0.7]], self.g2)
+      fn3 = os.path.join(findbin, "wind3_processed.csv")
+      w3 = Wind(os.path.join(findbin, "wind1.csv"), fn3, [[1.0, 0.3], [2.0, 0.7]], self.g2)
       for (windobj, fn) in [(w3, "inactive_active.csv")]:
          windobj.parseRawFile()
          windobj.outputProcessedCSV()
-         with open(os.path.join(findbin, "wind3_processed.csv"), 'r') as f:
+         with open(fn3, 'r') as f:
             data = f.readlines()
          self.assertEqual(data[1], "#Active cells defined by file " + fn + "\n")
          self.assertEqual(data[2], "#xmin=1.0,ymin=2.0,cell_size=3.0,nx=4,ny=3\n")
@@ -191,8 +195,11 @@ class TestWind(unittest.TestCase):
          self.assertTrue(arrayequal(windobj.getAdvectionFrom(), afr))
          self.assertTrue(arrayequal(windobj.getAdvectionTo(), ato))
          self.assertTrue(arrayfuzzyequal(windobj.getAdvectionP(), app, 1E-5))
+         if os.path.isfile(fn3) and delete_output: os.remove(fn3)
+         
 
    def testParseProcessedFile(self):
+      
       self.w1.parseRawFile()
       self.w1.outputProcessedCSV()
       self.w1.parseProcessedFile()
@@ -201,6 +208,7 @@ class TestWind(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal(self.w1.getAdvectionP(), [1.0, 1.0, 1.0, 1.0, 1.0, 0.3, 0.7, 0.3, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
       self.assertEqual(self.w1.getNumAdvection(), 16)
       self.assertEqual(self.w1.getProcessedDataComputed(), 1)
+      if os.path.isfile(self.w1.getProcessedWindFilename()) and delete_output: os.remove(self.w1.getProcessedWindFilename())
 
       self.w2.parseRawFile()
       self.w2.outputProcessedCSV()
@@ -210,6 +218,7 @@ class TestWind(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal(self.w2.getAdvectionP(), [1.0, 1.0, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
       self.assertEqual(self.w2.getNumAdvection(), 8)
       self.assertEqual(self.w2.getProcessedDataComputed(), 1)
+      if os.path.isfile(self.w2.getProcessedWindFilename()) and delete_output: os.remove(self.w2.getProcessedWindFilename())
 
       self.w1b.parseRawFile()
       self.w1b.outputProcessedCSV()
@@ -219,6 +228,7 @@ class TestWind(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal(self.w1b.getAdvectionP(), [1.0, 1.0, 1.0, 1.0, 1.0, 0.3, 0.7, 0.3, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
       self.assertEqual(self.w1b.getNumAdvection(), 16)
       self.assertEqual(self.w1b.getProcessedDataComputed(), 1)
+      if os.path.isfile(self.w1b.getProcessedWindFilename()) and delete_output: os.remove(self.w1b.getProcessedWindFilename())
 
       self.w2b.parseRawFile()
       self.w2b.outputProcessedCSV()
@@ -228,6 +238,7 @@ class TestWind(unittest.TestCase):
       self.assertTrue(arrayfuzzyequal(self.w2b.getAdvectionP(), [1.0, 1.0, 0.3, 0.7, 0.3, 0.7, 0.3, 0.7], 1E-5))
       self.assertEqual(self.w2b.getNumAdvection(), 8)
       self.assertEqual(self.w2b.getProcessedDataComputed(), 1)
+      if os.path.isfile(self.w2b.getProcessedWindFilename()) and delete_output: os.remove(self.w2b.getProcessedWindFilename())
 
 
    def testBinaryFormat(self):

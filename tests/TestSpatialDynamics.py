@@ -11,6 +11,8 @@ from cellDynamics import CellDynamicsStatic15_9_3_2
 from spatialDynamics import SpatialDynamics
 from populationsAndParameters import PopulationsAndParameters
 
+delete_output = True
+
 def arrayfuzzyequal(a, b, eps):
    return (len(a) == len(b)) and all([(a[i] > b[i] - eps and a[i] < b[i] + eps) for i in range(min(len(a), len(b)))])
 
@@ -33,17 +35,21 @@ class TestSpatialDynamics(unittest.TestCase):
 
 
    def testExcept(self):
+      fn = os.path.join(findbin, "test_sd_out_1.csv")
       with self.assertRaises(ValueError) as the_err:
-         self.spatial.outputCSVsubset(1, 2, 9, 10, os.path.join(findbin, "test_sd_1.csv"), 2, "0", "")
+         self.spatial.outputCSVsubset(1, 2, 9, 10, fn, 2, "0", "")
       self.assertEqual(str(the_err.exception), "Cell range (1,2) to (9,10) outside range of grid with x_max = 8 and y_max = 8")
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
 
    def testOutputCSVsubset(self):
-      self.spatial.outputCSVsubset(3, 3, 5, 6, os.path.join(findbin, "test_sd_1.csv"), 2, "0", "")
-      with open(os.path.join(findbin, "test_sd_1.csv")) as f:
+      fn = os.path.join(findbin, "test_sd_out_2.csv")
+      self.spatial.outputCSVsubset(3, 3, 5, 6, fn, 2, "0", "")
+      with open(fn) as f:
          data = f.readlines()
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[2].strip().split(",")], [0, 0], 1E-8))
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[3].strip().split(",")], [0, 2], 1E-8))
       self.assertTrue(arrayfuzzyequal([float(d) for d in data[4].strip().split(",")], [0, 0], 1E-8))
+      if os.path.isfile(fn) and delete_output: os.remove(fn)
 
 if __name__ == '__main__':
    unittest.main()
