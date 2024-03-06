@@ -39,7 +39,7 @@ On Windows:
 
 ### Testing the code
 
-Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `run_all_tests.sh` (on linux/mac) or `run_all_tests.bat` (on Windows).
+Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `python -m unittest -v`.
 
 ### Simulating
 
