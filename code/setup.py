@@ -1,22 +1,28 @@
-import os
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Distutils import build_ext
+from setuptools import Extension, setup
+from Cython.Build import cythonize
+
+compiler_directives = {}
+compiler_directives['language_level'] = 3
+define_macros = []
+
+debug = False
+if debug:
+    define_macros.append(('CYTHON_TRACE', '1'))
+    compiler_directives['profile'] = True
+    compiler_directives['linetrace'] = True
 
 ext_modules=[
-    Extension("grid", ["grid.pyx"], include_dirs=['.']),
-    Extension("cellDynamics", ["cellDynamics.pyx"], include_dirs=['.']),
-    Extension("spatialDynamics", ["spatialDynamics.pyx"], include_dirs=['.']),
-    Extension("wind", ["wind.pyx"], include_dirs=['.']),
-    Extension("spatialDependence", ["spatialDependence.pyx"], include_dirs=['.']),
-    Extension("populationsAndParameters", ["populationsAndParameters.pyx"], include_dirs=['.'])
+    Extension("grid", ["grid.pyx"], include_dirs = ['.'], define_macros = define_macros),
+    Extension("cellDynamics", ["cellDynamics.pyx"], include_dirs = ['.'], define_macros = define_macros),
+    Extension("spatialDynamics", ["spatialDynamics.pyx"], include_dirs = ['.'], define_macros = define_macros),
+    Extension("wind", ["wind.pyx"], include_dirs = ['.'], define_macros = define_macros),
+    Extension("spatialDependence", ["spatialDependence.pyx"], include_dirs = ['.'], define_macros = define_macros),
+    Extension("populationsAndParameters", ["populationsAndParameters.pyx"], include_dirs = ['.'], define_macros = define_macros)
 ]
 
-setup(
-  name="mozzie",
-  ext_modules=ext_modules,
-  cmdclass = {'build_ext': build_ext},
-  script_args = ['build_ext'],
-  options = {'build_ext':{'inplace':True, 'force':True}}
- )
+setup(ext_modules = cythonize(
+    ext_modules,
+    compiler_directives = compiler_directives,
+    annotate = True,
+    force = True))
 

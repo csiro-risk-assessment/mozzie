@@ -32,6 +32,11 @@ To our knowledge, all architectures can install `cython` (see above for examples
 
 On linux-based systems (including mac): in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, `build_nimbus.sh` etc).  Look at `code/build_nimbus.sh`.  There are two items you will have to change: the `gcc_flags` `include directories` (the paths specified after the -I).  The file `code/build_nimbus.sh` contains hints on how to find those paths.
 
+Temporary:
+
+```python setup.py build_ext --inplace```
+
+
 On Windows:
 
 - In the `code` folder, run setup.py (for instance, on the command line, `cd` to the correct folder and then `py setup.py`).  Using the Cython files in the `code` folder, this will generate Windows files.  (Specifically, the *.pyd files.  It is ok that the names of the files are the names of the classes concatenated with other information such as architecture and python version.  The script setup.py ensures that the filenames are correct.)  Depending upon your setup, you may find a conflict between "x86" (old-style 32-bit Windows) and "x64" (new-style 64-bit): we recommend using the "x64" always, and you may have to manually choose this configuration in Visual Studio (eg, by using the `x64 Native Tools Command Prompt for VS 2019` available from the Start Menu).

@@ -4,3 +4,8 @@ code/*.so
 code/auxillary/ab_convert
 code/auxillary/*.o
 code/auxillary/t
+tests/.coverage
+tmp*
+build
+__pycache__
+
