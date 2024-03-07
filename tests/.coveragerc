@@ -1,0 +1,9 @@
+[run]
+plugins = Cython.Coverage
+[report]
+omit =
+    # don't report on coverage of the test files themselves
+    test*
+    # the following are part of the cython library
+    array.pxd
+    stringsource
