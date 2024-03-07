@@ -34,7 +34,18 @@ On linux-based systems (including mac): in the `code` directory we provide a few
 
 Temporary:
 
-```python setup.py build_ext --inplace```
+```
+python setup.py build_ext --inplace
+```
+
+Also for code coverage (assume that setup.py has been run with debug = True
+
+```
+cd tests
+coverage run -m unittest -v
+coverage report
+```
+
 
 
 On Windows:

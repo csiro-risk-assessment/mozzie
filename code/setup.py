@@ -1,3 +1,6 @@
+# Usually this is run from the command line using:
+# python setup.py build_ext --inplace
+
 from setuptools import Extension, setup
 from Cython.Build import cythonize
 
@@ -5,7 +8,7 @@ compiler_directives = {}
 compiler_directives['language_level'] = 3
 define_macros = []
 
-debug = False
+debug = True
 if debug:
     define_macros.append(('CYTHON_TRACE', '1'))
     compiler_directives['profile'] = True
