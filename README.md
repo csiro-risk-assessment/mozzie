@@ -35,7 +35,10 @@ On linux-based systems (including mac): in the `code` directory we provide a few
 Temporary:
 
 ```
-python setup.py build_ext --inplace
+sudo apt install python3-dev python3-numpy python3-scipy python3-pip
+pip install Cython coverage
+sudo snap install emacs --classic
+python3 setup.py build_ext --inplace
 ```
 
 Also for code coverage (assume that setup.py has been run with debug = True)

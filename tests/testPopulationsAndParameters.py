@@ -20,14 +20,17 @@ def arrayfuzzyequal(a, b, eps):
 class TestPopulationsAndParameters(unittest.TestCase):
 
    def setUp(self):
-      # grid that is 2kmx2km long with 8x8 active cells
+      # grid that is 4kmx4km, centred at origin, with 8x8 active cells
       nx = 8
       self.grid = Grid(-0.25 * nx, -0.25 * nx, 0.5, nx, nx)
-
       self.cell = CellDynamicsStatic15_9_3_2()
-
       # all the population and parameters
       self.pap = PopulationsAndParameters(self.grid, self.cell)
+
+      # grid that has inactive cells
+      self.g2 = Grid(1.0, 2.0, 3.0, 4, 3) # xmin=1, xmax=13, ymin=2, ymax=11
+      self.g2.setActiveAndInactive(os.path.join(findbin, "inactive_active.csv"))
+      self.pap_inactive = PopulationsAndParameters(self.g2, self.cell)
 
    def testGetCell(self):
       self.assertEqual(self.pap.getCell().getNumberOfPopulations(), 15)
@@ -68,6 +71,18 @@ class TestPopulationsAndParameters(unittest.TestCase):
          self.pap.setOverActiveGrid(16, pop_or_param_array)
       self.assertEqual(str(the_err.exception), "length of pop_or_param_array is 640 which must be equal to the number of active cells, which is 64")
 
+   def testBadGetPopulationAndParameters(self):
+      with self.assertRaises(ValueError) as the_err:
+         self.pap.getPopulationAndParameters(12345)
+      self.assertEqual(str(the_err.exception), "Active cell index is 12345 which should be less than 64")
+      with self.assertRaises(ValueError) as the_err:
+         self.pap_inactive.getPopulationAndParameters(9)
+      self.assertEqual(str(the_err.exception), "Active cell index is 9 which should be less than 7")
+
+   def testSetGetQuantities(self):
+      result = [float(i) for i in range(8 * 8 * 17)]
+      self.pap.setQuantities(result)
+      self.assertTrue(arrayequal(self.pap.getQuantities(), result))
 
    def testSetPopulationAndParameters(self):
       result = [0.0] * 8 * 8 * 17
@@ -79,8 +94,8 @@ class TestPopulationsAndParameters(unittest.TestCase):
       pp = [1.0, -3.0, -33.0, 9.0, 17.0, 1.0, -3.0, -33.0, 9.0, 17.0, 11.0, -19.0, 13.0, -55.0, 15.0, 0.0, 1.0]
       self.pap.setPopulationAndParameters(2, pp)
       for i in range(17):
-         result[17 * 2 + i] = pp
-      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result[0:17]))
+         result[17 * 2 + i] = pp[i]
+      self.assertTrue(arrayequal(self.pap.getQuantities(), result))
 
    def testSetPopulationAndParametersFromXY(self):
       result = [0.0] * 8 * 8 * 17
@@ -90,10 +105,32 @@ class TestPopulationsAndParameters(unittest.TestCase):
       self.assertTrue(arrayequal(self.pap.getQuantities(), result))
 
       pp = [1.0, -3.0, -33.0, 9.0, 17.0, 1.0, -3.0, -33.0, 9.0, 17.0, 11.0, -19.0, 13.0, -55.0, 15.0, 0.0, 1.0]
-      self.pap.setPopulationAndParametersFromXY(-1.5, -2.0, pp)
+      self.pap.setPopulationAndParametersFromXY(-1.0, -2.0, pp)
       for i in range(17):
-         result[17 * 2 + i] = pp
-      self.assertTrue(arrayequal(self.pap.getQuantities()[0:17], result[0:17]))
+         result[17 * 2 + i] = pp[i]
+      self.assertTrue(arrayequal(self.pap.getQuantities(), result))
+
+   def testBadGetPopulationAndParametersFromXY(self):
+      with self.assertRaises(ValueError) as the_err:
+         self.pap_inactive.getPopulationAndParametersFromXY(0.9, 4)
+      self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+      with self.assertRaises(ValueError) as the_err:
+         self.pap_inactive.getPopulationAndParametersFromXY(14, 4)
+      self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+      with self.assertRaises(ValueError) as the_err:
+         self.pap_inactive.getPopulationAndParametersFromXY(10, 1.9)
+      self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+      with self.assertRaises(ValueError) as the_err:
+         self.pap_inactive.getPopulationAndParametersFromXY(11, 12)
+      self.assertEqual(str(the_err.exception), "x or y in setPopulationAndParametersFromXY is not inside the grid")
+      with self.assertRaises(ValueError) as the_err:
+         self.pap_inactive.getPopulationAndParametersFromXY(4, 5) # an inactive cell
+      self.assertEqual(str(the_err.exception), "Active cell index is 12 which should be less than 7")
+
+   def testGetPopulationAndParametersFromXY(self):
+      pp = [1.0, -3.0, -33.0, 9.0, 17.0, 1.0, -3.0, -33.0, 9.0, 17.0, 11.0, -19.0, 13.0, -55.0, 15.0, 0.0, 1.0]
+      self.pap.setPopulationAndParametersFromXY(-1.0, 0, pp)
+      self.assertTrue(arrayequal(self.pap.getPopulationAndParametersFromXY(-1.0, -0), pp))
 
    def testSetOverActiveGrid(self):
       sixtyfour = self.grid.getNumActiveCells()

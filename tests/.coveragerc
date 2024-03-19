@@ -7,3 +7,5 @@ omit =
     # the following are part of the cython library
     array.pxd
     stringsource
+    # the following are part of the python3 library
+    */python3/dist-packages/*
