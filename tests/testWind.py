@@ -130,6 +130,13 @@ class TestWind(unittest.TestCase):
       self.assertEqual(self.w1.getRawWindFilename(), os.path.join(findbin, "wind1.csv"))
       self.assertEqual(self.w2.getRawWindFilename(), os.path.join(findbin, "wind1.csv"))
 
+   def testGetGrid(self):
+      self.assertEqual(self.w1.getGrid(), self.g1)
+      self.assertEqual(self.w1b.getGrid(), self.g1)
+      self.assertEqual(self.w2_static.getGrid(), self.g2)
+      self.assertEqual(self.w2.getGrid(), self.g2)
+      self.assertEqual(self.w2b.getGrid(), self.g2)
+
    def testGetProcessedWindFilename(self):
       self.assertEqual(self.w1.getProcessedWindFilename(), os.path.join(findbin, "wind1_processed.csv"))
       self.assertEqual(self.w2.getProcessedWindFilename(), os.path.join(findbin, "wind2_processed.csv"))

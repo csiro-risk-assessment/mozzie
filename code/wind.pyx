@@ -206,7 +206,7 @@ cdef class Wind:
 
     cpdef Grid getGrid(self):
         """Returns the Grid object that this class depends on"""
-        return self.Grid
+        return self.grid
 
     cpdef int getProcessedDataComputed(self):
         """Returns 1 if processed advection data has been computed"""

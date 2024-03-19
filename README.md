@@ -38,12 +38,16 @@ Temporary:
 python setup.py build_ext --inplace
 ```
 
-Also for code coverage (assume that setup.py has been run with debug = True
+Also for code coverage (assume that setup.py has been run with debug = True)
 
 ```
 cd tests
 coverage run -m unittest -v
 coverage report
+```
+
+```
+coverage html
 ```
 
 

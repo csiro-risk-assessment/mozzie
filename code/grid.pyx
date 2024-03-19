@@ -84,7 +84,7 @@ cdef class Grid:
 
 
     cdef void computeNumActive(self):
-        """Computes self.num_active_cells, self.global_index.  Also, checks if there are entries that are not zero or one"""
+        """Computes self.num_active_cells, self.global_index"""
 
         self.num_active_cells = 0
         self.global_index = array.clone(self.uint_template, self.num_cells, zero = False) # maximum size it can be: below we resize it smaller
@@ -92,12 +92,10 @@ cdef class Grid:
         for i in range(len(self.active)):
             if self.active.data.as_uints[i] == 0:
                 self.active_index.data.as_uints[i] = self.num_cells
-            elif self.active.data.as_uints[i] == 1:
+            else:
                 self.global_index.data.as_uints[self.num_active_cells] = i
                 self.active_index.data.as_uints[i] = self.num_active_cells
                 self.num_active_cells += 1
-            else:
-                raise ValueError("Data in active matrix that determines whether a cell is active or inactive must be only 0 or 1, but yours includes the number " + str(self.active[i]))
         array.resize(self.global_index, self.num_active_cells)
 
     cdef void buildAdjacency(self):

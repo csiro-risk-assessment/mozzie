@@ -72,8 +72,7 @@ cdef class Grid:
     
 
     cdef void computeNumActive(self)
-    """Computes self.num_active_cells, self.global_index, self_active_index.
-    Also, checks if there are entries that are not zero or one"""
+    """Computes self.num_active_cells, self.global_index, self_active_index"""
     
     cdef void buildAdjacency(self)
     """Builds connect_from and connect_to, and num_connections, based on the self.active"""
