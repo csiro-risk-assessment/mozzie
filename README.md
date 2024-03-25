@@ -7,7 +7,40 @@ Mosquito lifecycle, diffusion and advection
 
 The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  Your computer system possibly has all the necessary features already installed, but a vanilla system will need various items.
 
-On Ubuntu:
+#### On Ubuntu
+
+(Step 0) Ensure your system has python3, python3-pip, python3-venv and cmake.  You may check by entering the following commands at the terminal:
+
+- `python3 --version`: the version number should be 3.10 or greater
+- `pip --version` shouldn't return an error
+- `python -m venv -h` shouldn't return an error
+- `cmake --version` shouldn't return an error.
+
+If one or more of these aren't available, one of the following could help.
+
+- On ubuntu: `sudo apt install python3-dev python3-pip python3-venv cmake`
+- On redhat: TODO
+- On an HPC supercomputer: `module load XXXX` (ask your systems administrators for what XXXX should be)
+
+(Step 1) Create a virtual environment and activate it.  This is so you can `pip install` the necessary packages without conflicting with other things on your system.
+
+```
+python3 -m venv ~/mozzie_venv
+. ~/mozzie_venv/bin/activate
+```
+
+In the above commands, `~/mozzie_venv` can be any path you desire.  You should remember it for later use of the `mozzie` software.  Whenever you want to work with the `mozzie` software, you should first `. ~/mozzie_venv/bin/activate`.
+
+(Step 2) Install all the required packages:
+
+```
+pip install numpy scipy Cython coverage
+```
+
+These may be installed into a directory that is not on your path.  For instance, if `coverage` returns an error, you will have to modify your PATH variable.
+
+(Step 3) Obtain the `mozzie` code.  This will probably be via a `git clone` command
+
 ```
 sudo apt install python3-dev python3-numpy python3-scipy cython
 ```
@@ -41,6 +74,8 @@ sudo snap install emacs --classic
 python3 setup.py build_ext --inplace
 ```
 
+Note, you might get some warnings from the Cython library, depending on the version of Cython you are using.
+
 Also for code coverage (assume that setup.py has been run with debug = True)
 
 ```
@@ -53,6 +88,7 @@ coverage report
 coverage html
 ```
 
+TODO: cmake
 
 
 On Windows:
