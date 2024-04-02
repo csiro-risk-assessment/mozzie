@@ -121,7 +121,7 @@ cdef class SpatialDependence:
 
         # check the header
         try:
-            self.checkHeader(data, filename, required_additional_headers + [self.required_header])
+            self.checkHeader("\n".join(data), filename, required_additional_headers + [self.required_header])
         except:
             raise
 

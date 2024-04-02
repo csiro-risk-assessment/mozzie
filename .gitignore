@@ -7,5 +7,6 @@ code/auxillary/t
 tests/.coverage
 tmp*
 build
+*~
 __pycache__
 
