@@ -148,21 +148,26 @@ cdef class SpatialDynamics:
     cpdef array.array getYypQuantities(self):
         return self.yyp_quantities
 
-    cpdef void setBirthQuantities(self, list birth_quantities):
+    cpdef setBirthQuantities(self, list birth_quantities):
+        if len(birth_quantities) != self.num_diffusing_populations_total:
+	    raise ValueError("Incorrect size of birth_quantities, " + str(len(birth_quantities)) + ", which should be the total number of diffusing populations, " + str(self.num_diffusing_populations_total))
         for i in range(self.num_diffusing_populations_total):
             self.birth_quantities.data.as_floats[i] = birth_quantities[i]
 
-    cpdef void setYypQuantities(self, list yyp_quantities):
+    cpdef setYypQuantities(self, list yyp_quantities):
+        if len(yyp_quantities) != self.num_diffusing_populations_total:
+            raise ValueError("Incorrect size of yyp_quantities, " + str(len(yyp_quantities)) + ", which should be the total number of diffusing populations, " + str(self.num_diffusing_populations_total))
         for i in range(self.num_diffusing_populations_total):
             self.yyp_quantities.data.as_floats[i] = yyp_quantities[i]    
 
     cpdef array.array getAllQuantities(self):
         return self.all_quantities
 
-    cpdef void setAllQuantities(self, list all_quantities):
+    cpdef setAllQuantities(self, list all_quantities):
+        if len(all_quantities) != self.num_quantities_total:
+            raise ValueError("Incorrect size of all_quantities, " + str(len(all_quantities)) + ", which should be the total number of quantities, " + str(self.num_quantities_total))
         for i in range(self.num_quantities_total):
             self.all_quantities.data.as_floats[i] = all_quantities[i]
-
 
     cpdef void diffuse(self, float dt, float diffusion_coeff):
         """One timestep of diffusion"""
@@ -358,7 +363,7 @@ cdef class SpatialDynamics:
 
     cpdef outputCSVsubset(self, unsigned x1, unsigned y1, unsigned x2, unsigned y2, str filename, int pop_or_param, str inactive_value, str additional_header_lines):
         """Outputs cell information for given population or parameter number to filename in CSV format.
-        Performs this for grid cells with x1 <= x < x2 and y1 <= y < y2.
+        Performs this for grid cell number (not coordinates) with x1 <= x < x2 and y1 <= y < y2.
         If pop_or_param >= 0 then it indicates the population (or parameter) number that should be outputted
         If self.num_diffusing_populations_at_cell <= pop_or_param < 0 then it indicates the birth_quantity that should be outputted (TODO: change this API)
         If 2*self.num_diffusing_populations_at_cell <= pop_or_param < self.num_diffusing_populations_at_cell then it indicates the yyp that should be outputted (TODO: change this API)

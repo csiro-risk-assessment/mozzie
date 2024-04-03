@@ -234,7 +234,7 @@ class TestSpatialDependence(unittest.TestCase):
       self.assertTrue(arrayequal([999, 0.0, -1.0, 1.25], list(map(float, data[3].strip().split(",")))))
       self.assertTrue(arrayequal([999, 999, 4.0, 999], list(map(float, data[4].strip().split(",")))))
       self.assertTrue(arrayequal([-3.0, 999, -6.0, -8.5], list(map(float, data[5].strip().split(",")))))
-      os.remove(out_fn)
+      if os.path.isfile(out_fn) and delete_output: os.remove(out_fn)
 
 if __name__ == '__main__':
    unittest.main()
