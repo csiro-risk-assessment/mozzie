@@ -1,10 +1,6 @@
 import array
 cimport cpython.array as array
 
-cdef int binomial(int N, float p)
-
-cdef int poisson(float l)
-
 cdef class CellDynamicsBase:
     """Manipulates information at a single cell, in particular this class solves lifecycle ODEs"""
 
@@ -434,17 +430,6 @@ cdef class CellDynamicsMosquito23F(CellDynamicsMosquito23):
 
     cdef float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt)
     """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
-
-cdef class CellDynamicsMosquito23G(CellDynamicsMosquito23F):
-    """CellDynamicsMosquito23F but stochastic"""
-
-    cdef void computeRHS_stoc(self, float[:] x)
-    """Evaluates change in populations for a timestep (assuming dt = 1 day)"""
-    
-    cdef void popChange(self, float timestep, float[:] current_pops_and_params, float[:] cchange)
-    """Given the timestep and current_pops_and_params, compute the change in populations according to the ODE.
-    For this class we add stochastic timestepping, this is just rhs."""
-
 
 cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     """Solves Mosquito ODE with

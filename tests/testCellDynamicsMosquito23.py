@@ -9,7 +9,6 @@ findbin = os.path.dirname(os.path.realpath(sys.argv[0]))
 sys.path.append(findbin + "/../code")
 
 from cellDynamics import CellDynamicsMosquito23
-from cellDynamics import CellDynamicsMosquito23G
 
 def arrayequal(a, b):
    return (len(a) == len(b)) and all([a[i] == b[i] for i in range(min(len(a), len(b)))])
@@ -229,12 +228,6 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       with self.assertRaises(ValueError) as the_err:
          self.c.setTimeIntegrationMethod("crazy_method")
       self.assertEqual(str(the_err.exception), "Time integration method crazy_method not supported")
-      with self.assertRaises(ValueError) as the_err:
-         self.c.setTimeIntegrationMethod("stochastic")
-      self.assertEqual(str(the_err.exception), "Stochastic time integration can only be used in CellDynamicsMosquito23G")
-      c23 = CellDynamicsMosquito23G()
-      c23.setTimeIntegrationMethod("stochastic")
-
 
    def testSetGetMinimumDt(self):
       self.c.setMinimumDt(123.0)
