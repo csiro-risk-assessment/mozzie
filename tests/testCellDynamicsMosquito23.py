@@ -127,6 +127,34 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
          self.c.setAlphaComponent(3, 1, 0)
       self.assertEqual(str(the_err.exception), "sp0 3 and sp1 1 must be less than the number of species, 3")
 
+   def testBadGetHybridisationRate(self):
+      with self.assertRaises(ValueError) as the_err:
+         self.c.getHybridisationRateFromPython(1, 0, 0)
+      self.assertEqual(str(the_err.exception), "All species numbers, 1, 0, 0 must be less than the number of species, 1")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.getHybridisationRateFromPython(0, 1, 0)
+      self.assertEqual(str(the_err.exception), "All species numbers, 0, 1, 0 must be less than the number of species, 1")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.getHybridisationRateFromPython(0, 0, 1)
+      self.assertEqual(str(the_err.exception), "All species numbers, 0, 0, 1 must be less than the number of species, 1")
+
+   def testBadSetGetFitnessComponent(self):
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setFitnessComponent(999, 999.0)
+      self.assertEqual(str(the_err.exception), "genotype 999 must be less than the number of genotypes 3")
+      with self.assertRaises(ValueError) as the_err:
+         self.c.getFitnessComponentFromPython(999)
+      self.assertEqual(str(the_err.exception), "Genotype 999 must be less than the number of genotypes, 3")
+
+   def testSetGetFitnessComponent(self):
+      self.c.setFitnessComponent(2, 0.125)
+      self.assertEqual(self.c.getFitnessComponentFromPython(2), 0.125)
+
+   def testBadSetNumGenotypes(self):
+      with self.assertRaises(ValueError) as the_err:
+         self.c.setNumGenotypes(3, 4)
+      self.assertEqual(str(the_err.exception), "setNumGenotypes: num_sexes != self.num_sexes.  3!=2.  Probably there is a bug in the code")
+
    def testSetGetHybridisationRate(self):
       self.assertEqual(self.c.getHybridisationRateFromPython(0, 0, 0), 1.0)
       self.c.setNumSpecies(3)
@@ -736,6 +764,11 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.assertEqual(self.c.getSmallValue(), 0.0)
       self.c.setSmallValue(1.0)
       self.assertEqual(self.c.getSmallValue(), 1.0)
+
+   def testCalcQm(self):
+      eqm_pop_and_params = array.array('f', list(range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())))
+      self.c.calcQm(eqm_pop_and_params)
+      self.assertTrue(arrayequal(eqm_pop_and_params, list(range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters()))))
 
 
 if __name__ == '__main__':

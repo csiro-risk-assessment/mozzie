@@ -499,7 +499,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
         self.comp = array.clone(array.array('f', []), num_species, zero = False)
         self.denom = array.clone(array.array('f', []), num_species, zero = False)
 
-    cpdef void setNumGenotypes(self, unsigned num_sexes, unsigned num_genotypes):
+    cpdef setNumGenotypes(self, unsigned num_sexes, unsigned num_genotypes):
         if num_sexes != self.num_sexes:
             raise ValueError("setNumGenotypes: num_sexes != self.num_sexes.  " + str(num_sexes) + "!=" + str(self.num_sexes) + ".  Probably there is a bug in the code")
 

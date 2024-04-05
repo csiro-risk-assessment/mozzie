@@ -150,7 +150,7 @@ cdef class SpatialDynamics:
 
     cpdef setBirthQuantities(self, list birth_quantities):
         if len(birth_quantities) != self.num_diffusing_populations_total:
-	    raise ValueError("Incorrect size of birth_quantities, " + str(len(birth_quantities)) + ", which should be the total number of diffusing populations, " + str(self.num_diffusing_populations_total))
+            raise ValueError("Incorrect size of birth_quantities, " + str(len(birth_quantities)) + ", which should be the total number of diffusing populations, " + str(self.num_diffusing_populations_total))
         for i in range(self.num_diffusing_populations_total):
             self.birth_quantities.data.as_floats[i] = birth_quantities[i]
 
