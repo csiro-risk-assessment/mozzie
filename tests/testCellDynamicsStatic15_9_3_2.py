@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+import array
 
 # so we can find our ../code no matter how we are called
 findbin = os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -44,6 +45,16 @@ class TestCellDynamicsStatic15_9_3_2(unittest.TestCase):
       self.assertEqual(self.c.getSmallValue(), 0.0)
       self.c.setSmallValue(1.0)
       self.assertEqual(self.c.getSmallValue(), 1.0)
+
+   def testEvolve(self):
+      pop_and_params = array.array('f', list(range(15 + 2)))
+      self.c.evolve(2.0, pop_and_params)
+      self.assertTrue(arrayequal(pop_and_params, list(range(15 + 2))))
+
+   def testCalcQm(self):
+      eqm_pop_and_params = array.array('f', list(range(15 + 2)))
+      self.c.calcQm(eqm_pop_and_params)
+      self.assertTrue(arrayequal(eqm_pop_and_params, list(range(15 + 2))))
 
 if __name__ == '__main__':
    unittest.main()

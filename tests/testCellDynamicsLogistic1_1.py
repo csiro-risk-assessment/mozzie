@@ -54,6 +54,11 @@ class TestCellDynamicsLogistic1_1(unittest.TestCase):
       self.c.evolve(40.0, pop_and_params)
       self.assertTrue(arrayfuzzyequal(pop_and_params, [1.0 + 40.0 * 0.01 * (1.0 - 1.0 / 2.0), 2.0], 1E-5))
       
+   def testCalcQm(self):
+      eqm_pop_and_params = array.array('f', [1.0, 2.0])
+      self.c.calcQm(eqm_pop_and_params)
+      self.assertTrue(arrayequal(eqm_pop_and_params, [1.0, 2.0]))
+
 
 if __name__ == '__main__':
    unittest.main()

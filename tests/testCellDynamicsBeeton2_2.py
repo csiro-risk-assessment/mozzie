@@ -90,6 +90,11 @@ class TestCellDynamicsBeeton2_2(unittest.TestCase):
 
       self.assertTrue(arrayfuzzyequal(pap, [xnew, ynew, kx, ky], 1E-6))
 
+   def testCalcQm(self):
+      eqm_pop_and_params = array.array('f', list(range(4)))
+      self.c.calcQm(eqm_pop_and_params)
+      self.assertTrue(arrayequal(eqm_pop_and_params, list(range(4))))
+
 if __name__ == '__main__':
    unittest.main()
 
