@@ -406,7 +406,7 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 1E-7))
 
-   def testEvolveZeroFecundityZeroAgingIVP(self):
+   def testEvolveIVP(self):
       # solve_ivp is very similar to RK4, so use that answer to test against
       dt = 0.5
       mu_larvae = 0.5
@@ -588,6 +588,52 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       initial_condition = list(range(12)) + [carrying_cap] # carrying capacity < min_cc, so no new larvae
       pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
+      mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0],
+             [0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0, 0],
+             [0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0],
+             [0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0],
+             [0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0],
+             [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
+             [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
+      
+      expected_result = [initial_condition[i] + dt * sum([mat[i][j] * initial_condition[j] for j in range(12)]) for i in range(12)] + [carrying_cap]
+      self.assertTrue(arrayfuzzyequal(pap, expected_result, 1E-8))
+
+   def testEvolveTwoAgesZeroAdultMales(self):
+      # with zero adult males, no eggs are layed
+      dt = 5.0
+      self.c.setMuLarvae(0.0625)
+      self.c.setMuAdult(0.09375)
+      self.c.setAgingRate(0.125)
+      self.c.setNumAges(2)
+      carrying_cap = 60.0
+
+      initial_condition = list(range(1, 13)) + [carrying_cap]
+      num_species = 1
+      for sex in [0]: # males
+         for genotype in range(3):
+               for age in [1]: # adults only
+                  initial_condition[genotype + sex * 3 + age * 3 * 2] = 0
+
+      pap = array.array('f', initial_condition)
+      self.c.evolve(dt, pap)
+      mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0],
+             [0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0, 0],
+             [0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0, 0],
+             [0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0, 0],
+             [0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0, 0],
+             [0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375, 0],
+             [0, 0, 0, 0, 0, 0.125, 0, 0, 0, 0, 0, -0.09375]]
       mat = [[-0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, -0.0625 - 0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0],
