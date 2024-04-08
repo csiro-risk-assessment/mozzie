@@ -355,6 +355,9 @@ class TestCellDynamics26DelayBase(unittest.TestCase):
       self.c.setSmallValue(1.0)
       self.assertEqual(self.c.getSmallValue(), 1.0)
 
+   def testPrecalculate(self):
+      self.c.precalculate()
+
 if __name__ == '__main__':
    unittest.main()
 

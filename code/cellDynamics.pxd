@@ -678,12 +678,6 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     """Returns fecundity[gM][gF][s] = proportion (male gM + female gF) producing offspring of sex s.  This is a vector with index = gM + gF * num_genotypes + s * num_genotypes * num_genotypes
 """
 
-    cpdef void setMinCarryingCapacity(self, float value)
-    """Sets min_cc to value.  If the carrying capacity is less than this value, no new larvae are produced"""
-
-    cpdef float getMinCarryingCapacity(self)
-    """Gets the value of min_cc"""
-
     cpdef precalculate(self)
     """Sets have_precalculated = 1.  This method may be over-ridden by derived classes in order to calculate spatially-independent things after number of species, emergence rates, inheritance, fecundity, reduction, hybridsation or offspring_modifier have changed"""
 

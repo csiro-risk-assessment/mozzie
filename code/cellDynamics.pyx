@@ -1297,12 +1297,6 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     cpdef list getOffspringModifier(self):
         return [[[self.offspring_modifier[mF + mM * self.num_species + s * self.num_species2] for mF in range(self.num_species)] for mM in range(self.num_species)] for s in range(self.num_sexes)]
 
-    cpdef void setMinCarryingCapacity(self, float value):
-        self.min_cc = value
-
-    cpdef float getMinCarryingCapacity(self):
-        return self.min_cc
-
     cpdef precalculate(self):
         self.have_precalculated = 1
 

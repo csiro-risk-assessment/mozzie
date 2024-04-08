@@ -248,6 +248,44 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
 
          self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
       
+   def testEvolve2_withprecalculate(self):
+      # see testEvolve2 for comments.  This is just the same, but with a precalculate step involved.
+      delay = 5
+      cd = CellDynamicsMosquitoBH26Delay(delay = delay, current_index = 2)
+      initial_condition = [random.random() for i in range(cd.getNumberOfPopulations())] + [0, 0, 0]
+      pap = array.array('f', initial_condition)
+      dr = [[[random.random() for species in range(3)]], [[random.random() for species in range(3)]]]
+      for s in range(2):
+         for g in range(6 - 1):
+            dr[s].append([random.random() for species in range(3)])
+      cd.setDeathRate(dr)
+
+      # for the precalculate using setFecundityP
+      cd.setFecundityP(cd.getSexRatio(), cd.getFemaleBias())
+      
+      dt = 1.23
+      for timestep in range(13):
+         gold = list(pap)
+         current_index = cd.getCurrentIndex()
+         current_base = current_index * 3 * 6 * 2
+         new_adults = [0 for i in range(3 * 6 * 2)]
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(3):
+                  ind = species + genotype * 3 + sex * 3 * 6
+                  new_adults[ind] = gold[current_base + ind] * exp(- dr[sex][genotype][species] * dt)
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(3):
+                  ind = species + genotype * 3 + sex * 3 * 6
+                  gold[(current_index + 1) % (delay + 1) * 3 * 6 * 2 + ind] = new_adults[ind]
+
+
+         cd.evolve(dt, pap)
+         cd.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
+
+         self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
+      
    def testEvolve3(self):
       # Test emergence = 0 case, where the ODE is just deaths-only
       delay = 3
@@ -612,6 +650,16 @@ class TestCellDynamicsMosquitoBH26Delay(unittest.TestCase):
       wild.evolve(1E6, pap)
       wild.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
 
+      self.assertTrue(arrayfuzzyequal(pap, pap_initial, 1E-2))
+
+      # finally, to force precalculate, use setFecundityP
+      wild.setFecundityP(wild.getSexRatio(), wild.getFemaleBias())
+      pap = array.array('f', pap_initial)
+      qm = wild.calcQm(pap)
+      for species in range(num_species):
+         pap[wild.getNumberOfPopulations() + species] = qm[species]
+      wild.evolve(1E6, pap)
+      wild.incrementCurrentIndex() # not necessary here: just good practice to increment after evolve has been called for all grid cells
       self.assertTrue(arrayfuzzyequal(pap, pap_initial, 1E-2))
 
    def testSetGetUseQm(self):

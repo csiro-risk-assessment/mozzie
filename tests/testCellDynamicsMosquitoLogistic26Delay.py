@@ -244,6 +244,41 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
 
          self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
       
+   def testEvolve2_withprecalculate(self):
+      # see testEvolve2 for comments.  This is just the same, but with a precalculate step involved.
+      delay = 5
+      cd = CellDynamicsMosquitoLogistic26Delay(delay = delay, current_index = 2)
+      initial_condition = [random.random() for i in range(cd.getNumberOfPopulations())] + [0, 0, 0]
+      pap = array.array('f', initial_condition)
+      dr = [[[random.random() for species in range(3)] for genotype in range(6)] for sex in range(2)]
+      cd.setDeathRate(dr)
+
+      # for the precalculate using setFecundityP
+      cd.setFecundityP(cd.getSexRatio(), cd.getFemaleBias())
+      
+      dt = 1.23
+      for timestep in range(13):
+         gold = list(pap)
+         current_index = cd.getCurrentIndex()
+         current_base = current_index * 3 * 6 * 2
+         new_adults = [0 for i in range(3 * 6 * 2)]
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(3):
+                  ind = species + genotype * 3 + sex * 3 * 6
+                  new_adults[ind] = gold[current_base + ind] * exp(- dr[sex][genotype][species] * dt)
+         for sex in range(2):
+            for genotype in range(6):
+               for species in range(3):
+                  ind = species + genotype * 3 + sex * 3 * 6
+                  gold[(current_index + 1) % (delay + 1) * 3 * 6 * 2 + ind] = new_adults[ind]
+
+         # get the code to evolve and check answer is gold
+         cd.evolve(dt, pap)
+         cd.incrementCurrentIndex() # note: current_index must be incremented after evolve has been called for all grid cells (in this case, there is no spatial structure, ie, no grid cells)
+
+         self.assertTrue(arrayfuzzyequal(pap, gold, 1E-6))
+      
    def testEvolve3(self):
       # Test emergence = 0 case, where the ODE is just deaths-only
       delay = 3
@@ -461,6 +496,14 @@ class TestCellDynamicsMosquitoLogistic26Delay(unittest.TestCase):
                      ind = species + genotype * num_species + sex * num_species * 6 + delay * num_species * 6 * 2
                      if genotype != 0:
                         self.assertEqual(pap[ind], 0.0)
+
+   def testCalcQm(self):
+      eqm_list = list(range(self.d.getNumberOfPopulations() + self.d.getNumberOfParameters(), 4))
+      eqm_pop_and_params = array.array('f', eqm_list)
+      self.d.calcQm(eqm_pop_and_params)
+      self.assertTrue(arrayequal(eqm_pop_and_params, eqm_list))
+
+
       
 if __name__ == '__main__':
    unittest.main()
