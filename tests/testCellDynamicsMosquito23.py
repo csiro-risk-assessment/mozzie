@@ -406,6 +406,26 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap, expected_answer, 1E-7))
 
+   def testEvolveZeroFecundityZeroAgingIVP(self):
+      # solve_ivp is very similar to RK4, so use that answer to test against
+      dt = 0.5
+      mu_larvae = 0.5
+      mu_adult = 0.7
+      self.c.setMuLarvae(mu_larvae)
+      self.c.setMuAdult(mu_adult)
+      random.seed(1)
+      initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
+
+      self.c.setTimeIntegrationMethod("runge_kutta4")
+      papRK = array.array('f', initial_condition)
+      self.c.evolve(dt, papRK)
+
+      self.c.setTimeIntegrationMethod("solve_ivp")
+      papIVP = array.array('f', initial_condition)
+      self.c.evolve(dt, papIVP)
+
+      self.assertTrue(arrayfuzzyequal(papRK, papIVP, 1E-4))
+
    def testEvolveAgingOnly(self):
       dt = 0.01
       aging_rate = 0.25
