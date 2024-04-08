@@ -70,7 +70,7 @@ cdef class CellDynamicsBase:
     cpdef float getSmallValue(self)
     """Gets self.small_value"""
 
-    cpdef void evolve(self, float timestep, float[:] pops_and_params)
+    cpdef evolve(self, float timestep, float[:] pops_and_params)
     """Performs one timestep of evolution
     Note: pops_and_params is a pointer to an array of floats, so any changes made to its values will be evident to the calling function
     Note: pops_and_params will be of size num_populations + num_parameters, and should not be resized
@@ -429,7 +429,10 @@ cdef class CellDynamicsMosquito23F(CellDynamicsMosquito23):
     """CellDynamicsMosquito23 but with modified fecundity"""
 
     cdef float fecundity_proportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt)
-    """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex"""
+    """Returns the proportion of total fecundity for: mother genotype and father genotype to produce offspring sex.  This is overwritten by a special from to the 23F class"""
+
+    cpdef float getFecundityProportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt)
+    """Returns the fecundity proportion for this 23F class"""
 
 cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     """Solves Mosquito ODE with
@@ -661,7 +664,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     cpdef array.array getInheritance(self)
     """returns inheritance_cube"""
 
-    cpdef void evolveTrial(self, float timestep, float[:] pops_and_params)
+    cpdef evolveTrial(self, float timestep, float[:] pops_and_params)
     """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt]: used for testing
     If desired, it can be removed in production code"""
 

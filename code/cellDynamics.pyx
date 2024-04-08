@@ -54,7 +54,7 @@ cdef class CellDynamicsBase:
     cpdef float getSmallValue(self):
         return self.small_value
 
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+    cpdef evolve(self, float timestep, float[:] pops_and_params):
         return
 
     cpdef array.array calcQm(self, float[:] eqm_pops_and_params):
@@ -79,7 +79,7 @@ cdef class CellDynamicsStatic15_9_3_2(CellDynamicsBase):
         self.advection_class = array.array('I', [0, 0, 0])
         self.num_parameters = 2
 
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+    cpdef evolve(self, float timestep, float[:] pops_and_params):
         """No dynamics here"""
         
         return
@@ -106,7 +106,7 @@ cdef class CellDynamicsLogistic1_1(CellDynamicsBase):
         self.num_parameters = 1
         self.growth_rate = 0.01 # fixed for this example
 
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+    cpdef evolve(self, float timestep, float[:] pops_and_params):
         # explicit time-stepping of logistic growth
         # as defined in the doco for "evolve",
         # pops_and_params[0] is the current population
@@ -190,7 +190,7 @@ cdef class CellDynamicsBeeton2_2(CellDynamicsBase):
         return self.small
 
 
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+    cpdef evolve(self, float timestep, float[:] pops_and_params):
         # explicit time-stepping of Beeton et al.'s equations
         # as defined in the doco for "evolve",
         # pops_and_params[0] is the current x
@@ -713,7 +713,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
 
 
 
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+    cpdef evolve(self, float timestep, float[:] pops_and_params):
         cdef unsigned ind
         cdef unsigned sp
 
@@ -755,8 +755,7 @@ cdef class CellDynamicsMosquito23(CellDynamicsBase):
                 # at least one of the populations went negative, so must re-do
                 dt = new_dt
                 if dt < self.min_dt:
-                    sys.stderr.write("Minimum dt reached.  Exiting\n")
-                    sys.exit(1)
+                    raise ValueError("Minimum dt reached.  Exiting")
         
         for ind in range(self.num_populations):
             if pops_and_params[ind] < self.zero_cutoff:
@@ -863,6 +862,9 @@ cdef class CellDynamicsMosquito23F(CellDynamicsMosquito23):
                 return 0.95
             else:
                 return 0.05
+
+    cpdef float getFecundityProportion(self, unsigned offspring_sex, unsigned mother_gt, unsigned father_gt):
+        return self.fecundity_proportion(offspring_sex, mother_gt, father_gt)
 
 cdef class CellDynamicsMosquito26(CellDynamicsMosquito23):
     def __init__(self):
@@ -1158,7 +1160,7 @@ cdef class CellDynamics26DelayBase(CellDynamicsDelayBase):
     cpdef list getActivity(self):
         return [[self.activity[mM + mF * self.num_species] for mM in range(self.num_species)] for mF in range(self.num_species)]
                      
-    cpdef void evolveTrial(self, float timestep, float[:] pops_and_params):
+    cpdef evolveTrial(self, float timestep, float[:] pops_and_params):
         """This just implements dx/dt = -death_rate * x + lambdah * x[t - delay * dt], which
         discretises to x[t + dt] = x[t - delay * dt] / death_rate + (x[t] - x[t - delay * dt] / death_rate) * exp(-death_rate * dt)
         This function is not optimised!"""
@@ -1357,7 +1359,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
         self.min_cc = min_cc
         self.precalculate()
 
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+    cpdef evolve(self, float timestep, float[:] pops_and_params):
         """This function is not optimised"""
 
         if self.have_precalculated == 0:
@@ -1562,7 +1564,7 @@ cdef class CellDynamicsMosquitoBH26Delay(CellDynamics26DelayBase):
     cpdef array.array getB(self):
         return self.birth_terms
 
-    cpdef void evolve(self, float timestep, float[:] pops_and_params):
+    cpdef evolve(self, float timestep, float[:] pops_and_params):
 
         if self.have_precalculated == 0:
             self.precalculate()

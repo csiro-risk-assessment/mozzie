@@ -276,12 +276,22 @@ class TestCellDynamicsMosquito23(unittest.TestCase):
       random.seed(1)
 
       initial_condition = [random.random() for i in range(self.c.getNumberOfPopulations() + self.c.getNumberOfParameters())]
-      pap = array.array('f', initial_condition)
       # Explicit-Euler will first give population = initial - dt * mu * initial, which is negative.
       # Adaptive timestepping will cut timestep to 0.9 * dt * initial / (dt * mu * initial) = 0.9 / mu = 0.6.
       # Then explicit will give population = initial - 0.6 * mu * initial = 0.1 * initial
       # The second substep will then try dt = min(1.1 * 0.6, 1 - 0.6) = 0.4, to give population = 0.1 * initial * (1 - dt * mu) = 0.1 * initial * 0.4
       expected_answer = [x * 0.1 * 0.4 for x in initial_condition[:6]] + [initial_condition[-1]]
+
+      # first, check that the code tries to cut dt:
+      self.c.setMinimumDt(dt)
+      pap = array.array('f', initial_condition)
+      with self.assertRaises(ValueError) as the_err:
+         self.c.evolve(dt, pap)
+      self.assertEqual(str(the_err.exception), "Minimum dt reached.  Exiting")
+
+      # now let the code cut dt and find the solution
+      self.c.setMinimumDt(1E-12)
+      pap = array.array('f', initial_condition)
       self.c.evolve(dt, pap)
       self.assertTrue(arrayfuzzyequal(pap[:-1], expected_answer[:-1], 4E-8))
 
