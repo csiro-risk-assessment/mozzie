@@ -34,10 +34,10 @@ In the above commands, `~/mozzie_venv` can be any path you desire.  You should r
 (Step 2) Install all the required packages:
 
 ```
-pip install numpy scipy Cython coverage
+pip install numpy scipy Cython coverage matplotlib
 ```
 
-These may be installed into a directory that is not on your path.  For instance, if `coverage` returns an error, you will have to modify your PATH variable.
+These may be installed into a directory that is not on your path.  For instance, if `coverage` returns an error, you will have to modify your PATH variable.  The matplotlib library is just used to plot the example figures.
 
 (Step 3) Obtain the `mozzie` code.  This will probably be via a `git clone` command
 
