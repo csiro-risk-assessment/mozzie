@@ -1,7 +1,10 @@
 ######################################################
 # Example simulation with
 # - lifecycle, diffusion and advection of a single species
-# The lifecycle is governed by the logistic equation.
+# The lifecycle is governed by the logistic equation, and
+# wind velocity is spatio-temporal dependent, and
+# carrying capacity is spatio-temporal dependent
+#
 # An island is separated from the mainland.
 # A species initially exists only on the mainland,
 # but advection carries it to the island.
@@ -19,6 +22,7 @@ sys.path.append(findbin + "/../code")
 from grid import Grid
 from cellDynamics import CellDynamicsLogistic1_1
 from spatialDynamics import SpatialDynamics
+from spatialDependence import SpatialDependence
 from wind import Wind
 from populationsAndParameters import PopulationsAndParameters
 
@@ -47,17 +51,29 @@ g1.setActiveAndInactive("island_active_inactive.csv")
 cell = CellDynamicsLogistic1_1()
 
 ######################################################
+# define the carrying capacity
+# This is higher on the island than the mainland,
+# and varies seasonally (first 100 days of year it
+# is high, remainder of the year it is low).
+cc_parser = SpatialDependence(0, 0, 10.0, 5, 3)
+cc_parser.parse("spatial_cc_high.csv", "generic_float", [])
+cc_parser.restrictToActive(g1.getGlobalIndex())
+cc_high = cc_parser.getData0()
+cc_parser = SpatialDependence(0, 0, 10.0, 5, 3)
+cc_parser.parse("spatial_cc_low.csv", "generic_float", [])
+cc_parser.restrictToActive(g1.getGlobalIndex())
+cc_low = cc_parser.getData0()
+
+######################################################
 # Using CellDynamicsLogistic1_1() means that at each
 # spatial location there is:
 # - 1 population
 # - 1 parameter, which is the carrying capacity
 # Define the populations and parameters over the grid:
 all_pops = PopulationsAndParameters(g1, cell)
-# The carrying capacity is set at 100
-pop_and_param_array = all_pops.getQuantities()
-for i in range(g1.getNumActiveCells()):
-   pop_and_param_array[2 * i + 1] = 100
 # Introduce 50 individuals at (x, y) = (10, 0)
+# Carrying capacity at this point is irrelevant here
+# because it is overwritten later on
 all_pops.setPopulationAndParametersFromXY(10, 0, [50, 100])
 
 ######################################################
@@ -67,31 +83,66 @@ spatial = SpatialDynamics(g1, all_pops)
 ######################################################
 # Define the wind
 # advection_wind.csv sets the advection velocity to
-# (80, 0) km/day in all cells
-# With the PDF = [[0.25, 1.0]] this means that 100% of
-# individuals that advect will move 0.25*80 = 20km
-# (which happens to be the distance to the island)
+# (80, 0) km/timestep on the mainland
+# (0, 0) km/timestep on the island
+# Note the timestep in the denominator (time step =
+# 1 day, below, because there is 0.5 days of lifecycle
+# evolution and 0.5 days of diffusion).  It is written
+# in this way because the wind is applied every time step.
+#
+# With the PDF = [[0.1, 0.625], [0.2, 0.375]],
+# then, of the individuals that advect:
+# - 62.5% of them will move 0.1*80 = 8km
+# - 37.5% of them will move 0.2*80 = 16km
+# (because of the spatial discretisation to 10km,
+# 8km -> 10km and 16km -> 20km)
 # towards the positive x direction every timestep
-wind = Wind("island_wind.csv", "dummy.csv", [[0.25, 1.0]], g1)
+wind = Wind("spatial_wind.csv", "dummy.csv", [[0.1, 0.625], [0.2, 0.375]], g1)
 wind.parseRawFile()
 
 ######################################################
 # Evolve in time
-dt = 1.0 # time step size, with units of days
+dt = 0.5 # time step size, with units of days
 t = 0
-for i in range(730): # 2 years
-   # perform the lifecycle evolution (solve the logistic equation)
-   spatial.evolveCells(dt)
-   # diffuse with diffusion coefficient 0.1 km^2/day
-   spatial.diffuse(dt, 0.1)
-   # The following means that 0.1% of the population will
-   # advect using the wind: the remaining will not advect
-   spatial.advect(array.array('f', [0.001]), wind)
-   t += dt
+for year in range(5):
+   # The first 100 days are windy and have high carrying-capacity
+   # Set the carrying capacity to the "high" values
+   pop_and_param_array = all_pops.getQuantities()
+   for i in range(g1.getNumActiveCells()):
+      pop_and_param_array[2 * i + 1] = cc_high[i]
+   for i in range(100):
+      # The following may be interpreted as:
+      # - allow lifecycle evolution to occur for 0.5 days
+      # - then diffuse for a remaining 0.5 days
+      # - then apply wind corresponding to the whole day
+      # You will have to consider whether this interpretation
+      # is appropriate for your particular species
+      #
+      # perform the lifecycle evolution (solve the logistic equation)
+      spatial.evolveCells(dt)
+      t += dt
+      # diffuse with diffusion coefficient 0.1 km^2/day
+      spatial.diffuse(dt, 0.1)
+      # Finally, apply advection.
+      # The following means that 0.1% of the population will
+      # advect using the wind: the remaining will not advect
+      spatial.advect(array.array('f', [0.001]), wind)
+      t += dt
+   # the next 265 days have no wind, smaller diffusion, and
+   # low carrying capacity
+   # Set the carrying capacity to the "low" values
+   pop_and_param_array = all_pops.getQuantities()
+   for i in range(g1.getNumActiveCells()):
+      pop_and_param_array[2 * i + 1] = cc_low[i]
+   for i in range(365 - 100): 
+      spatial.evolveCells(dt)
+      t += dt
+      spatial.diffuse(dt, 0.01)
+      t += dt
 
 ######################################################
 # Output useful information
-spatial.outputCSV("island.csv", 0, "0", "")
+spatial.outputCSV("spatial.csv", 0, "0", "")
 
 ######################################################
 # Plot results
@@ -101,7 +152,7 @@ import numpy as np
 
 xvals, yvals = np.meshgrid(np.linspace(0, 40, 5), np.linspace(0, 20, 3))
 data = []
-with open("island.csv", "r") as f:
+with open("spatial.csv", "r") as f:
    f.readline()
    f.readline()
    for y in range(3):
@@ -120,14 +171,14 @@ ax.add_patch(patches.Rectangle((35, 15), 10, 10, linewidth = 0, facecolor = 'bla
 plt.text(25, -5, "mainland", horizontalalignment = 'right', verticalalignment = 'bottom')
 plt.text(45, 6, "island", bbox=dict(facecolor='white', alpha=0.6, linewidth=0), horizontalalignment = 'right', verticalalignment = 'bottom')
 plt.text(30, 0, "ocean", horizontalalignment = 'left', verticalalignment = 'bottom')
-fig.colorbar(c, ax = ax)
+fig.colorbar(c, ax = ax, shrink = 0.5)
 plt.xlabel("x (km)")
 plt.ylabel("y (km)")
-plt.title("Population after growth, diffusion and advection")
+plt.title("Population after spatio-temporal growth, diffusion and advection")
 plt.gca().set_aspect('equal')
 plt.xticks([0, 10, 20, 30, 40])
 plt.yticks([0, 10, 20])
-plt.savefig("island.pdf", bbox_inches = 'tight')
+plt.savefig("spatial.pdf", bbox_inches = 'tight')
 plt.show()
 plt.close()
 
