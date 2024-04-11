@@ -22,7 +22,7 @@ from populationsAndParameters import PopulationsAndParameters
 ######################################################
 # Setup the 10km x 10km grid with 1 x 8 spatial locations
 # The units (km) are arbitrary at this stage, but
-# later, the diffusion coefficient must be defined in the
+# later, the wind velocity must be defined in the
 # same units
 g1 = Grid(0, 0, 10.0, 1, 8)
 
