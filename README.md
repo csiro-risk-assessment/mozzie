@@ -1,6 +1,8 @@
 # mozzie
 Mosquito lifecycle, diffusion and advection
 
+TODO: doco primers.  all the build, test, run stuff
+
 ## Use
 
 ### Prerequisites
