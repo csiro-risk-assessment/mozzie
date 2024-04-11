@@ -31,7 +31,7 @@ g1 = Grid(0, 0, 10.0, 5, 3)
 
 ######################################################
 # Set the active and inactive cells.
-# Pictoriall, these are:
+# Pictorially, these are:
 # m m m * *
 # m m m * i
 # m m m * *
