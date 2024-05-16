@@ -1,5 +1,4 @@
-# mozzie
-Mosquito lifecycle, diffusion and advection
+# Mosquito lifecycle, diffusion and advection
 
 TODO: doco primers.  all the build, test, run stuff
 
@@ -102,7 +101,20 @@ On Windows:
 
 Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `python -m unittest -v`.
 
-### Simulating
+## Primers
+
+Before attempting a full-scale simulation with complicated lifecycle dynamics, you might want to inspect the samples found in the `primers` directory.  In order of increasing complexity, these are:
+
+- `logistic.py` which describes how to simulate lifecycle dynamics at a single location with no spatial spread.  In this case, the logistic equation is used.  The output is plotted in `logistic.pdf`.
+- `diffusion.py` which describes the diffusion of a single species with no lifecycle dynamics (the species does not breed, evolve or die).  The output is plotted in `diffusion.pdf` and `diffusion_line.pdf`.
+- `advection.py` which describes the advection of a single species with no lifecycle dynamics (the species does not breed, evolve or die).  The output is plotted in `advection.pdf`.
+- `island.py` which describes lifecycle dynamics, diffusion and advection of a single species.  The lifecycle is governed by the logistic equation.  An island is separated from the mainland.  The species initially exists only on the mainland, but advection carries it to the island.  The output is plotted in `island.pdf`
+- `spatial.py` which is the same as `island.py`, but the wind velocity and carrying capacity are spatio-temporally dependent.  The result is plotted in `spatial.pdf`.
+
+Each of these python files contains extensive in-code documentation.  Run each of them using, for instance, `python3 logistic.py`.
+
+
+## Simulating in general
 
 The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  An example is `example1/runner.py`, and there are other more sophisticated models in the other `example` directories.  Run the simulations using, for example,
 
@@ -121,13 +133,13 @@ Generally, each "runner" python script contains the following.
 
 Because of this "block" structure, you can run partial simulations, for instance, just processing wind files, or loading files, processing in some way and outputting to produce figures.  You can also chain together multiple simulations that rely on just one initial block of file reading, to avoid reading data files for each and every simulation.
 
-### Directory layout
+## Directory layout
 
 - `tests` directory contains tests (.py files) and associated files (all other files).  Run the tests by using, for example, `python TestGrid.py`.  Much of the code is tested by multiple tests.
 - `code` directory contains the core code (described below) that numerically simulates mosquito population dynamics.
 - `code/auxillary` directory contains python scripts that perform auxillary functions, such as plotting results and the important `ab_convert` program that converts between plaintext and binary data files.  These scripts are useful but are not necessary for the numerical simulation of mosquitoes.
 
-### File I/O and memory requirements
+## File I/O and memory requirements
 
 Full-sized simulations require substantial file I/O and memory.
 
@@ -235,7 +247,7 @@ A `Wind` object is only of use if `getProcessedDataComputed()==1`.  Upon constru
   - Then it is advected by that new cell's velocity for time `time1 - time0`.  It may end up in another new cell (or the same cell), and if that cell is active, information is recorded again.
   - This process is repeated until the `pdf` is exhausted.
   - This process is repeated for all active cells.
-  - This has the consequence that if a mosquito ends its advection in a inactive cell it is assumed to instantly die, but mosquitoes may in principal pass over inactive cells, using the wind in those cells to reach active cells.  If a mosquito ever advects outside the grid's boundary they are assumed to instantly die.
+  - This has the consequence that if a mosquito ends its advection in an inactive cell it is assumed to instantly die, but mosquitoes may in principal pass over inactive cells, using the wind in those cells to reach active cells.  If a mosquito ever advects outside the grid's boundary they are assumed to instantly die: there is an "instant-kill zone" outside the grid's boundary
   - The result may be written to a file using `outputProcessedCSV()`.  Usually you will want to `setBinaryFileFormat(1)` before the writing, so a binary file is written.
 - `parseProcessedFile()`.  This parses the processed file defined in the constructor, to build the data mentioned in the previous bullet-point.
 
@@ -271,7 +283,7 @@ This is a cython class that may be imported or cimported into other classes.  It
 
 This is a cython class that may be imported into other classes.  It provides methods to `diffuse`, `advect` and `evolveCells` the cell populations.  It is constructed using the `Grid` and `PopulationsAndParameters` objects.  Its most important methods are the following
 
-- `diffuse(dt, diffusion_coeff)`.  This performs one time-step of diffusion, updating the grid-cell populations contained in `PopulationsAndParameters`.  Only the populations labelled as "diffusing" by the `CellDynamicsX` object are updated.  `diffuse` uses the nearest-neighbour finite-difference approximation to the Laplacian.  Hence, with time-step size `dt` the fraction of mosquitoes removed from one cell is `diffusion_coeff * 4 * dt / (dx)^2`, where `dx` is the cell-size.  One quarter of this amount is added to each of the 4 neighbours.  If the neighbours happen to be inactive, the mosquitoes are assumed to die instantly.
+- `diffuse(dt, diffusion_coeff)`.  This performs one time-step of diffusion, updating the grid-cell populations contained in `PopulationsAndParameters`.  Only the populations labelled as "diffusing" by the `CellDynamicsX` object are updated.  `diffuse` uses the nearest-neighbour finite-difference approximation to the Laplacian.  Hence, with time-step size `dt` the fraction of mosquitoes removed from one cell is `diffusion_coeff * 4 * dt / (dx)^2`, where `dx` is the cell-size.  One quarter of this amount is added to each of the 4 neighbours.  If the neighbours happen to be inactive, the mosquitoes are assumed to die instantly.  If the mosquitoes diffuse outside the grid, they are instantly killed.
 
 - `advect(frac, wind)`.  This performs one time-step of advection using the given `wind` object.  The grid-cell populations contained in `PopulationsAndParameters` are updated.  Only the populations labelled as "advecting" by the `CellDynamicsX` object are updated.  The `Wind` object will have processed the raw-wind data using its `pdf`, and mosquitoes are advected as described in the `Wind` section above.  For instance, if the `pdf` contains times up to `timeN`, then `advect` will advect mosquitoes up to that time, which is completely independent of the time-step size in `diffuse` or `evolveCells`.  This is why the `time` quantities in the `pdf` must be commensurate with `dt`, as mentioned above in the section on the `Wind` class.  The `frac` input to `advect` is an array that defines the fraction of advecting mosquitoes of each advection class that is advected.  For instance, if there are two advection classes (males and females, for instance) then `frac = (0.1, 0.2)` means 10% of the first class advects, while 20% of the second class advects.
 

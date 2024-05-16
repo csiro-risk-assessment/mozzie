@@ -39,6 +39,16 @@ g1 = Grid(0, 0, 10.0, 5, 3)
 # - "m" denotes the mainland
 # - "*" an inactive cell (the ocean)
 # - "i" denotes the island
+# Note that the code always assumes that a "instant-kill zone"
+# always exists around the grid, so the situation really
+# looks like:
+# + + + + + + +
+# + m m m * * +
+# + m m m * i +
+# + m m m * * +
+# + + + + + + +
+# where "+" indicates a cell that instantly kills all
+# species if they advect or diffuse there.
 g1.setActiveAndInactive("island_active_inactive.csv")
 
 ######################################################
