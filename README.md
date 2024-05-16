@@ -51,6 +51,14 @@ cd code
 python3 setup.py build_ext --inplace
 ```
 
+If you are going to use the code in earnest, you will very likely want to manipulate plaintext and binary input files, for which you need the `ab_convert` program (see below for documentation details).  To create this program, navigate to the mozzie repository, and then
+
+```
+cd code/auxillary
+cmake .
+cmake --build .
+```
+
 (Step 5) Test the code.  Navigate to the mozzie repository and then
 
 ```
@@ -59,6 +67,7 @@ coverage run -m unittest -v
 coverage report
 ```
 
+You are now ready to start using or developing the code!
 
 
 ```
