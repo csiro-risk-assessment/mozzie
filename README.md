@@ -8,9 +8,13 @@ The core code is written in `cython`, which is a mix of python (ease of developm
 
 You must be familiar with the terminal (linux/mac) or command prompt (windows) to use the mozzie code.  In the remainder of this document, the python interpreter will be denoted by `python3`, even though the python interpreter may be invoked by `python` or `py` on your system.
 
-(Step 0) Obtain the `mozzie` code.  This will probably be via a `git clone` command, and probably you have already done this step.
+### Step 0
 
-(Step 1a) Ensure your system has python3, python3-pip, python3-venv, cmake and a C compiler.  You may check by entering the following commands at the terminal:
+Obtain the `mozzie` code.  This will probably be via a `git clone` command, and probably you have already done this step.
+
+### Step 1a
+
+Ensure your system has python3, python3-pip, python3-venv, cmake and a C compiler.  You may check by entering the following commands at the terminal:
 
 - `python3 --version`: the version number should be 3.10 or greater
 - `pip --version` shouldn't return an error
@@ -27,7 +31,9 @@ If one or more of these aren't available, one of the following could help.
   - Install cmake by downloading from cmake.org.  Ensure you add cmake to your PATH.
   - Install the C compiler (eg Visual Studio Build Tools 2022) from visualstudio.microsoft.com/visual-cpp-build-tools/, ticking the "Desktop development with C++".
 
-(Step 1b) Create a virtual environment and activate it.  This is so you can `pip install` the necessary packages without conflicting with other things on your system.
+### Step 1b
+
+Create a virtual environment and activate it.  This is so you can `pip install` the necessary packages without conflicting with other things on your system.
 
 On non-windows computers:
 
@@ -43,10 +49,12 @@ python3 -m venv mozzie_venv
 mozzie_venv\Scripts\activate.bat
 ```
 
-In the above commands, `~/mozzie_venv` can be any path you desire.  You should remember it for later use of the `mozzie` software.  *Whenever* you want to work with the `mozzie` software, you should first `. ~/mozzie_venv/bin/activate` (on non-windows computers) or `mozzie_venv\Scripts\activate.bat` (on windows computers using the command prompt).
+In the above commands, `~/mozzie_venv` can be any path you desire.  You should remember it for later use of the `mozzie` software.  **Whenever** you want to work with the `mozzie` software, you should first `. ~/mozzie_venv/bin/activate` (on non-windows computers) or `mozzie_venv\Scripts\activate.bat` (on windows computers using the command prompt).
 
 
-(Step 1c) Install all the required packages:
+### Step 1c
+
+Install all the required python packages:
 
 ```
 pip install numpy scipy Cython coverage setuptools matplotlib
@@ -55,7 +63,9 @@ pip install numpy scipy Cython coverage setuptools matplotlib
 These may be installed into a directory that is not on your path.  For instance, if `coverage` returns an error, you will have to modify your PATH variable.  The matplotlib library is just used to plot the example figures.
 
 
-(Step 2) Compile the code.  Navigate to the mozzie repository, and then
+### Step 2
+
+Compile the code.  Navigate to the mozzie repository, and then
 
 ```
 cd code
@@ -72,7 +82,9 @@ cmake .
 cmake --build .
 ```
 
-(Step 3) Test the code.  Navigate to the mozzie repository and then
+### Step 3
+
+Test the code.  Navigate to the mozzie repository and then
 
 ```
 cd tests
@@ -81,66 +93,6 @@ coverage report
 ```
 
 You are now ready to start using or developing the code!
-
-
-```
-sudo apt install python3-dev python3-numpy python3-scipy cython
-```
-(Other things to install that are unrelated to the mosquito modelling but might be useful are `sudo apt install unzip` and `sudo snap install emacs --classic`.)
-
-On Windows, make sure python3 is installed, along with the numpy, scipy and cython packages.  After installing python3, the following series of commands can help installing the packages (you are going to need administrator rights):
-```
-py -m pip --version`
-py -m pip install --upgrade pip setuptools wheel
-py -m pip install numpy
-py -m pip install scipy
-py -m pip install cython
-```
-The second step on Windows is to install Visual Studio Build Tools for C++ (version 2015 at least).  If you are using Visual Studio Installer, select "Visual Studio Build Tools 2019", then tick "Desktop development with C++".
-	
-On other architectures, the commands may be slightly different, but you need python3, numpy, scipy and cython.
-
-
-### Building the code
-
-To our knowledge, all architectures can install `cython` (see above for examples).  This converts the cython code to C code, which may then be compiled and run.  The actual process of doing this is different on different computers and different archiectures.
-
-On linux-based systems (including mac): in the `code` directory we provide a few different build scripts (`build_easy.sh`, `build_pearcey.sh`, `build_mac.sh`, `build_nimbus.sh` etc).  Look at `code/build_nimbus.sh`.  There are two items you will have to change: the `gcc_flags` `include directories` (the paths specified after the -I).  The file `code/build_nimbus.sh` contains hints on how to find those paths.
-
-Temporary:
-
-```
-sudo apt install python3-dev python3-numpy python3-scipy python3-pip
-pip install Cython coverage
-sudo snap install emacs --classic
-python3 setup.py build_ext --inplace
-```
-
-Note, you might get some warnings from the Cython library, depending on the version of Cython you are using.
-
-Also for code coverage (assume that setup.py has been run with debug = True)
-
-```
-cd tests
-coverage run -m unittest -v
-coverage report
-```
-
-```
-coverage html
-```
-
-TODO: cmake
-
-
-On Windows:
-
-- In the `code` folder, run setup.py (for instance, on the command line, `cd` to the correct folder and then `py setup.py`).  Using the Cython files in the `code` folder, this will generate Windows files.  (Specifically, the *.pyd files.  It is ok that the names of the files are the names of the classes concatenated with other information such as architecture and python version.  The script setup.py ensures that the filenames are correct.)  Depending upon your setup, you may find a conflict between "x86" (old-style 32-bit Windows) and "x64" (new-style 64-bit): we recommend using the "x64" always, and you may have to manually choose this configuration in Visual Studio (eg, by using the `x64 Native Tools Command Prompt for VS 2019` available from the Start Menu).
-- In the `code\auxillary` folder (using the same command prompt, if you used one in the previous step) run the windows batch-script `build_windows.bat`.  This builds the `ab_convert.exe` executable.
-
-### Testing the code
-
-Tests of the code may be found In the `tests` directory.  Run the tests by using, for example, `python TestGrid.py`, which runs all the tests of the `Grid` class.  All the tests may be run using `python -m unittest -v`.
 
 ## Primers
 
