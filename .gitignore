@@ -5,6 +5,10 @@ code/auxillary/ab_convert
 code/auxillary/*.o
 code/auxillary/t
 tests/.coverage
+code/auxillary/CMakeCache.txt
+code/auxillary/CMakeFiles/
+code/auxillary/Makefile
+code/auxillary/cmake*
 tmp*
 build
 *~
