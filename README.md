@@ -6,7 +6,7 @@ TODO: all the build, test, run stuff
 
 The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  Your computer system possibly has all the necessary features already installed, but a vanilla system will need various items.
 
-You must be familiar with the terminal (linux/mac) or command prompt (windows) to use the mozzie code.  In the remainder of this document, the python interpreter will be denoted by `python3`, even though the python interpreter may be invoked by `python` or `py` on your system.
+You must be familiar with the terminal (linux/mac) or command prompt (windows) to use the mozzie code.  In the remainder of this document, the python interpreter will be denoted by `python3`, even though the python interpreter may be invoked by `python` or `py`, etc, on your system.
 
 ### Step 0
 
@@ -14,7 +14,7 @@ Obtain the `mozzie` code.  This will probably be via a `git clone` command, and 
 
 ### Step 1a
 
-Ensure your system has python3, python3-pip, python3-venv, cmake and a C compiler.  You may check by entering the following commands at the terminal:
+Ensure your system has python3 with pip and venv, cmake and a C compiler.  You may check by entering the following commands at the terminal:
 
 - `python3 --version`: the version number should be 3.10 or greater
 - `pip --version` shouldn't return an error
@@ -49,7 +49,7 @@ python3 -m venv mozzie_venv
 mozzie_venv\Scripts\activate.bat
 ```
 
-In the above commands, `~/mozzie_venv` can be any path you desire.  You should remember it for later use of the `mozzie` software.  **Whenever** you want to work with the `mozzie` software, you should first `. ~/mozzie_venv/bin/activate` (on non-windows computers) or `mozzie_venv\Scripts\activate.bat` (on windows computers using the command prompt).
+In the above commands, `mozzie_venv` can be any path you desire.  You should remember it for later use of the `mozzie` software.  **Whenever** you want to work with the `mozzie` software, you should first `. ~/mozzie_venv/bin/activate` (on non-windows computers) or `mozzie_venv\Scripts\activate.bat` (on windows computers using the command prompt).
 
 
 ### Step 1c
