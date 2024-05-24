@@ -119,7 +119,7 @@ with open("island.csv", "r") as f:
 fig, ax = plt.subplots()
 # blank out the surrounding "ocean"
 ax.add_patch(patches.Rectangle((-10, -10), 60, 40, linewidth = 0, facecolor = 'black', alpha = 0.1))
-c = ax.pcolormesh(xvals, yvals, data, cmap = 'viridis', vmin = 40, vmax = 80)
+c = ax.pcolormesh(xvals, yvals, data, cmap = 'viridis', vmin = 40, vmax = 80, shading = 'auto')
 # blank out the intervening "ocean"
 ax.add_patch(patches.Rectangle((25, -5), 10, 30, linewidth = 0, facecolor = 'white'))
 ax.add_patch(patches.Rectangle((25, -5), 10, 30, linewidth = 0, facecolor = 'black', alpha = 0.1))

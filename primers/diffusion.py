@@ -42,7 +42,7 @@ cell = CellDynamicsLogistic1_1()
 # - 1 parameter, which is the carrying capacity
 # Define the populations and parameters over the grid:
 all_pops = PopulationsAndParameters(g1, cell)
-# Introduce 100 individuals at the center.
+# Introduce 1E6 individuals at the center.
 # The carrying capacity is set at 1000, but this
 # is irrelevant because no lifecycle evolution is
 # used in this example
@@ -84,7 +84,7 @@ with open("diffusion_100days.csv", "r") as f:
 dmin = min([min(d) for d in data])
 dmax = max([max(d) for d in data])
 fig, ax = plt.subplots()
-c = ax.pcolormesh(xvals, yvals, data, cmap = 'Greys', vmin = dmin, vmax = dmax)
+c = ax.pcolormesh(xvals, yvals, data, cmap = 'Greys', vmin = dmin, vmax = dmax, shading = 'auto')
 fig.colorbar(c, ax = ax)
 plt.grid()
 plt.xlabel("x")

@@ -1366,7 +1366,7 @@ cdef class CellDynamicsMosquitoLogistic26Delay(CellDynamics26DelayBase):
             self.precalculate()
         
         cdef unsigned mF, mM, gM, gF, mprime, gprime, sex, ind, s, g, m
-        cdef unsigned current_index, delayed_index, yy_ind, f_ind, precalc_ind
+        cdef unsigned current_index, delayed_index, yy_ind, f_ind, precalc_ind, delayed_ind
         cdef float denom, xF, bb
 
         cdef unsigned adult_base = self.current_index * self.num_species * self.num_genotypes * self.num_sexes
