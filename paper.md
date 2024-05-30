@@ -11,10 +11,22 @@ authors:
     orcid: 0000-0001-6472-9560
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
-  - name: Another Person
+  - name: Nicholas J. Beeton
     orcid: 0000-0000-0000-0000
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
+  - name: Maud El-Hachem
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+    affiliation: "1" # (Multiple affiliations must be quoted)
+  - name: Keith R Hayes
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+    affiliation: "1" # (Multiple affiliations must be quoted)
+  - name: Geoffrey R. Hosack
+    orcid: 0000-0002-6462-6817
+    equal-contrib: false
+    affiliation: "1"
 affiliations:
  - name: Commonwealth Scientific and Industrial Organisation (CSIRO), Australia
    index: 1
