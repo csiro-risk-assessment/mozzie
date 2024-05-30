@@ -16,8 +16,8 @@ authors:
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Maud El-Hachem
-    orcid: 0000-0000-0000-0000
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+    orcid: 0000-0002-9312-6109
+    equal-contrib: false # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Keith R Hayes
     orcid: 0000-0000-0000-0000
