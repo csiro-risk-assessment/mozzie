@@ -1,5 +1,5 @@
 ---
-title: 'Mozzie: spatio-temporal species dynamics'
+title: 'Mozzie: a computationally efficient simulator for the spatio-temporal modelling of mosquitoes'
 tags:
   - Python
   - Cython
