@@ -50,6 +50,8 @@ A Statement of need section that clearly illustrates the research purpose of the
 - Mention (if applicable) a representative set of past or ongoing research projects using the software and recent scholarly publications enabled by it.
 - Acknowledgement of any financial support.
 
+This work was supported, in whole or in part, by the Bill & Melinda Gates Foundation [grant number]. Under the grant conditions of the Foundation, a Creative Commons Attribution 4.0 Generic License has already been assigned to the Author Accepted Manuscript version that might arise from this submission.
+
 See [instructions](https://joss.readthedocs.io/en/latest/paper.html) for instructions about formulae, references, tables, figures, markdown, footnotes, headings, etc.  See [example](https://joss.readthedocs.io/en/latest/example_paper.html) for an example.
 
 # References
