@@ -1,7 +1,5 @@
 # Mosquito lifecycle, diffusion and advection
 
-TODO: all the build, test, run stuff
-
 ## How to build and test the code
 
 The core code is written in `cython`, which is a mix of python (ease of development) and C (performance).  Your computer system possibly has all the necessary features already installed, but a vanilla system will need various items.
