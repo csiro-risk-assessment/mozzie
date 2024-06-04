@@ -20,8 +20,8 @@ authors:
     equal-contrib: false # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Keith R Hayes
-    orcid: 0000-0000-0000-0000
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+    orcid: 0000-0003-4094-3575
+    equal-contrib: false # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Geoffrey R. Hosack
     orcid: 0000-0002-6462-6817
