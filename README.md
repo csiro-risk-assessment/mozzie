@@ -19,6 +19,8 @@ Ensure your system has python3 with pip and venv, cmake and a C compiler.  You m
 - `python3 -m venv -h` shouldn't return an error
 - `cmake --version` shouldn't return an error.
 
+On Windows computers, replace `python3` with `python` or `py` here and elsewhere.
+
 If one or more of these aren't available, one of the following could help.
 
 - On ubuntu and Mac: `sudo apt install python3-dev python3-pip python3-venv cmake`
@@ -43,7 +45,7 @@ python3 -m venv ~/mozzie_venv
 On windows computers using the command prompt:
 
 ```
-python3 -m venv mozzie_venv
+python -m venv mozzie_venv
 mozzie_venv\Scripts\activate.bat
 ```
 
@@ -70,7 +72,7 @@ cd code
 python3 setup.py build_ext --inplace
 ```
 
-There may be some warnings from your Cython instalation.
+There may be some warnings from your Cython installation.
 
 If you are going to use the code in earnest, you will very likely want to manipulate plaintext and binary input files, for which you need the `ab_convert` program (see below for documentation details).  To create this program, navigate to the mozzie repository, and then
 
