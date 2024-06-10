@@ -50,9 +50,9 @@ cdef class SpatialDependence:
         if error_code == 1:
             raise IOError('Cannot open or read ' + filename)
         elif error_code == 2:
-            raise MemoryError('C buffer not big enough to read ' + filename + '  You will have to increase MAX_FILE_LENGTH')
+            raise MemoryError('C buffer not big enough to read ' + filename + '  You will have to increase the value of MAX_FILE_LENGTH, which is found in the file csvparser.c.  Then recompile the code, and try to read ' + filename + ' again')
         elif error_code == 3:
-            raise MemoryError('C memory allocation problem when reading ' + filename + '  Perhaps MAX_FILE_LENGTH is too large for your computer')
+            raise MemoryError('C memory allocation problem when reading ' + filename + "  It is likely the value of MAX_FILE_LENGTH exceeds the available memory in your computer.  The definition of MAX_FILE_LENGTH is found in csvparser.c.  Experiment with reducing its value (to reduce the amount of memory used for reading the file), recompiling, and trying to read " + filename + ' again')
 
         # file was opened and header successfully read, so check header
         try:

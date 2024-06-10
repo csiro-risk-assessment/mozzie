@@ -9,7 +9,7 @@
 #endif
 
 // we read the entire file in one gulp, to attempt to speed I/O
-#define MAX_FILE_LENGTH (200 * 1024 * 1024)
+#define MAX_FILE_LENGTH (200 * 1024 * 1024) // may have to be increased to read large files, or decreased because of computer-memory restrictions
 char file_contents[MAX_FILE_LENGTH];
 
 // initial guess at the maximum length of the header.  the header string gets dynamically resized if the file header is longer than this

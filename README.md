@@ -72,7 +72,7 @@ cd code
 python3 setup.py build_ext --inplace
 ```
 
-There may be some warnings from your Cython installation.
+There may be some warnings from your Cython installation.  Don't worry for now, but maybe later you can contribute changes to the code to avoid these warnings!
 
 If you are going to use the code in earnest, you will very likely want to manipulate plaintext and binary input files, for which you need the `ab_convert` program (see below for documentation details).  To create this program, navigate to the mozzie repository, and then
 
@@ -91,6 +91,8 @@ cd tests
 coverage run -m unittest -v
 coverage report
 ```
+
+You may get some errors associated with MAX_FILE_LENGTH being too large if you are running on a computer with not enough memory.
 
 You are now ready to start using or developing the code!
 
