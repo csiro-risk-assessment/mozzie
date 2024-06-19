@@ -48,6 +48,11 @@ Conversely, `Mozzie` does not contain human agents, nor does it consider the eff
 
 `Mozzie` has been used by the authors to simulate the spread across sub-Saharan Africa of a theoretical, population-modifying, gene drive in _Anopheles gambiae s.s._ and _Anopheles coluzzii_, and to predict the spread of Target Malaria's Paternal Male Bias construct [@Galizi2014] following a proposed field-release of genetically modified _Anopheles coluzzi_ male mosquitoes in Burkina Faso [@Hosack2023].
 
+
+AN ALTERATE PARAGRAPH:
+
+`Mozzie` enables simulation of the lifecycle and spatial spread of mosquitoes.  Mosquitoes transmit malaria, and `Mozzie` is designed to support risk assessments associated with genetic alterations of mosquitoes aimed at eliminating malaria.  Treatment of the mosquito lifecycle includes competition and breeding between multiple (sub-)species, allowing researchers to assess potential transfer of the genetic alteration to other (sub-)species.  To assess the spatial spread of wild-type and genetically-altered mosquitoes, `Mozzie` can simulate the local diffusion of individuals through the landscape, and long-distance dispersal via wind.  `Mozzie` can be used for risk assessments at the local, regional or continental scale.  For example, wind patterns and the capacity of the landscape to support mosquitoes can vary spatially and temporally, reflecting seasonality, local conditions and/or daily variations, etc.  Genetic alterations can be flexibly modelled with any number of alleles and the capacity for Mendelian or non-Mendelian inheritance, including gene drives.
+
 # Statement of need
 
 > JOSS says: "A Statement of need section that clearly illustrates the research purpose of the software and places it in the context of related work."
@@ -86,4 +91,3 @@ This work was supported, in whole or in part, by the Bill & Melinda Gates Founda
 See [instructions](https://joss.readthedocs.io/en/latest/paper.html) for instructions about formulae, references, tables, figures, markdown, footnotes, headings, etc.  See [example](https://joss.readthedocs.io/en/latest/example_paper.html) for an example.
 
 # References
-  
