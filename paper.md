@@ -12,7 +12,7 @@ authors:
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Nicholas J. Beeton
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0000-0000-0000 # TODO
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Maud El-Hachem
@@ -44,7 +44,7 @@ The paper should be between 250-1000 words. Authors submitting papers significan
 
 `Mozzie` allows sophisitcated treatment of the spatio-temporal evolution of populations.  This includes age or stage structure, and competition and breeding between multiple (sub-)species, allowing researchers to assess potential transfer of the genetic alteration to other (sub-)species.  Genetic alterations can be flexibly modelled with any number of alleles and the capacity for Mendelian or non-Mendelian inheritance, including gene drives.  To assess the spatial spread of wild-type and genetically-altered mosquitoes, `Mozzie` can simulate the local diffusion of individuals through the landscape, and long-distance dispersal via wind.  `Mozzie` can be used for risk assessments at the local, regional or continental scale.  For example, wind patterns and the capacity of the landscape to support mosquitoes can vary spatially and temporally, reflecting seasonality, local conditions and/or daily variations, etc.  
 
-`Mozzie` has been used by the authors and collaborators to simulate the effects of a theoretical population-modifying gene-drive in malaria vectors in sub-Saharan Africa [@beetonplos]. It has also been used to simulate a proposed release of a self-limiting Paternal Male Bias genetic construct [@Hosack2023]... Geoff/Nick/Keith - please write a few words about risk-assessment work, and include refs.
+`Mozzie` has been used by the authors and collaborators to simulate the effects of a theoretical population-modifying gene-drive in malaria vectors in sub-Saharan Africa [@beetonplos]. It has also been used to simulate a proposed release of a self-limiting Paternal Male Bias genetic construct [@Hosack2023]... Geoff/Nick/Keith - please write a few words about risk-assessment work, and include refs.  TODO
 
 
 # Statement of need
@@ -72,6 +72,7 @@ In addition to the publicly available codes mentioned above, many academic artic
 ** NICE FIGURE **
 # Maud's suggestion: maybe a UML Component Diagram, there is an nice example in this paper https://joss.theoj.org/papers/10.21105/joss.06384
 # Andy was thinking of a figure from our risk assessment work
+TODO
 
 # Other sections and info
 
@@ -81,7 +82,7 @@ In addition to the publicly available codes mentioned above, many academic artic
 
 # Acknowledgements
 
-This work was supported, in whole or in part, by the Bill & Melinda Gates Foundation (**grant number**).  Under the grant conditions of the Foundation, a Creative Commons Attribution 4.0 Generic License has already been assigned to the Author Accepted Manuscript version that might arise from this submission.
+This work was supported, in whole or in part, by the Bill & Melinda Gates Foundation (**grant number**) TODO.  Under the grant conditions of the Foundation, a Creative Commons Attribution 4.0 Generic License has already been assigned to the Author Accepted Manuscript version that might arise from this submission.
 
 See [instructions](https://joss.readthedocs.io/en/latest/paper.html) for instructions about formulae, references, tables, figures, markdown, footnotes, headings, etc.  See [example](https://joss.readthedocs.io/en/latest/example_paper.html) for an example.
 
