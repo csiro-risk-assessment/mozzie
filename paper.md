@@ -12,7 +12,7 @@ authors:
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Nicholas J. Beeton
-    orcid: 0000-0000-0000-0000 # TODO
+    orcid: 0000-0002-8513-3165
     equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Maud El-Hachem
