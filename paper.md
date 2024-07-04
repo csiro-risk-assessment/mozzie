@@ -34,7 +34,7 @@ date: 1 June 2024
 bibliography: paper.bib
 ---
 
-The paper should be between 250-1000 words. Authors submitting papers significantly longer than 1000 words may be asked to reduce the length of their paper.
+> JOSS says: The paper should be between 250-1000 words. Authors submitting papers significantly longer than 1000 words may be asked to reduce the length of their paper.
 
 # Summary
 
@@ -42,11 +42,13 @@ The paper should be between 250-1000 words. Authors submitting papers significan
 
 `Mozzie` enables simulation of the lifecycle and spatial spread of mosquitoes.  `Mozzie` can be used to assess risks associated with disease-control strategies at local, regional or continental scales, most particularly, strategies involving genetic alterations of mosquitoes to eliminate malaria.
 
-`Mozzie` simulates a population-dynamics model that uses differential equations or delay differential equations [@BOHNER2018114;@El-Hachem2024] to describe the spread and persistence of genetic alterations that modify or suppress populations of disease-carrying mosquitoes.  Genetic alterations are flexibly modelled: these can involve any number of alleles; Mendelian or non-Mendelian inheritance, including gene drives; they can be self-limiting or self-sustaining, and can include the emergence of resistant allelles.  The model allows simulation of $N$ mosquito species.  It incorporates mate-choice, hybridisation and intra-specific competition that occur within complexes of sibling species [@BEETON2020110072], such as the three main malaria vectors in the _Anopheles gambiae_ complex.  This fills a gap that currently exists among similar models, allowing researchers to assess potential transfer of the genetic alterations between (sub-)species.  `Mozzie` supports age- or stage-specific population structure, spatial and temporal variations in birth rate, local diffusion and wind-assisted, long range, advection.  Spatio-temporal heterogeneity is supported.  For example, wind patterns and the capacity of the landscape to support mosquitoes can vary spatially and temporally, reflecting seasonality, local conditions and/or daily variations, etc.  
+`Mozzie` simulates a population-dynamics model that uses differential equations or delay differential equations [@BOHNER2018114;@El-Hachem2024] to describe the spread and persistence of genetic alterations that modify or suppress populations of disease-carrying mosquitoes.  Genetic alterations are flexibly modelled: these can involve any number of alleles; Mendelian or non-Mendelian inheritance, including gene drives; they can be self-limiting or self-sustaining; and can include the emergence of resistant allelles.  The model allows simulation of $N$ mosquito species, and allows stage-specific dynamics.   It incorporates mate-choice, hybridisation and intra-specific competition that occur within complexes of sibling species [@BEETON2020110072], such as the three main malaria vectors in the _Anopheles gambiae_ complex.  This fills a gap that currently exists among similar models, allowing researchers to assess potential transfer of the genetic alterations between (sub-)species.
+
+`Mozzie` supports spatial and temporal variations in birth rate, local diffusion and wind-assisted, long range, advection.  For example, wind patterns and the capacity of the landscape to support mosquitoes can vary spatially and temporally, reflecting daily variations, seasonality, and local conditions.
 
 Conversely, `Mozzie` does not contain human agents, nor does it consider the effect of genetic control strategies on the prevalence of pathogens such as the malaria parasite, among human or animal populations.
 
-`Mozzie` has been used by the authors to simulate the spread across sub-Saharan Africa of a theoretical, population-modifying, gene drive in _Anopheles gambiae s.s._ and _Anopheles coluzzii_, and to predict the spread of Target Malaria's Paternal Male Bias construct [@Galizi2014] following a proposed field-release of genetically modified _Anopheles coluzzi_ male mosquitoes in Burkina Faso [@Hosack2023].
+`Mozzie` has been used by the authors to simulate the spread across sub-Saharan Africa of a theoretical, population-modifying, gene drive in _Anopheles gambiae s.s._ and _Anopheles coluzzii_ [@beetonplos] (that paper also describes the mathematics of one of the mosquito lifecycle models that are contained in `Mozzie`), and to predict the spread of Target Malaria's Paternal Male Bias construct [@Galizi2014] following a proposed field-release of genetically modified _Anopheles coluzzi_ male mosquitoes in Burkina Faso [@Hosack2023].
 
 
 AN ALTERATE PARAGRAPH:
@@ -57,7 +59,7 @@ AN ALTERATE PARAGRAPH:
 
 > JOSS says: "A Statement of need section that clearly illustrates the research purpose of the software and places it in the context of related work."
 
-The numerical implementation of Mozzie is ecologically interpretable [@Hosack2023] and computationally and I/O efficient.  This allows simulations at continental scales and the investigation of varying input parameters, as required in risk assessments.  It is written in [Cython](https://cython.org) [@behnel2010cython] (a mixture of Python and C), and simulations are run using Python. The test coverage of the `Mozzie` codebase is over 99%, meaning it is also suitable for risk assessments of vector control strategies that could be subject to considerable scrutiny.
+The numerical implementation of Mozzie is ecologically interpretable [@Hosack2023] and computationally and I/O efficient.  This allows rapid simulation at continental scales to investigate sensitivity to input parameters, as required in risk assessments.  It is written in [Cython](https://cython.org) [@behnel2010cython] (a mixture of Python and C), and simulations are run using Python. The test coverage of the `Mozzie` codebase is over 99%, meaning it is also suitable for risk assessments of vector control strategies that could be subject to considerable scrutiny.
 
 Alternatives to `Mozzie` include:
 
@@ -73,16 +75,9 @@ If spatially explicit, these model spatial structure using a network.  In contra
 
 In addition to the publicly available codes mentioned above, many academic articles consider the lifecycle and spatial spread of mosquitoes, for example [@LUTAMBI2013198;@DUFOURD20131695;@north2013;@roques2016;@YAMASHITA201890;@Smith2018;@endo2018;@fc2018;@yamashita2018;@silva2020;@FANG2020149;@Bruzzone2022;@dye2024], but few have published their code.  Most appear to rely on unpublished scripts in codes such as MATLAB [@LUTAMBI2013198,@yamashita2018,@fc2018], or concentrate on specialised scenarios [@roques2016;@Bruzzone2022].
 
-** NICE FIGURE **
-# Maud's suggestion: maybe a UML Component Diagram, there is an nice example in this paper https://joss.theoj.org/papers/10.21105/joss.06384
-# Andy was thinking of a figure from our risk assessment work
-TODO
+\autoref{beetonfig} shows results from `Mozzie` simulations when using 2 inter-breeding and competing mosquito species.  A gene-drive is introduced into one of these species, and the modified individuals are released from one of 15 sites throughout sub-Saharan Africa.
 
-# Other sections and info
-
-- A list of key references, including to other software addressing related needs. Note that the references should include full names of venues, e.g., journals and conferences, not abbreviations only understood in the context of a specific discipline.
-- Mention (if applicable) a representative set of past or ongoing research projects using the software and recent scholarly publications enabled by it.
-- Acknowledgement of any financial support.
+![The invasion front of genetically-modified mosquito species from a selection of starting point, from [@beetonplos].\label{beetonfig}](path/to/image.png)
 
 # Acknowledgements
 
