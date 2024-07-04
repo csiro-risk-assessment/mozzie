@@ -77,7 +77,7 @@ In addition to the publicly available codes mentioned above, many academic artic
 
 \autoref{beetonfig} shows results from `Mozzie` simulations when using 2 inter-breeding and competing mosquito species.  A gene-drive is introduced into one of these species, and the modified individuals are released from one of 15 sites throughout sub-Saharan Africa.
 
-![The invasion front of genetically-modified mosquito species from a selection of starting point, from [@beetonplos].\label{beetonfig}](path/to/image.png)
+![The invasion front of genetically-modified mosquito species from a selection of starting point, from [@beetonplos].\label{beetonfig}](journal.pcbi.1009526.g004.png)
 
 # Acknowledgements
 
