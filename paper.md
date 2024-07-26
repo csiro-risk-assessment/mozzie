@@ -90,6 +90,6 @@ In addition to the publicly available codes mentioned above, many academic artic
 
 # Acknowledgements
 
-This work was supported, in whole or in part, by the Bill & Melinda Gates Foundation (**grant number, supplied after approval**).  Under the grant conditions of the Foundation, a Creative Commons Attribution 4.0 Generic License has already been assigned to the Author Accepted Manuscript version that might arise from this submission.
+This work was funded by a grant to the Foundation for the National Institutes of Health from the Bill \& Melinda Gates Foundation (INV-008525). Under the grant conditions of the Foundation, a Creative Commons Attribution 4.0 Generic License has already been assigned to the Author Accepted Manuscript version that might arise from this submission.
 
 # References
