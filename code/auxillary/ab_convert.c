@@ -1,3 +1,4 @@
+// Copyright (c) 2024 Commonwealth Scientific and Industrial Research Organisation (CSIRO) ABN 41 687 119 230.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

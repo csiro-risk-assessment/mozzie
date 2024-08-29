@@ -1,18 +1,22 @@
 # Mosquito lifecycle, diffusion and advection
 
-## Administration and Legal
+## Contributing
 
 Australia's Commonwealth Scientific and Industrial Research Organisation (CSIRO) welcomes contributions to this code.  The recommended method is to:
-
+ 
 1. Submit an Issue on github, describing the reasons for your potential contribution;
 2. Engage in discussions with CSIRO staff on github regarding the best architecture, etc, for your contribution;
 3. When your contribution is ready, issue a Pull Request on github.
-
+ 
 CSIRO does not guarantee to inspect such contributions, nor accept them into the code.
 
-CSIRO does not make any guarantees of accuracy or relevance of the code.  CSIRO does not guarantee the code has no security vulnerabilities.  CSIRO does not guarantee to bug-fix or security-fix the code.  CSIRO reserves the right to "retire" the code and make no further changes.
+## Licensing and disclaimers
 
-This code is released under a GPLv3 license.
+This code is released under a GPLv3 license. To discuss other licenses, please contact CSIRO via github.
+ 
+Copyright (c) 2024 Commonwealth Scientific and Industrial Research Organisation (CSIRO) ABN 41 687 119 230.
+ 
+CSIRO does not make any guarantees of accuracy or relevance of the code.  CSIRO does not guarantee the code has no security vulnerabilities.  CSIRO does not guarantee to bug-fix or security-fix the code.  CSIRO reserves the right to "retire" the code and make no further changes.
 
 ## How to build and test the code
 
