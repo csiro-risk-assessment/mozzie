@@ -43,7 +43,6 @@ pandoc --citeproc --csl ../whedon/resources/apa.csl --pdf-engine=xelatex --varia
 See [instructions](https://joss.readthedocs.io/en/latest/paper.html) for instructions about formulae, references, tables, figures, markdown, footnotes, headings, etc.  See [example](https://joss.readthedocs.io/en/latest/example_paper.html) for an example.
 -->
 
-> Note for reviewers.  This paper is to be submitted to the Journal of Open Source Software (JOSS), which is different to many other academic journals.  Firstly, the focus is on the software, and less on this article.  Secondly, key instructions from JOSS are as follows.  (A) The paper should be between 250-1000 words. Authors submitting papers significantly longer than 1000 words may be asked to reduce the length of their paper.  (B) The paper needs to include a summary describing the high-level functionality and purpose of the software for a diverse, non-specialist audience.  (C) The paper needs to explain the research applications of the software.  (D)  The paper needs to contain A Statement of Need section that clearly illustrates the research purpose of the software and places it in the context of related work.
 
 # Summary
 
