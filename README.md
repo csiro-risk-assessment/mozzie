@@ -21,6 +21,7 @@ Australia's Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  
 CSIRO does not guarantee to inspect such contributions, nor accept them into the code.
 
+
 ## Licensing and disclaimers
 
 This code is released under a GPLv3 license. To discuss other licenses, please contact CSIRO via github.
@@ -28,6 +29,12 @@ This code is released under a GPLv3 license. To discuss other licenses, please c
 Copyright (c) 2024 Commonwealth Scientific and Industrial Research Organisation (CSIRO) ABN 41 687 119 230.
  
 CSIRO does not make any guarantees of accuracy or relevance of the code.  CSIRO does not guarantee the code has no security vulnerabilities.  CSIRO does not guarantee to bug-fix or security-fix the code.  CSIRO reserves the right to "retire" the code and make no further changes.
+
+## Reporting problems and seeking support
+
+Please report problems using a new github issue.  Please tag someone (eg @WilkAndy) in your issue.  CSIRO will endeavour to fix any problems, but does not guarantee to do so.
+
+To seek help, please also use a new github issue, and please tag someone (eg @WilkAndy).  Using a github issue means that future users may benefit from the solution to your problem.  CSIRO will endeavour to help, but does not guarantee to do so.
 
 
 ## How to build and test the code
