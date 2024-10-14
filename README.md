@@ -1,5 +1,16 @@
 # Mosquito lifecycle, diffusion and advection
 
+## Description
+
+`Mozzie` enables simulation of the lifecycle and spatial spread of mosquitoes.  `Mozzie` can be used to assess risks associated with disease-control strategies at local, regional or continental scales.  Strategies involving genetic alterations of mosquitoes to eliminate malaria, are of prime interest.
+
+More technically, `Mozzie` simulates a population-dynamics model that uses differential equations or delay differential equations to describe the spread and persistence of mosquitoes that may be genetic altered.  Genetic alterations are flexibly modelled: these can involve any number of alleles; Mendelian or non-Mendelian inheritance, including gene drives; they can be self-limiting or self-sustaining; and can include the emergence of resistant allelles.  The model allows simulation of any number of mosquito species.   It incorporates mate-choice, hybridisation and intra-specific competition that occur within complexes of mosquito species.  This fills a gap that currently exists among similar models, allowing researchers to assess potential transfer of the genetic alterations between (sub-)species.
+
+`Mozzie` supports spatial and temporal variations in lifecyle parameters, and local diffusion and wind-assisted, long range, advection.  For example, wind patterns and the capacity of the landscape to support mosquitoes can vary spatially and temporally, reflecting daily variations, seasonality, and local conditions.
+
+Conversely, `Mozzie` does not contain human agents, nor does it consider the effect of genetic control strategies on the prevalence of pathogens such as the malaria parasite, among human or animal populations.
+
+
 ## Contributing
 
 Australia's Commonwealth Scientific and Industrial Research Organisation (CSIRO) welcomes contributions to this code.  The recommended method is to:
