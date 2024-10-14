@@ -139,24 +139,145 @@ Before attempting a full-scale simulation with complicated lifecycle dynamics, y
 Each of these python files contains extensive in-code documentation.  Run each of them using, for instance, `python3 logistic.py`.
 
 
-## Simulating in general
+## How to set up a simulation
 
-The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  An example is `example1/runner.py`, and there are other more sophisticated models in the other `example` directories.  Run the simulations using, for example,
+The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  The aforementioned primers contain simple examples, and now we describe `example1/runner.py` that contains all the components of a full-scale simulation.  There are other more sophisticated models in the other `example*` directories.  Run the simulations using, for example,
 
 `python3 runner.py`
 
-Generally, each "runner" python script contains the following.
+### runner.py: the `import` block
 
-- An `import` block in which you import all the core libraries (described below) and any other python libraries you need.
-- A block in which you set up the grid and active cells, defining the spatial extents and discretisation of the model.  You will use `Grid` and `Grid.setActiveAndInactive`.
-- A block that defines `Wind` (multiple input files corresponding to different times).  This is a little different from the generic spatially-varying parameters (next item) because it usually requires some sort of pre-processing, or is read from specially-preprocessed files.
-- A block in which you read files corresponding to spatially-varying parameters in your model, such as carrying capacities.  You'll typically have to read multiple of these per parameter, as the parameters will also vary with time.  You will use `SpatialDependence` and `SpatialDependence.restrictToActive`
-- A definition of your cell dynamics (the ODE model), such as `CellDynamicsMosquito23`
-- A block that defines the populations and parameters, and sets initial conditions.  You'll use `PopulationsAndParameters`.
-- A block that gathers the grid structure, the populations and the cell dynamics together into a `SpatialDynamics` object.
-- A block that controls the time-stepping of the simulation, involving `diffuse`, `evolveCells`, and `advect`.  There can be multiple of these, depending on the complexity of your model, as different carrying capacities, wind vectors, etc, are used at different times.
+The `import` block is used to import all the core libraries (described below) and any other python libraries you need.  `example1/runner.py` looks like:
 
-Because of this "block" structure, you can run partial simulations, for instance, just processing wind files, or loading files, processing in some way and outputting to produce figures.  You can also chain together multiple simulations that rely on just one initial block of file reading, to avoid reading data files for each and every simulation.
+```
+import os
+import sys
+import array
+import timeit
+
+# so we can find our ../code no matter how we are called
+findbin = os.path.dirname(os.path.realpath(sys.argv[0]))
+sys.path.append(findbin + "/../code")
+
+from wind import Wind
+from grid import Grid
+from cellDynamics import CellDynamicsLogistic1_1
+from spatialDynamics import SpatialDynamics
+from spatialDependence import SpatialDependence
+from populationsAndParameters import PopulationsAndParameters
+```
+
+The first imports are standard python libraries.  In order of import, the others will enable: a definition of wind direction; a definition of the spatial grid; lifecycle dynamics governed by the logistic equation; spatial dynamics such as diffusion and wind advection; spatially-dependent lifecycle parameters such as the carrying capacity; populations and parameter quantities.  These are discussed in more detail below.
+
+### runner.py: the grid block
+
+This is a block of code in which you set up the grid and active cells, defining the spatial extents and discretisation of the model.  You will use `Grid` and `Grid.setActiveAndInactive`.  In `example1/runner.py` this looks like:
+
+```
+g1 = Grid(-4614.0, -3967.0, 5.0, 1517, 1667, False)
+g1.setActiveAndInactive("active.csv")
+```
+
+These lines set up a spatial grid of 5km x 5km, with 1517 x 1667 grid cells in the horizontal x vertical direction, with corner coordinate (-4614, -3967).  Then, some of these cells are made inactive (no mosquitoes will live there: in this case because it an ocean area) using the `setActiveAndInactive` method.
+
+### runner.py: the spatially-dependent lifecycle parameters
+
+In `example1/runner.py`, the carrying-capacity, `cc`, is spatially-dependent:
+
+```
+cc_parser = SpatialDependence(-4614.0, -3967.0, 5.0, 1517, 1667)
+cc_parser.parse("carrying.csv", "generic_float", [])
+cc_parser.restrictToActive(g1.getGlobalIndex())
+cc = cc_parser.getData0()
+```
+
+Generally, you'll typically have to read multiple of these per lifecycle parameter, as the parameters will also vary with time.  Each time, you will use `SpatialDependence`, `SpatialDependence.restrictToActive`, and `getData0`.
+
+### runner.py: lifecycle definition
+
+This is typically one line.  In `example1/runner.py`, we want to use a logistic-growth model, so it is:
+
+```
+cell = CellDynamicsLogistic1_1()
+```
+
+### runner.py: setting populations, lifecycle parameters and initial conditions
+
+First, define an object that contains all the mosquito populations over the grid, and all the lifecycle parameters (such as carrying capacity) associated with those populations:
+
+```
+all_pops = PopulationsAndParameters(g1, cell)
+```
+
+In this case, when the lifecycle parameter (carrying capacity) is time-independent, it is convenient to set it now.  In `CellDynamicsLogistic1_1`, the second slot in the populations and paramemters array contains the carrying capacity at the cell, so:
+
+```
+pop_and_param_array = all_pops.getQuantities()
+for i in range(g1.getNumActiveCells()):
+   pop_and_param_array[2 * i + 1] = max(1.0, cc[i])
+```
+
+(The `max` ensures there is a nonzero carrying capacity everywhere).  If carrying capacity were time-dependent then `pop_and_param_array` would be set during time-stepping, not during this initialisation phase (the primers contain examples of this).
+
+There are various ways of defining initial ocnditions, and the `example*/runner*` provide examples. In this case, 10000 mosquitoes are introduced at (x, y) = (-2000, 700), and the carrying capacity is set to 150000 at that cell:
+
+```
+all_pops.setPopulationAndParametersFromXY(-2000, 700, [10000.0, 150000.0])
+```
+
+### runner.py: readying for simulation
+
+The populations and the cell dynamics together into a `SpatialDynamics` object, to be ready for lifecycle dynamics, diffusion and advection:
+
+```
+spatial = SpatialDynamics(g1, all_pops)
+```
+
+### runner.py: defining wind
+
+Wind advection is special in `mozzie`.  It is always spatially dependent, and usually temporally dependent.  It is not deemed a "parameter" such as carrying capacity because it is independent of the lifecycle dynamics.  The `mozzie` Wind class is described in detail below: in `example1/runner.py`, the definition is:
+
+```
+import math
+# define the probability function:
+xa = [0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.17, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+ya = [math.exp(-x * 6) for x in xa]
+su = sum(ya)
+ya = [y / sum(ya) for y in ya]
+pdf = [[xa[i], ya[i]] for i in range(len(xa))]
+# read the wind velocity vectors, and specify the desired proability function to use
+wind = Wind(os.path.join(findbin, "raw_wind.csv"), os.path.join(findbin, "wind_8_subdivisions.csv"), pdf, g1)
+# Parse the wind velocity vectors, and do particle tracking based on the probability function
+wind.parseRawFile()
+```
+
+Typically, you'll read multiple input files corresponding to different times.
+
+### runner.py: time-stepping the simulation
+
+After all this set-up, finally we come to the simulation!  Often, there are multiple blocks similar to the following, as different carrying capacities, wind vectors, etc are used at different times.  But they will all use `diffuse`, `evolveCells`, and `advect`.  The primers and `example*/runner*.py` contain examples.  For `example1/runner.py` the block is simple:
+
+```
+timestep_size = 0.5
+for i in range(501):
+   sys.stdout.write("Time step " + str(i) + "\n")
+   # lifecycle (logistically grow) using evolveCells for 0.5 days
+   spatial.evolveCells(0.5 * 10) # the multiplication here is just because Logistic1_1 has a hard-coded 0.01 growth rate which is too tiny to notice anything interesting
+   # now diffuse with diffusion coefficient 0.1 km^2/day
+   spatial.diffuse(timestep_size, 0.1)
+   # anow dvect 1% of the population at each cell using the defined wind
+   spatial.advect(array.array('f', [0.01]), wind)
+   if (i%100 == 0):
+      spatial.outputCSV("runner_" + str(i) + "_days.csv", 0, "0", "")
+```
+
+Note that you will have to **think carefully about the biological reality of your time-stepping**.  In the case above, logistic growth occurs only for half a day (during the daylight), and then diffusion and wind advection occur (eg, during the night).
+
+### runner.py: plotting results and general comments
+
+Notice the `spatial.outputCSV` line above.  This outputs populations to a CSV file (the arguments depend on the lifecycle chosen, such as logistic growth, or any of the other CellDynamics classes).  Matplotlib can be used to plot the results.  The primers mentioned above contain examples of this.
+
+Because of th "block" structure of each `runner.py` script, you can run partial simulations, for instance, just processing wind files, or loading files, processing in some way and outputting to produce figures.  You can also chain together multiple simulations that rely on just one initial block of file reading, to avoid reading data files for each and every simulation.
 
 ## Directory layout
 
