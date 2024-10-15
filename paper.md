@@ -77,13 +77,25 @@ Alternatives to `Mozzie` include:
 
 In addition to these publicly-available codes, many academic articles consider the lifecycle and spatial spread of mosquitoes, for example [@LUTAMBI2013198;@DUFOURD20131695;@north2013;@roques2016;@YAMASHITA201890;@Smith2018;@endo2018;@fc2018;@yamashita2018;@silva2020;@FANG2020149;@Bruzzone2022;@dye2024], but few have published their code.  Most appear to rely on unpublished scripts in codes such as MATLAB [@LUTAMBI2013198;@yamashita2018;@fc2018], or concentrate on specialised scenarios [@roques2016;@Bruzzone2022].
 
-# Statement of need
-
 If spatially explicit, the aforementioned codes model spatial structure using a network.  In contrast, `Mozzie` uses a continuous-space (diffusion-advection equation) approach, deliberately incorporating long-range dispersal in a way that is ecologically interpretable [@Hosack2023].  In addition, `Mozzie` does not focus on single species, but concentrates on the interaction of multiple (sub-)species.  Many of the aforementioned alternatives contain human agents and the malaria parasite, which `Mozzie` does not.
 
-The numerical implementation of Mozzie is ecologically interpretable [@Hosack2023] and computationally and I/O efficient.  This allows rapid simulation at continental scales to investigate sensitivity to input parameters, as required in risk assessments.  It is written in [Cython](https://cython.org) [@behnel2010cython] (a mixture of Python and C), and simulations are run using Python. The test coverage of the `Mozzie` codebase is over 99%, meaning it is also suitable for risk assessments that could be subject to considerable scrutiny.
+# Statement of need
 
-It is anticipated that users of `Mozzie` will be researchers who are interested in flows of genetic modifications between (sub-)species of mosquitoes, in a spatially-extensive setting (such as the continental scale) involving spatial dispersal of individuals.  The computational efficiency of `Mozzie` will be advantageous in complicated, large-scale, spatio-temporal modelling. 
+`Mozzie` is designed to solve problems involving:
+
+- interacting (sub-)species of mosquitoes, with
+- complicated lifecycle dynamics including transfers of genetic modifications between the (sub-)species, in
+- spatially-extensive settings (such as continental scales) including the spatio-temporal dispersal of individuals (such as advection via wind).
+
+It is anticipated that users of `Mozzie` will be researchers interested in such aspects.
+
+Importantly, the numerical implementation of Mozzie is:
+
+- ecologically interpretable [@Hosack2023],
+- computationally and I/O efficient, and
+- well tested.
+
+This allows rapid simulation at continental scales to investigate sensitivity to input parameters, as required in risk assessments.  It is written in [Cython](https://cython.org) [@behnel2010cython] (a mixture of Python and C), and simulations are run using Python. The test coverage of the `Mozzie` codebase is over 99%, meaning it is also suitable for risk assessments that could be subject to considerable scrutiny.
 
 # Example
 
