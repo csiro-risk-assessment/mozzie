@@ -87,7 +87,7 @@ It is anticipated that users of `Mozzie` will be researchers who are interested 
 
 # Example
 
-\autoref{beetonfig} shows results from `Mozzie` simulations when using 2 inter-breeding, hybridising and competing mosquito species [@beetonplos].  A gene-drive is introduced into one of these species, and the modified individuals are released from one of 15 sites throughout sub-Saharan Africa.
+\autoref{beetonfig} shows results from `Mozzie` simulations when using 2 inter-breeding, hybridising and competing mosquito species [@beetonplos].  A gene-drive is introduced into one of these species, and the modified individuals are released from one of 15 sites throughout sub-Saharan Africa.  The script and data to reproduce this result can be found on [CSIRO's data access portal](https://doi.org/10.25919/rgqc-7520).
 
 ![The invasion front of genetically-modified mosquito species, released from different points [@beetonplos].  Figure used under the [Creative Commons Attribution License](http://creativecommons.org/licenses/by/4.0/).\label{beetonfig}](journal.pcbi.1009526.g004.png)
 
