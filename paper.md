@@ -105,6 +105,6 @@ This allows rapid simulation at continental scales to investigate sensitivity to
 
 # Acknowledgements
 
-This work was funded by a grant to the Foundation for the National Institutes of Health from the Bill \& Melinda Gates Foundation (INV-008525). Under the grant conditions of the Foundation, a Creative Commons Attribution 4.0 Generic License has already been assigned to the Author Accepted Manuscript version that might arise from this submission.
+This work was funded by a grant to the Foundation for the National Institutes of Health from the Bill \& Melinda Gates Foundation (INV-008525).
 
 # References
