@@ -91,13 +91,13 @@ In the above commands, `mozzie_venv` can be any path you desire.  You should rem
 
 ### Step 1c
 
-Install all the required python packages:
+Install all the required python packages.  Navigate to the mozzie repository, and then:
 
 ```
-pip install numpy scipy Cython coverage setuptools matplotlib
+pip install -r requirements.txt
 ```
 
-These may be installed into a directory that is not on your path.  For instance, if `coverage` returns an error, you will have to modify your PATH variable.  The matplotlib library is just used to plot the example figures.
+This may install packages into a directory that is not on your path.  For instance, if typing `coverage` into your terminal or command prompt returns an error, you will have to modify your PATH variable.
 
 
 ### Step 2
