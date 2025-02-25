@@ -64,9 +64,9 @@ If one or more of these aren't available, one of the following could help.
 - On redhat: TODO
 - On an HPC supercomputer: `module load XXXX` (ask your systems administrators for what XXXX should be)
 - On Windows:
-  - Install python by downloading from the internet (eg [python.org](www.python.org)).  Ensure you add python to your PATH, and install the pip optional package.
+  - Install python by downloading from the internet (eg [python.org](https://python.org)).  Ensure you add python to your PATH, and install the pip optional package.
   - Install cmake by downloading from cmake.org.  Ensure you add cmake to your PATH.
-  - Install the C compiler (eg Visual Studio Build Tools 2022) from [MicroSoft's website](www.visualstudio.microsoft.com/visual-cpp-build-tools/), ticking the "Desktop development with C++".
+  - Install the C compiler (eg Visual Studio Build Tools 2022) from [Microsoft's website](https://visualstudio.microsoft.com/visual-cpp-build-tools/), ticking the "Desktop development with C++".
 
 ### Step 1b
 
