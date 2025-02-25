@@ -6,7 +6,7 @@
 
 More technically, `Mozzie` simulates a population-dynamics model that uses differential equations or delay differential equations to describe the spread and persistence of mosquitoes that may be genetic altered.  Genetic alterations are flexibly modelled: these can involve any number of alleles; Mendelian or non-Mendelian inheritance, including gene drives; they can be self-limiting or self-sustaining; and can include the emergence of resistant allelles.  The model allows simulation of any number of mosquito species.   It incorporates mate-choice, hybridisation and intra-specific competition that occur within complexes of mosquito species.  This fills a gap that currently exists among similar models, allowing researchers to assess potential transfer of the genetic alterations between (sub-)species.
 
-`Mozzie` supports spatial and temporal variations in lifecyle parameters, and local diffusion and wind-assisted, long range, advection.  For example, wind patterns and the capacity of the landscape to support mosquitoes can vary spatially and temporally, reflecting daily variations, seasonality, and local conditions.
+`Mozzie` supports spatial and temporal variations in lifecycle parameters, and local diffusion and wind-assisted, long range, advection.  For example, wind patterns and the capacity of the landscape to support mosquitoes can vary spatially and temporally, reflecting daily variations, seasonality, and local conditions.
 
 Conversely, `Mozzie` does not contain human agents, nor does it consider the effect of genetic control strategies on the prevalence of pathogens such as the malaria parasite, among human or animal populations.
 
@@ -15,16 +15,16 @@ Conversely, `Mozzie` does not contain human agents, nor does it consider the eff
 
 Australia's Commonwealth Scientific and Industrial Research Organisation (CSIRO) welcomes contributions to this code.  The recommended method is to:
  
-1. Submit an Issue on github, describing the reasons for your potential contribution;
-2. Engage in discussions with CSIRO staff on github regarding the best architecture, etc, for your contribution;
-3. When your contribution is ready, issue a Pull Request on github.
+1. Submit an [Issue](https://github.com/csiro-risk-assessment/mozzie/issues) on GitHub, describing the reasons for your potential contribution;
+2. Engage in discussions with CSIRO staff on GitHub regarding the best architecture, etc, for your contribution;
+3. When your contribution is ready, issue a Pull Request on GitHub.
  
 CSIRO does not guarantee to inspect such contributions, nor accept them into the code.
 
 
 ## Licensing and disclaimers
 
-This code is released under a GPLv3 license. To discuss other licenses, please contact CSIRO via github.
+This code is released under a GPLv3 license. To discuss other licenses, please contact CSIRO via GitHub.
  
 Copyright (c) 2024 Commonwealth Scientific and Industrial Research Organisation (CSIRO) ABN 41 687 119 230.
  
@@ -32,9 +32,9 @@ CSIRO does not make any guarantees of accuracy or relevance of the code.  CSIRO 
 
 ## Reporting problems and seeking support
 
-Please report problems using a new github issue.  Please tag someone (eg @WilkAndy) in your issue.  CSIRO will endeavour to fix any problems, but does not guarantee to do so.
+Please report problems using a new GitHub [issue](https://github.com/csiro-risk-assessment/mozzie/issues).  Please tag someone (eg @WilkAndy) in your issue.  CSIRO will endeavour to fix any problems, but does not guarantee to do so.
 
-To seek help, please also use a new github issue, and please tag someone (eg @WilkAndy).  Using a github issue means that future users may benefit from the solution to your problem.  CSIRO will endeavour to help, but does not guarantee to do so.
+To seek help, please also use a new GitHub [issue](https://github.com/csiro-risk-assessment/mozzie/issues), and please tag someone (eg @WilkAndy).  Using a GitHub issue means that future users may benefit from the solution to your problem.  CSIRO will endeavour to help, but does not guarantee to do so.
 
 
 ## How to build and test the code
@@ -64,9 +64,9 @@ If one or more of these aren't available, one of the following could help.
 - On redhat: TODO
 - On an HPC supercomputer: `module load XXXX` (ask your systems administrators for what XXXX should be)
 - On Windows:
-  - Install python by downloading from the internet (eg www.python.org).  Ensure you add python to your PATH, and install the pip optional package.
+  - Install python by downloading from the internet (eg [python.org](www.python.org)).  Ensure you add python to your PATH, and install the pip optional package.
   - Install cmake by downloading from cmake.org.  Ensure you add cmake to your PATH.
-  - Install the C compiler (eg Visual Studio Build Tools 2022) from visualstudio.microsoft.com/visual-cpp-build-tools/, ticking the "Desktop development with C++".
+  - Install the C compiler (eg Visual Studio Build Tools 2022) from [MicroSoft's website](www.visualstudio.microsoft.com/visual-cpp-build-tools/), ticking the "Desktop development with C++".
 
 ### Step 1b
 
@@ -216,7 +216,7 @@ First, define an object that contains all the mosquito populations over the grid
 all_pops = PopulationsAndParameters(g1, cell)
 ```
 
-In this case, when the lifecycle parameter (carrying capacity) is time-independent, it is convenient to set it now.  In `CellDynamicsLogistic1_1`, the second slot in the populations and paramemters array contains the carrying capacity at the cell, so:
+In this case, when the lifecycle parameter (carrying capacity) is time-independent, it is convenient to set it now.  In `CellDynamicsLogistic1_1`, the second slot in the populations and parameters array contains the carrying capacity at the cell, so:
 
 ```
 pop_and_param_array = all_pops.getQuantities()
@@ -226,7 +226,7 @@ for i in range(g1.getNumActiveCells()):
 
 (The `max` ensures there is a nonzero carrying capacity everywhere).  If carrying capacity were time-dependent then `pop_and_param_array` would be set during time-stepping, not during this initialisation phase (the primers contain examples of this).
 
-There are various ways of defining initial ocnditions, and the `example*/runner*` provide examples. In this case, 10000 mosquitoes are introduced at (x, y) = (-2000, 700), and the carrying capacity is set to 150000 at that cell:
+There are various ways of defining initial conditions, and the `example*/runner*` provide examples. In this case, 10000 mosquitoes are introduced at (x, y) = (-2000, 700), and the carrying capacity is set to 150000 at that cell:
 
 ```
 all_pops.setPopulationAndParametersFromXY(-2000, 700, [10000.0, 150000.0])
@@ -284,13 +284,13 @@ Note that you will have to **think carefully about the biological reality of you
 
 Notice the `spatial.outputCSV` line above.  This outputs populations to a CSV file (the arguments depend on the lifecycle chosen, such as logistic growth, or any of the other CellDynamics classes).  Matplotlib can be used to plot the results.  The primers mentioned above contain examples of this.
 
-Because of th "block" structure of each `runner.py` script, you can run partial simulations, for instance, just processing wind files, or loading files, processing in some way and outputting to produce figures.  You can also chain together multiple simulations that rely on just one initial block of file reading, to avoid reading data files for each and every simulation.
+Because of the "block" structure of each `runner.py` script, you can run partial simulations, for instance, just processing wind files, or loading files, processing in some way and outputting to produce figures.  You can also chain together multiple simulations that rely on just one initial block of file reading, to avoid reading data files for each and every simulation.
 
 ## Directory layout
 
 - `tests` directory contains tests (.py files) and associated files (all other files).  Run the tests by using, for example, `python TestGrid.py`.  Much of the code is tested by multiple tests.
 - `code` directory contains the core code (described below) that numerically simulates mosquito population dynamics.
-- `code/auxillary` directory contains python scripts that perform auxillary functions, such as plotting results and the important `ab_convert` program that converts between plaintext and binary data files.  These scripts are useful but are not necessary for the numerical simulation of mosquitoes.
+- `code/auxillary` directory contains python scripts that perform auxiliary functions, such as plotting results and the important `ab_convert` program that converts between plaintext and binary data files.  These scripts are useful but are not necessary for the numerical simulation of mosquitoes.
 
 ## File I/O and memory requirements
 
@@ -342,7 +342,7 @@ Here is an example "active/inactive" file:
 1,0,1,0
 0,0,1,1
 ```
-The lines following the header lines (preceeded by "#") always correspond to rows of cells.  The rows always appear in *upside-down order*, viz, in the above example:
+The lines following the header lines (preceded by "#") always correspond to rows of cells.  The rows always appear in *upside-down order*, viz, in the above example:
 - the first line, `1,0,1,1`, corresponds to the cells at `y=ymin=2.0`.  The cell at `xmin=1.0` is active; the cell at `xmin=4.0` is inactive; the cell at `xmin=7.0` is active; the cell at `xmin=10.0` is active.
 - the second line, `1,0,1,0`, corresponds to the cells at `y=ymin+cell_size=5.0`.  The cell at `xmin=1.0` is active; the cell at `xmin=4.0` is inactive; the cell at `xmin=7.0` is active; the cell at `xmin=10.0` is inactive.
 - the third line, `0,0,1,1`, corresponds to the cells at `y=ymin+2*cell_size=8.0`.  The cell at `xmin=1.0` is inactive; the cell at `xmin=4.0` is inactive; the cell at `xmin=7.0` is active; the cell at `xmin=10.0` is active.
@@ -410,7 +410,7 @@ After this, the `Wind` object is fully operational, and the useful methods are:
 - `getAdvectionP()`, returns the array `p`.
 - `getNumAdvection()`, returns the length of `f` (which equals the length of `t`, which also equals the length of `p`).
 
-For any `i`, `f[i]` is the active cell index from which a mosquito is advecting, `t[i]` is the active cell index to which it is advecting, and `p[i]` is the probability of this occuring.  This is stored in the processed data file and may be outputted using `outputProcessedCSV()` (as plaintext, or, if `setBinaryFileFormat(1), binary format).
+For any `i`, `f[i]` is the active cell index from which a mosquito is advecting, `t[i]` is the active cell index to which it is advecting, and `p[i]` is the probability of this occurring.  This is stored in the processed data file and may be outputted using `outputProcessedCSV()` (as plaintext, or, if `setBinaryFileFormat(1), binary format).
 
 Note that `f` may not contain all active cell indices.  For instance, for a cell on the grid boundary, wind may instantly advect all mosquitoes out of the domain.  Hence, `p` is the probability of moving from `f` to `t`, given that the mosquito is indeed advecting.  It is not simply the probability of advecting away from `f`.  This latter probability is specified in `spatialDynamics.advect`.
 
