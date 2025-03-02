@@ -328,7 +328,7 @@ The other choice that must be made regarding file I/O is whether to read "raw" w
 
 It is simply a matter of experimentation to determine whether reading "raw" or "processed" files is faster.
 
-Remember that there are hardware limitations when considering file I/O.  For example, Pearcey's `/scratch1` SSDs have a read-speed of about 1GB/s (this is impacted by caching and other users).  Processed, binary wind data can be read, checked and organised into data structures at a speed of about 0.7GB/s, indicating the code is close to optimal.  `Generic_float_binary` data (describing carrying-capacity, etc) can be read and organised into data structures at greater than 0.8GB/s.
+Remember that there are hardware limitations when considering file I/O.  For example, in our experiments on our HPC system, the SSDs have a read-speed of about 1GB/s (this is impacted by caching and other users).  Processed, binary wind data can be read, checked and organised into data structures at a speed of about 0.7GB/s, indicating the code is close to optimal.  `Generic_float_binary` data (describing carrying-capacity, etc) can be read and organised into data structures at greater than 0.8GB/s.
 
 Lots of memory is needed when reading lots of data describing wind, etc.  A lower bound on the program's memory requirements is the size of the binary files (sum of the "processed" wind and the `generic_float_binary` files).  For instance, in a recent simulation, 1 year of processed wind files used 84GB on disk, so the simulation is going to use at least this amount of memory, assuming all the wind files (either "raw" or "processed") are read and stored.  In reality, in this case this simulation uses almost exactly 84GB.
 
