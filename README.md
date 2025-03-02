@@ -97,7 +97,7 @@ Install all the required python packages.  Navigate to the mozzie repository, an
 pip install -r requirements.txt
 ```
 
-This may install packages into a directory that is not on your path.  For instance, if typing `coverage` into your terminal or command prompt returns an error, you will have to modify your PATH variable.
+Because you have created and activated your `mozzie_venv`, this will install the required python packages into that virtual environment.  Check all is well by typing `coverage` into your terminal or command prompt.  If an error is returned, you will have to modify your PATH variable.
 
 
 ### Step 2
@@ -118,6 +118,8 @@ cd code/auxillary
 cmake .
 cmake --build .
 ```
+
+The code is built in the `code` directory, so when you want to `import` the modules you have to ensure your `PATH` is set correctly.  See the primers and examples below for how we do this.
 
 ### Step 3
 
@@ -143,14 +145,24 @@ Before attempting a full-scale simulation with complicated lifecycle dynamics, y
 - `island.py` which describes lifecycle dynamics, diffusion and advection of a single species.  The lifecycle is governed by the logistic equation.  An island is separated from the mainland.  The species initially exists only on the mainland, but advection carries it to the island.  The output is plotted in `island.pdf`
 - `spatial.py` which is the same as `island.py`, but the wind velocity and carrying capacity are spatio-temporally dependent.  The result is plotted in `spatial.pdf`.
 
-Each of these python files contains extensive in-code documentation.  Run each of them using, for instance, `python3 logistic.py`.
+Each of these python files contains extensive in-code documentation.  Run each of them using, for instance,
+
+```
+cd primers
+python3 logistic.py
+```
+
+The `cd primers` is necessary because of the way we manipulate `PATH` to pick up the modules (see the start of each of the aforementioned files).
 
 
 ## How to set up a simulation
 
 The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  The aforementioned primers contain simple examples, and now we describe `example1/runner.py` that contains all the components of a full-scale simulation.  There are other more sophisticated models in the other `example*` directories.  Run the simulations using, for example,
 
-`python3 runner.py`
+```
+cd example1
+python3 runner.py
+```
 
 ### runner.py: the `import` block
 
