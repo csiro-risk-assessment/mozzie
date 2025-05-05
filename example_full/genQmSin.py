@@ -4,7 +4,7 @@ import pandas as pd
 from scipy.ndimage import distance_transform_edt
 
 # Set the path of your working directory
-working_dir = "example_fulls"
+working_dir = "example_full"
 os.chdir(os.path.expanduser(working_dir))
 
 # Create a directory for saving the CSV for qm daily between 01-01-2022 and 31-12-2023
@@ -38,21 +38,19 @@ species = ["Aa", "Ac", "Ag"]
 # Sinusoidal function is daily varying abundance at equilibrium of each species, a function of time in number of days
 # f(t) = amplitude*sin(2*pi*frequency*t+phase)+shift
 # The parameters are chosen so that:
-# An. arabiensis abundance is varying between ~ 200 and ~ 900 females 
-# An. coluzzii abundance is varying between ~ 8300 and ~ 34000 females 
-# An. gambiae ss abundance is varying between ~ 1100 and ~ 5000 females
-# An. coluzzii peaks of abundance are shifted by two months approximatively with respect to An. arabiensis peaks
-# An. gambiae ss peaks of abundance are shifted by six months approximatively with respect to An. coluzzii peaks
-# An. gambiae ss peaks of abundance are shifted by four months approximatively with respect to An. arabiensis peaks
+# An. arabiensis abundance is varying between ~ 1300 and ~ 7300 females 
+# An. coluzzii abundance is varying between ~ 3000 and ~ 83000 females 
+# An. gambiae ss abundance is varying between ~ 1000 and ~ 45000 females
+# The peaks of abundance of An. coluzzii and An. gambiae ss are shifted by 40 days approximatively with respect to An. arabiensis peaks
 # amplitude is the difference between the maximum and the minimum divided by 2
-amplitude = [-297.58599, -12864.35366, 1955.44556] 
-# frequency f=1/T where T is the period, the period is approximatively 365
-frequency = [0.002742199, 0.002739520, 0.002739513]
+amplitude = [-3000, 40000, 22000] 
+# frequency f = 1/T where T is the period, the period is approximatively 365
+frequency = [0.00274, 0.00274, 0.00274]
 # horizontal shift or phase shift
-phase = [0.2638043, -0.8975329, -0.8219002]
+phase = [0.9, -1/5, -1.5]
 # vertical shift, the vertical shift must be sufficient to make the sinusoidal function always positive
 # another vertical shift is going to be added later using the distance to the river
-shift = [562.41244, 21175.22266, 3066.00344]
+shift = [4300, 43000, 23000]
 
 # Initialize parameters of the model
 # Reproduction rate in number of females
@@ -90,10 +88,10 @@ for year in years_simulated:
                     mat_d = (mat_dist / 20) ** 2
                 elif sp == 1:
                     # The vertical shift for the cells with Aa close from the "river" is going to be increase by a linear factor of the distance
-                    mat_d = -2 * mat_dist
+                    mat_d = -4 * mat_dist
                 elif sp == 2:
                     # The vertical shift for the cells with Ag far from the "river" is going to be increase by a cubic factor of the distance
-                    mat_d = (mat_dist) ** 3
+                    mat_d = (mat_dist / 35) ** 3
 
                 # Calculate the sinusoidal for all grid to represent current species abundance in each cell
                 mat_X = amplitude[sp] * np.sin(2 * np.pi * frequency[sp] * tt + phase[sp]) + (shift[sp] + mat_d)
