@@ -2,8 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 
-# Set the working directory
-working_dir = "example_full"
+# Set this to the path of your working directory
+working_dir = "/scratch3/bee069/bee069/example_full" #"SET PATH HERE"
 os.chdir(os.path.expanduser(working_dir))
 
 # Directory to save the CSV files
@@ -45,14 +45,14 @@ for y in years:
             wind_north = np.flipud(wind_north)
 
             # Create filename
-            newfile = os.path.join(writing_dir, f"{y}.{m}.{d}.windvec_m_per_day.csv")
+            newfile = os.path.join(writing_dir, f"{y:02d}.{m:02d}.{d:02d}.windvec_m_per_day.csv")
 
             # Create header
             header = [
                 "#Active cells defined by file active.csv",
                 f"#raw_vel_filename={newfile}",
                 "#processed_pdf=[[0.375, 1.0]]",
-                "#xmin=-1799134,ymin=-1299134,cell_size=5000.0,nx=100,ny=100"
+                "#xmin=-1799134.0,ymin=-1299134.0,cell_size=5000.0,nx=100,ny=100"
             ]
 
             # Reshape matrix for saving

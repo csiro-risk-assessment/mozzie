@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from scipy.ndimage import distance_transform_edt
 
-# Set the path of your working directory
-working_dir = "example_full"
+# Set this to the path of your working directory
+working_dir = "/scratch3/bee069/bee069/example_full" # "SET PATH HERE"
 os.chdir(os.path.expanduser(working_dir))
 
 # Create a directory for saving the CSV for qm daily between 01-01-2022 and 31-12-2023
@@ -13,7 +13,7 @@ if not os.path.exists(writing_dir):
     os.makedirs(os.path.join(working_dir, writing_dir))
 
 # Header of the CSV file
-header = "#xmin=-1799134,ymin=-1299134,cell_size=5000.0,nx=100,ny=100"
+header = "#xmin=-1799134.0,ymin=-1299134.0,cell_size=5000.0,nx=100,ny=100"
 
 # Read the active cells grid of 100 by 100 cells where active cells are represented by 1 and inactive cells are represented by 0
 # Inactive cells form the shape of a "river"
@@ -41,10 +41,10 @@ species = ["Aa", "Ac", "Ag"]
 # An. arabiensis abundance is varying between ~ 1300 and ~ 7300 females 
 # An. coluzzii abundance is varying between ~ 3000 and ~ 83000 females 
 # An. gambiae ss abundance is varying between ~ 1000 and ~ 45000 females
-# The peaks of abundance of An. coluzzii and An. gambiae ss are shifted by 40 days approximatively with respect to An. arabiensis peaks
+# The peaks of abundance of An. coluzzii and An. gambiae ss are shifted by 40 days approximately with respect to An. arabiensis peaks
 # amplitude is the difference between the maximum and the minimum divided by 2
 amplitude = [-3000, 40000, 22000] 
-# frequency f = 1/T where T is the period, the period is approximatively 365
+# frequency f = 1/T where T is the period, the period is approximately 365
 frequency = [0.00274, 0.00274, 0.00274]
 # horizontal shift or phase shift
 phase = [0.9, -1/5, -1.5]
