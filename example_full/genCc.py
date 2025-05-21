@@ -7,8 +7,8 @@ from scipy.ndimage import distance_transform_edt
 working_dir = "/scratch3/bee069/bee069/example_full" # "SET PATH HERE"
 os.chdir(os.path.expanduser(working_dir))
 
-# Create a directory for saving the CSV for qm daily between 01-01-2022 and 31-12-2023
-writing_dir = "qm"
+# Create a directory for saving the CSV for daily carrying capacities between 01-01-2022 and 31-12-2023
+writing_dir = "cc"
 if not os.path.exists(writing_dir):
     os.makedirs(os.path.join(working_dir, writing_dir))
 
@@ -74,7 +74,7 @@ for year in years_simulated:
     for doy in range(365):
         tt = tt + 1
         # 3 filenames, one for each species (Aa, Ac, Ag) 
-        new_files = [f"{writing_dir}/qm.{species}.{year}.{doy+1}.csv" for species in ["Aa", "Ac", "Ag"]]
+        new_files = [f"{writing_dir}/cc.{species}.{year}.{doy+1}.csv" for species in ["Aa", "Ac", "Ag"]]
 
         # Check if the files already exist
         if not all(os.path.exists(file) for file in new_files):
@@ -104,18 +104,18 @@ for year in years_simulated:
                 if np.any(vec_X < 0):
                     print(f"big problem for timestep: {tt}")
             
-            # The values qm, species-specific, are obtained from the daily abundances X at equilibrium (X*)
-            # X* = inv(A)*diag((lamb - z)/z)*qm
-            # qm = A*diag(z/(lamb - z))
-            vec_q = vec_X.dot(A)
-            vec_q = vec_q.dot(np.diag(z / (lamb - z)))
+            # The values cc, species-specific, are obtained from the daily abundances X at equilibrium (X*)
+            # X* = inv(A)*diag((lamb - z)/z)*cc
+            # cc = A*diag(z/(lamb - z))
+            vec_cc = vec_X.dot(A)
+            vec_cc = vec_cc.dot(np.diag(z / (lamb - z)))
 
-            # Save each matrix representing qm for each species in a file, one for each day  
+            # Save each matrix representing cc for each species in a file, one for each day  
             for sp in range(3):  # Write CSV files
-                mat_qm = vec_q[:, sp].reshape(100, 100)
-                mat_qm = np.flipud(mat_qm)  # Flip rows
+                mat_cc = vec_cc[:, sp].reshape(100, 100)
+                mat_cc = np.flipud(mat_cc)  # Flip rows
                 file_path = new_files[sp]
 
                 with open(file_path, 'w') as f:
                     f.write(header + "\n")
-                    np.savetxt(f, mat_qm, delimiter=',', fmt='%f')
+                    np.savetxt(f, mat_cc, delimiter=',', fmt='%f')
