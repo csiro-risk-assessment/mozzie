@@ -102,5 +102,5 @@ img_animated <- image_animate(img_joined, fps = 20)
 #img_animated
 ## save to disk
 image_write(image = img_animated,
-            path = "anim.png")
+            path = "anim.gif")
 #for (i in 1:730) file.remove(paste0(i,".png"))

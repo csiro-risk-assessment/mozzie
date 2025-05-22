@@ -124,8 +124,8 @@ cell.setHybridisationRate(0, 1, 1, 1.0)
 cell.setHybridisationRate(0, 1, 0, 0.0) 
 cell.setHybridisationRate(1, 0, 0, 1.0)
 cell.setHybridisationRate(1, 0, 1, 0.0) 
-self.setAlphaComponent(0, 1, 0.1)
-self.setAlphaComponent(1, 0, 0.1)
+cell.setAlphaComponent(0, 1, 0.1)
+cell.setAlphaComponent(1, 0, 0.1)
 
 ######################################################
 # define a zeroed populations and parameters array
@@ -169,7 +169,7 @@ sys.stdout.write("Initialising the populations, with male and female wild-types 
 start = timeit.default_timer()
 num_actives = len(ini_ccs[0])
 
-ini_pops = [array.array('f', [0.5 * ini_ccs[m][i] for i in range(num_actives)]) for m in range(num_species)]
+ini_pops = [array.array('f', [100.0 * 0.5 * ini_ccs[m][i] for i in range(num_actives)]) for m in range(num_species)]
 
 for species in range(num_species):
     for genotype in [0]: # only wild-types
@@ -241,13 +241,13 @@ for year in years_simulated:
                         temp.parse(os.path.join(working_dir, dir_with_cc, "cc.Ac." + str(year) + "." + str(doyno) + ".csv"), "generic_float", [])
                         temp.restrictToActive(g1.getGlobalIndex())
                         ini_cc = temp.getData0()
-                        cc[(month, day, species)] = [ini_cc[i] + 1.e-3 for i in range(num_actives)]
+                        cc[(month, day, species)] = [100.0 * ini_cc[i] + 1.e-3 for i in range(num_actives)]
                     elif speciesno == 1:
                         temp = SpatialDependence(-1799134, -1299134, 5000.0, 100, 100) 
                         temp.parse(os.path.join(working_dir, dir_with_cc, "cc.Ag." + str(year) + "." + str(doyno) + ".csv"), "generic_float", [])
                         temp.restrictToActive(g1.getGlobalIndex())
                         ini_cc = temp.getData0()
-                        cc[(month, day, species)] = [ini_cc[i] + 1.e-3 for i in range(num_actives)]
+                        cc[(month, day, species)] = [100.0 * ini_cc[i] + 1.e-3 for i in range(num_actives)]
                         
                     cc[(month, day, species)] = array.array('f', cc[(month, day, species)])
 
@@ -272,7 +272,7 @@ for year in years_simulated:
                     sex = 0
                     age = 1
                     index = species + genotype * num_species + sex * num_species * 6 + age * num_species * 12
-                    pap[index] = pap[index] + 10000.0
+                    pap[index] = pap[index] + 100.0 * 10000.0
                     all_pops.setPopulationAndParametersFromXY(locx,locy, pap.tolist())
 
                 spatial.evolveCells(timestep_size)
