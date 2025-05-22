@@ -56,9 +56,10 @@ for y in years:
             ]
 
             # Reshape matrix for saving
-            wind_en = np.column_stack((wind_east.flatten(), wind_north.flatten()))
+            wind_en = np.column_stack((wind_east, wind_north)).reshape(wind_east.shape[0], -1, order='F')
 
             # Write to file
             with open(newfile, 'w') as f:
                 f.write("\n".join(header) + "\n")
-            pd.DataFrame(wind_en[::-1]).to_csv(newfile, sep=',', index=False, header=False, mode='a')
+                np.savetxt(f, wind_en, delimiter=",", fmt="%d")
+
