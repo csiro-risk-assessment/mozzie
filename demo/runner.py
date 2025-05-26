@@ -21,7 +21,7 @@ sys.path.append(os.path.join(findbin, "..", "code"))
 working_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 os.chdir(os.path.expanduser(working_dir))
 # Directory, relative to working_directory, where the daily carrying-capacity files are
-# These data will have been created by genCc.py
+# These data will have been created by genCC.py
 dir_with_cc = "cc"
 # Directory, relative to working_directory, where the wind CSV files are
 dir_with_wind = "wind"
