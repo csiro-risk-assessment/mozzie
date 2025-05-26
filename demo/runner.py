@@ -26,7 +26,7 @@ dir_with_cc = "cc"
 # Directory, relative to working_directory, where the wind CSV files are
 dir_with_wind = "wind"
 # The file (in the working_directory) that contains the active cells
-file_defining_active_cells = "activeDemo.csv"
+file_defining_active_cells = "active.csv"
 # The output directory
 output_dir = "output"
 

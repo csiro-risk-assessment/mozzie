@@ -40,7 +40,7 @@ header = "#xmin=-1799134.0,ymin=-1299134.0,cell_size=5000.0,nx=100,ny=100"
 # Read the active cells grid of 100 by 100 cells where active cells are represented by 1 and inactive cells are represented by 0
 # Inactive cells form the shape of a "river"
 sys.stdout.write("Parsing active cells\n")
-active = pd.read_csv(os.path.join(working_dir, "activeDemo.csv"), skiprows=1, header=None)
+active = pd.read_csv(os.path.join(working_dir, "active.csv"), skiprows=1, header=None)
 active_mat = active.to_numpy()
 active_mat = np.flipud(active_mat)  # Reverse the order of rows
 
