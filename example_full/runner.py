@@ -8,24 +8,27 @@ import math
 import numpy as np
 
 ######################################################
-# User input directories
-# Set this to the path of your working directory
-working_dir = "/scratch3/bee069/bee069/example_full" #"SET PATH HERE"
+# Paths and filenames
+#
+# Append the path of the mozzie code directory to the system path
+# Here, we assume you are running this script from mozzie/example_full
+findbin = os.path.dirname(os.path.realpath(sys.argv[0]))
+sys.path.append(os.path.join(findbin, "..", "code"))
+#
+# Set the working directory,
+# which contains files for defining active cells, etc, as well as the output
+# Here, we assume your working directory is mozzie/example_full
+working_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 os.chdir(os.path.expanduser(working_dir))
-
-# Set this to the path of the mozzie code directory
-sys.path.append("/home/bee069/mozzie/mozzie/code")#"SET PATH HERE")
-
-######################################################
-# Default example directories
-# Please enter the path of the directory where to read the .bin files of q
-dir_with_cc = "cc" # corresponding to the "cc" of each species at each year at each month at each day.
-# Please enter the path of the directory where to read the .bin files of processed wind fields
-dir_with_wind = "wind/"
-# Please enter the path of the directory where to read the .csv file of the active grid
+# Directory, relative to working_directory, where the daily carrying-capacity files are
+# These data will have been created by genCc.py
+dir_with_cc = "cc"
+# Directory, relative to working_directory, where the wind CSV files are
+dir_with_wind = "wind"
+# The file (in the working_directory) that contains the active cells
 file_defining_active_cells = "activeDemo.csv"
-# Please enter the name of the output directory
-output_dir = "output/"
+# The output directory
+output_dir = "output"
 
 from wind import Wind
 from grid import Grid
@@ -35,48 +38,47 @@ from spatialDependence import SpatialDependence
 from populationsAndParameters import PopulationsAndParameters
 
 ######################################################
-# setup the grid and the active/inactive information
+# Setup the grid and the active/inactive information
+#
 sys.stdout.write("Initialising grid (without building adjacency list)...")
 start = timeit.default_timer()
 g1 = Grid(-1799134, -1299134, 5000.0, 100, 100, False)
-sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
+sys.stdout.write("  Time taken = " + str(timeit.default_timer() - start) + "s\n")
 
 sys.stdout.write("Setting active and inactive...")
 start = timeit.default_timer()
 g1.setActiveAndInactive(os.path.join(working_dir, file_defining_active_cells))
-sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
+sys.stdout.write("  Time taken = " + str(timeit.default_timer() - start) + "s\n")
 sys.stdout.write("There are " + str(g1.getNumActiveCells()) + " active cells\n")
 
 
 ###################################################
 # Model parameters
-
-# Introduction location in middle of grid somewhere
+#
+# Introduction location roughly in middle of grid
 locx = -1799134 + 2500 + 49*5000
 locy = -1299134 + 2500 + 49*5000
-
-
 # Following are the parameters and input-files of this model
-species_list = ["Ac", "Ag"] # if you change to !=3 subspecies, a few other things below will need to be changed, as noted below.  If you change these names, then search throughout this file for "species_list" to see what else you might need to change
+species_list = ["Ac", "Ag"] # if you change to a different number of species, a few other things below will need to be changed, as noted below.  If you change these names, then search throughout this file for "species_list" to see what else you might need to change
 sex_list = ["male", "female"] # must be 2 sexes
-genotype_list = ["ww", "wc", "wr", "cc", "cr", "rr"] # must be 6 genotypes
+genotype_list = ["ww", "wc", "wr", "cc", "cr", "rr"] # must be 6 genotypes because of the use of CellDynamicsMosquito26
 num_species = len(species_list) 
-death_rate_ww = [0.1, 0.1] # death rate of wild-types of each species, measured in 1/day.  Below we assume the other genotypes have the same death rate: if a bad assumption then just modify death_rate variable below.  Must be changed if num_species changes from 3
-competition = [[1.00000000,0.01], [0.01,1.00000000]] # competition between subspecies.  Must be changed if num_species changes from 3
-emergence_rate = [9.0, 9.0] 
+# death rate in 1/day for each sex, genotype and species.  Must be changed if num_species changes from 2.
+death_rate = [[[0.1 for m in range(2)] for g in range(6)] for s in range(2)]
+competition = [[1.00000000,0.01], [0.01,1.00000000]] # competition between subspecies.  Must be changed if num_species changes from 2
+emergence_rate = [9.0, 9.0] # emergence rate in 1/day.  Must be changed if num_species changes from 2
+# activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing.  Must be changed if num_species changes from 2
 activity = [[0.998093641, 0.001906359], 
-[0.001906359, 0.998093641]]
-# activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing.  Must be changed if num_species changes from 3
-
+            [0.001906359, 0.998093641]]
+# hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF.  The current value means offspring is always same as mF.  Must be changed if num_species changes from 2
 hybridisation = [[[[1, 0], [0, 1]],  # Ac
-[[1, 0], [0, 1]]]] # Ag
-# hybridisation[mM][mF][m] = prob that offspring of species m results from male of species mM and female of species mF.  The current value means offspring is always same as mF.  Must be changed if num_species changes from 3
-offspring_modifier = [[[1, 1], [1, 1]], [[1, 1], [1, 1]]]
+                  [[1, 0], [0, 1]]]] # Ag
 # offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) offspring of sex s that arises from male of species mM and female of species mF
-
-diffusion_coefficient = 100 * 190.0**2 / (math.pi * 7) # TURBOCHARGED 100 x 1641.57 m^2/day for male Ac wildtype
-
-windhrs = 2;
+offspring_modifier = [[[1, 1], [1, 1]], [[1, 1], [1, 1]]]
+# diffusion coefficient in km^2/day.  This is massively turbocharged compared with something that is realistic, to best illustrate mozzie's capability.  Or, equivalently, the grid could be measured in a smaller unit than km
+diffusion_coefficient = 100 * 190.0**2 / (math.pi * 7)
+# wind, and advection fraction
+windhrs = 2
 if windhrs <= 0:
     advection_fraction = 0
 elif windhrs == 2:
@@ -86,31 +88,22 @@ elif windhrs == 9:
 else:
     raise ValueError("windhrs must be <=0, 2 or 9")
 
-######################################################
-# 50/50 sex advection ratio
-advection_males = 0.5 
-
 # Example simulation goes from 2022-3
 years_simulated = list(range(2022, 2024))
 year_begin = 2022
 monthdays = [31,28,31,30,31,30,31,31,30,31,30,31] # No leap years
-
-death_rate = [[[0.1 for m in range(2)] for g in range(6)] for s in range(2)]
-
 
 # add output folder
 try:
     os.mkdir(os.path.join(working_dir, output_dir))
 except:
     sys.stdout.write("Output folder already exists\n")
+# If num_species != 2, you shouldn't have to change anything below here
 
-# End parameter definitions
-# If num_species != 3, you shouldn't have to change anything below here
-
-
+# 26May2025: Andy to here: need to use all the above parameters!
 ######################################################
 # Define the ODE
-sys.stdout.write("Defining the populations and parameters array...")
+sys.stdout.write("Defining the ODE\n")
 start = timeit.default_timer()
 cell = CellDynamicsMosquito26()
 cell.setTimeIntegrationMethod("runge_kutta4")
@@ -126,14 +119,14 @@ cell.setHybridisationRate(1, 0, 0, 1.0)
 cell.setHybridisationRate(1, 0, 1, 0.0) 
 cell.setAlphaComponent(0, 1, 0.1)
 cell.setAlphaComponent(1, 0, 0.1)
+sys.stdout.write("  Time taken = " + str(timeit.default_timer() - start) + "s\n")
 
 ######################################################
 # define a zeroed populations and parameters array
 start = timeit.default_timer()
-sys.stdout.write("defining the populations and parameters array...")
+sys.stdout.write("Defining the populations and parameters array...")
 all_pops = PopulationsAndParameters(g1, cell)
-# get coords of introduction cell
-sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
+sys.stdout.write("  Time taken = " + str(timeit.default_timer() - start) + "s\n")
 
 ######################################################
 # initialise populations
@@ -280,10 +273,7 @@ for year in years_simulated:
                 spatial.diffuse(timestep_size, diffusion_coefficient)
                 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
                     
-                if windhrs == 9:
-                    spatial.advect(array.array('f', [26.65/41526.]), wind[(month, day)])
-                elif windhrs == 2:
-                    spatial.advect(array.array('f', [106.39/41526.]), wind[(month, day)])
+                spatial.advect(array.array('f', [advection_fraction]), wind[(month, day)])
                     
                 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
                 
@@ -294,7 +284,7 @@ for year in years_simulated:
                     for species in range(num_species):
                         for sex in range(2):
                             ind = species + genotype * num_species + sex * num_species * 6 + age * num_species * 12
-                            spatial.outputCSV(output_dir + species_list[species] + "_" + genotype_list[genotype] + "_" + sex_list[sex] + "_" + str(year) + "_" + month + "_" + day + ".csv", ind, "0", "")
+                            spatial.outputCSV(os.path.join(working_dir, output_dir, species_list[species] + "_" + genotype_list[genotype] + "_" + sex_list[sex] + "_" + str(year) + "_" + month + "_" + day + ".csv"), ind, "0", "")
                 
                 sys.stdout.write(" " + str(timeit.default_timer() - start) + "s\n")
             

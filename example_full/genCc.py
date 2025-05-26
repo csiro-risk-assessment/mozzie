@@ -1,6 +1,6 @@
 ######################################################
-# Creates daily carrying capacities between
-# 2022-01-01 and 2023-12-31
+# Creates a number proportional to daily carrying capacities
+# between 2022-01-01 and 2023-12-31.
 # Carrying capacities are defined for three species:
 # An. arabiensis; An. coluzzii; An. gambiae ss
 # called here Aa, Ac and Ag
