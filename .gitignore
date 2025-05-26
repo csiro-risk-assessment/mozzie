@@ -15,4 +15,4 @@ build
 __pycache__
 example_full/cc
 example_full/wind
-
+example_full/output
