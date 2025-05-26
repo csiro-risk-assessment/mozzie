@@ -1,32 +1,58 @@
+######################################################
+# Creates daily carrying capacities between
+# 2022-01-01 and 2023-12-31
+# Carrying capacities are defined for three species:
+# An. arabiensis; An. coluzzii; An. gambiae ss
+# called here Aa, Ac and Ag
+# Carrying capacities are modelled as sinusoidal, and
+# also depend on the distance from a river that is
+# embedded into the model.  The parameters in the
+# sinusoids, and the dependence on the distance to
+# the river are somewhat based on the authors' experience,
+# but also chosen to clearly illustrate the capability of mozzie
+
 import os
+import sys
 import numpy as np
 import pandas as pd
 from scipy.ndimage import distance_transform_edt
 
-# Set this to the path of your working directory
-working_dir = "/scratch3/bee069/bee069/example_full" # "SET PATH HERE"
-os.chdir(os.path.expanduser(working_dir))
+sys.stdout.write("Initialising paths and output directory\n")
+######################################################
+# Paths and filenames
+#
+# Set the working directory, which contains the file
+# defining active cells, and will contain the output directory
+# Change working_dir to suit your needs.
+working_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+# CSV Output of this script will be placed in this directory,
+# relative to working_dir
+output_dir = "cc"
 
-# Create a directory for saving the CSV for daily carrying capacities between 01-01-2022 and 31-12-2023
-writing_dir = "cc"
-if not os.path.exists(writing_dir):
-    os.makedirs(os.path.join(working_dir, writing_dir))
+# Change working directory, and potentially create output directory
+os.chdir(os.path.expanduser(working_dir))
+if not os.path.exists(output_dir):
+    os.makedirs(os.path.join(working_dir, output_dir))
 
 # Header of the CSV file
 header = "#xmin=-1799134.0,ymin=-1299134.0,cell_size=5000.0,nx=100,ny=100"
 
 # Read the active cells grid of 100 by 100 cells where active cells are represented by 1 and inactive cells are represented by 0
 # Inactive cells form the shape of a "river"
+sys.stdout.write("Parsing active cells\n")
 active = pd.read_csv(os.path.join(working_dir, "activeDemo.csv"), skiprows=1, header=None)
 active_mat = active.to_numpy()
 active_mat = np.flipud(active_mat)  # Reverse the order of rows
 
-# Compute the distance transform, it is going to be used in the vertical shift in the sinus formula
+# Compute the distance transform, it is going to be used in the vertical shift in the sinusoidal formula
 # The distance grid is a grid of of 100 by 100 cells where each value represented the distance to the closest inactive cells
 # A distance of zero is equivalent to an inactive cell
+sys.stdout.write("Finding minimum distances to river\n")
 distance_mat = distance_transform_edt(active_mat)
 # Multiply the distances by 10 so they have some weight
 distance_mat = distance_mat*10
+
+sys.stdout.write("Computing carrying capacities, and outputting\n")
 
 # Define the years
 years_simulated = list(range(2022, 2024))
@@ -67,22 +93,26 @@ vec_X = np.zeros((100 * 100, 3))
 mat_X = np.zeros((100, 100))
 mat_d = np.zeros((100, 100))
 
-# no of day
-tt = 0
+
+tt = 0 # timestep
+skipped = False # whether a set of files already existed
 # Loop through days and years
 for year in years_simulated:
+    sys.stdout.write("  year " + str(year) + "\n")
     for doy in range(365):
         tt = tt + 1
         # 3 filenames, one for each species (Aa, Ac, Ag) 
-        new_files = [f"{writing_dir}/cc.{species}.{year}.{doy+1}.csv" for species in ["Aa", "Ac", "Ag"]]
+        new_files = [f"{output_dir}/cc.{species}.{year}.{doy+1}.csv" for species in ["Aa", "Ac", "Ag"]]
 
         # Check if the files already exist
-        if not all(os.path.exists(file) for file in new_files):
+        if all(os.path.exists(file) for file in new_files):
+            skipped = True
+        else:
             for sp in range(3):  # Loop through species
                 # Matrix of distance is 100 by 100 cells
                 mat_dist = np.array(distance_mat).reshape(100, 100)
 
-                #A vertical shift is going to be added to the sinusoidal function depending on the distance grid and the species
+                # A vertical shift is going to be added to the sinusoidal function depending on the distance grid and the species
                 if sp == 0:
                     # The vertical shift for the cells with Aa far from the "river" is going to be increase by a quadratic factor of the distance
                     mat_d = (mat_dist / 20) ** 2
@@ -119,3 +149,6 @@ for year in years_simulated:
                 with open(file_path, 'w') as f:
                     f.write(header + "\n")
                     np.savetxt(f, mat_cc, delimiter=',', fmt='%f')
+if skipped:
+    sys.stdout.write("Warning: some files already existed, so these were not regenerated\n")
+sys.stdout.write("Done\n")
