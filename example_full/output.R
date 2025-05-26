@@ -104,3 +104,23 @@ img_animated <- image_animate(img_joined, fps = 20)
 image_write(image = img_animated,
             path = "anim.gif")
 #for (i in 1:730) file.remove(paste0(i,".png"))
+
+gm = apply(mozzies[,-1,,,,,,], 4:8, sum)
+gm = array(
+  aperm(gm, c(3:1, 4, 5)),
+        c(2*12*31, 100, 100))
+gm = apply(gm, 2:3, function(x) min(which(x > 1), na.rm = TRUE))
+gm[gm == Inf] = NA
+library(raster)
+
+africa.albers = '+proj=aea +lat_1=20 +lat_2=-23 +lat_0=0 +lon_0=25 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 
++units=m +no_defs'
+gm = raster(as.matrix(gm)[nrow(gm):1,], 
+       xmn=-1799134.0,ymn=-1299134.0,xmx=-1799134.0+5000*100,ymx=-1299134.0+5000*100, 
+       crs = africa.albers)
+
+pdf("figure.pdf", 7, 7)
+plot(gm)
+contour(gm, add = TRUE, drawlabels = FALSE, lwd = 1)
+dev.off()
+
