@@ -86,15 +86,17 @@ gm = np.flipud(gm)
 # Get terrain colormap
 terrain_cmap = plt.get_cmap("terrain")
 terrain = ListedColormap(terrain_cmap(np.linspace(0, 1, 255))[::-1])
-# Plot the map
-plt.imshow(gm,cmap=terrain)
-plt.colorbar()
+# Plot the map (in months)
+plt.imshow(gm/31,cmap=terrain)
+plt.colorbar(label = "Simulation time (months)")
 plt.title("Gene drive movement evolution")
-# Add contour lines
-x = np.arange(gm.shape[1])
-y = np.arange(gm.shape[0])
+# Add contour lines (in km)
+x = np.arange(gm.shape[1])*0.5 - 25.0
+y = np.arange(gm.shape[0])*0.5 - 25.0
 X, Y = np.meshgrid(x, y)
 plt.contour(X, Y, gm, levels=10, colors="black")
+plto.xlabel("Distance east of release point (km)")
+plto.ylabel("Distance north of release point (km)")
 # Save the figure in pdf
 plt.savefig(os.path.join(working_dir,"figure.pdf"), format="pdf", dpi=300)
 plt.close()

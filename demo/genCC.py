@@ -34,7 +34,7 @@ if not os.path.exists(output_dir):
     os.makedirs(os.path.join(working_dir, output_dir))
 
 # Header of the CSV file
-header = "#xmin=-1799134.0,ymin=-1299134.0,cell_size=5000.0,nx=100,ny=100"
+header = "#xmin=-25000.0,ymin=-25000.0,cell_size=500.0,nx=100,ny=100"
 
 # Read the active cells grid of 100 by 100 cells where active cells are represented by 1 and inactive cells are represented by 0
 # Inactive cells form the shape of a "river"
@@ -112,13 +112,13 @@ for year in years_simulated:
 
                 # A vertical shift is going to be added to the sinusoidal function depending on the distance grid and the species
                 if sp == 0:
-                    # The vertical shift for the cells with Aa far from the "river" is going to be increase by a quadratic factor of the distance
+                    # The vertical shift for the cells with Aa far from the "river" is going to increase by a quadratic factor of the distance
                     mat_d = (mat_dist / 20) ** 2
                 elif sp == 1:
-                    # The vertical shift for the cells with Aa close from the "river" is going to be increase by a linear factor of the distance
+                    # The vertical shift for the cells with Aa close from the "river" is going to increase by a linear factor of the distance
                     mat_d = -4 * mat_dist
                 elif sp == 2:
-                    # The vertical shift for the cells with Ag far from the "river" is going to be increase by a cubic factor of the distance
+                    # The vertical shift for the cells with Ag far from the "river" is going to increase by a cubic factor of the distance
                     mat_d = (mat_dist / 35) ** 3
 
                 # Calculate the sinusoidal for all grid to represent current species abundance in each cell
@@ -128,7 +128,7 @@ for year in years_simulated:
                 # Represent the grid in a 1D vector, so that vec_X contains abundances for all three species in three different columns
                 vec_X[:, sp] = mat_X.flatten()
 
-                # Print a message if a value of abundance is inferior to zero (should not happen with the parameters values we chose)
+                # Print a message if a value of abundance is below zero (should not happen with the parameters values we chose)
                 if np.any(vec_X < 0):
                     print(f"big problem for timestep: {tt}")
             

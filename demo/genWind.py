@@ -66,7 +66,7 @@ for y in years:
                 "#Active cells defined by file active.csv",
                 f"#raw_vel_filename={newfile}",
                 "#processed_pdf=[[0.375, 1.0]]",
-                "#xmin=-1799134.0,ymin=-1299134.0,cell_size=5000.0,nx=100,ny=100"
+                "#xmin=-25000.0,ymin=-25000.0,cell_size=500.0,nx=100,ny=100"
             ]
 
             # Reshape matrix for saving

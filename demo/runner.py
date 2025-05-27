@@ -51,7 +51,7 @@ from populationsAndParameters import PopulationsAndParameters
 #
 sys.stdout.write("Initialising grid (without building adjacency list)...")
 start = timeit.default_timer()
-g1 = Grid(-1799134, -1299134, 5000.0, 100, 100, False)
+g1 = Grid(-25000, -25000, 500.0, 100, 100, False)
 sys.stdout.write(f"  Time taken = {(timeit.default_timer() - start):.2g}s\n")
 
 sys.stdout.write("Setting active and inactive...")
@@ -76,29 +76,15 @@ competition = [[1, 0.1], [0.1, 1]]
 # hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF.  The current value means offspring is always same as mF.  Must be changed if num_species changes from 2
 hybridisation = [[[1, 0], [0, 1]],  # father Ac
                  [[1, 0], [0, 1]]] # father Ag
-# diffusion coefficient in km^2/day.  This is massively turbocharged compared with something that is realistic, to best illustrate mozzie's capability.  Or, equivalently, the grid could be measured in a smaller unit than km
-diffusion_coefficient = 100 * 190.0**2 / (math.pi * 7)
+# diffusion coefficient in m^2/day (roughly equivalent to 30 m / day average mozzie movement)
+diffusion_coefficient = 900 
 # number of hours mosquitoes advect by wind, and advection fraction
 windhrs = 2
 advection_fraction = 2.6E-3
 # Introduction location roughly in middle of grid
-locx = -1799134 + 2500 + 49*5000
-locy = -1299134 + 2500 + 49*5000
+locx = 0
+locy = 0
 # If num_species != 2, you shouldn't have to change anything below here
-
-################################################################################################
-# THESE ARE UNUSED, AND SHOULD PROBABLY BE DELETED !!
-# death rate in 1/day for each sex, genotype and species.  Must be changed if num_species changes from 2.
-# instead muAdult and muLarvae are used in CellDynamics26.  They default to 0.125 and 0.05
-death_rate = [[[0.1 for m in range(num_species)] for g in range(len(genotype_list))] for s in range(len(sex_list))]
-# emergence rate in 1/day.  Must be changed if num_species changes from 2.  Instead, there is an aging_rate in CellDynamics26, which defaults to 0.1
-emergence_rate = [9.0, 9.0]
-# activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing.  Must be changed if num_species changes from 2.  There is no such thing in CellDynamics26
-activity = [[0.998093641, 0.001906359], 
-            [0.001906359, 0.998093641]]
-# offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) offspring of sex s that arises from male of species mM and female of species mF.  There is no such thing in CellDynamics26
-offspring_modifier = [[[1, 1], [1, 1]], [[1, 1], [1, 1]]]
-################################################################################################
 
 # Example simulation runs through 2022 and 2023
 years_simulated = list(range(2022, 2024))
@@ -145,7 +131,7 @@ sys.stdout.write(f"  Time taken = {(timeit.default_timer() - start):.2g}s\n")
 # read a file corresponding to the cc for the first day, to set initial populations
 start = timeit.default_timer()
 sys.stdout.write("Reading a representative carrying capacity to set the initial populations...")
-temp = SpatialDependence(-1799134, -1299134, 5000.0, 100, 100) 
+temp = SpatialDependence(-25000, -25000, 500.0, 100, 100) 
 ini_ccs = [0 for i in range(num_species)]
 for species_num, species_name in number_species_name:
     fn = os.path.join(working_dir, dir_with_cc, "cc." + species_name + "." + str(year_begin) + ".1.csv")
@@ -223,7 +209,7 @@ for year in years_simulated:
         sys.stdout.write("    Reading and processing cc ")
         sys.stdout.flush() 
         start = timeit.default_timer()
-        temp = SpatialDependence(-1799134, -1299134, 5000.0, 100, 100) 
+        temp = SpatialDependence(-25000, -25000, 500.0, 100, 100) 
         cc = {}
         for dayno in range(monthdays[monthno]):
             day = str(dayno + 1).zfill(2)
