@@ -14,7 +14,6 @@
 import os
 import sys
 import numpy as np
-import pandas as pd
 from scipy.ndimage import distance_transform_edt
 
 sys.stdout.write("Initialising paths and output directory\n")
