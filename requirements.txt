@@ -1,6 +1,5 @@
 numpy~=2.2
 scipy~=1.15
-pandas~=2.2
 Cython~=3.0
 coverage~=7.6
 setuptools~=70.0
