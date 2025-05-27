@@ -2,8 +2,8 @@
 # Creates daily wind velocities between
 # 2022-01-01 and 2023-12-31
 # It is assumed that:
-# - The wind blows northeasterly in July and August at 10m/s
-# - The wind blows southwesterly in January at 10m/s
+# - The wind blows northeasterly in July and August at 1m/s
+# - The wind blows southwesterly in January at 1m/s
 # - The wind is set to 0m/s the other months
 import os
 import sys
@@ -30,8 +30,8 @@ month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 years = range(2022, 2024)
 months = range(1, 13)
 
-# The wind blows northeasterly in July and August at 10m/s
-# The wind blows southwesterly in January at 10m/s
+# The wind blows northeasterly in July and August at 1m/s
+# The wind blows southwesterly in January at 1m/s
 # The wind is set to 0m/s the other months
 # Iterate over years, months, and days
 for y in years:
@@ -42,13 +42,13 @@ for y in years:
             wind_north = np.zeros((100, 100))
 
             # Wind direction adjustments
-            # The magnitude of the speed is 10m/s in the indicated direction
+            # The magnitude of the speed is 1m/s in the indicated direction
             if m in [7, 8]:  # July and August: Northeasterly wind
-                wind_east += 10 * np.cos(np.pi / 4)
-                wind_north += 10 * np.sin(np.pi / 4)
+                wind_east += 1 * np.cos(np.pi / 4)
+                wind_north += 1 * np.sin(np.pi / 4)
             elif m == 1:  # January: Southwesterly wind
-                wind_east += 10 * np.cos(5 * np.pi / 4)
-                wind_north += 10 * np.sin(5 * np.pi / 4)
+                wind_east += 1 * np.cos(5 * np.pi / 4)
+                wind_north += 1 * np.sin(5 * np.pi / 4)
 
             # Convert wind speed from m/s to m/day
             wind_east = np.round(86400 * wind_east)
