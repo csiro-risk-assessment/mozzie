@@ -1,4 +1,13 @@
 ######################################################
+# This demo uses CellDynamics26 with 2 species
+# The simulation runs over the years 2022 and 2023
+# with daily changes in spatially-varying carrying capacity
+# and wind vectors.
+# Genetically modified mosquitoes are released near the
+# center of the domain during June 2022
+# This demo models the spread of the genetic modification
+
+######################################################
 # Import libraries
 import os
 import sys
@@ -55,65 +64,73 @@ sys.stdout.write("There are " + str(g1.getNumActiveCells()) + " active cells\n")
 ###################################################
 # Model parameters
 #
-# Introduction location roughly in middle of grid
-locx = -1799134 + 2500 + 49*5000
-locy = -1299134 + 2500 + 49*5000
-# Following are the parameters and input-files of this model
 species_list = ["Ac", "Ag"] # if you change to a different number of species, a few other things below will need to be changed, as noted below.  If you change these names, then search throughout this file for "species_list" to see what else you might need to change
 sex_list = ["male", "female"] # must be 2 sexes
 genotype_list = ["ww", "wc", "wr", "cc", "cr", "rr"] # must be 6 genotypes because of the use of CellDynamicsMosquito26
-num_species = len(species_list)
+num_species = len(species_list) # useful
+number_species_name = [(i, species_list[i]) for i in range(num_species)] # useful
 # multiply the carrying capacities found in the *cc* files by this number
 cc_scale = 100
-# death rate in 1/day for each sex, genotype and species.  Must be changed if num_species changes from 2.
-death_rate = [[[0.1 for m in range(2)] for g in range(6)] for s in range(2)]
-competition = [[1.00000000,0.01], [0.01,1.00000000]] # competition between subspecies.  Must be changed if num_species changes from 2
-emergence_rate = [9.0, 9.0] # emergence rate in 1/day.  Must be changed if num_species changes from 2
-# activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing.  Must be changed if num_species changes from 2
-activity = [[0.998093641, 0.001906359], 
-            [0.001906359, 0.998093641]]
+# competition between subspecies.  Must be changed if num_species changes from 2
+competition = [[1, 0.1], [0.1, 1]]
 # hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF.  The current value means offspring is always same as mF.  Must be changed if num_species changes from 2
-hybridisation = [[[[1, 0], [0, 1]],  # Ac
-                  [[1, 0], [0, 1]]]] # Ag
-# offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) offspring of sex s that arises from male of species mM and female of species mF
-offspring_modifier = [[[1, 1], [1, 1]], [[1, 1], [1, 1]]]
+hybridisation = [[[1, 0], [0, 1]],  # father Ac
+                 [[1, 0], [0, 1]]] # father Ag
 # diffusion coefficient in km^2/day.  This is massively turbocharged compared with something that is realistic, to best illustrate mozzie's capability.  Or, equivalently, the grid could be measured in a smaller unit than km
 diffusion_coefficient = 100 * 190.0**2 / (math.pi * 7)
 # number of hours mosquitoes advect by wind, and advection fraction
 windhrs = 2
 advection_fraction = 2.6E-3
+# Introduction location roughly in middle of grid
+locx = -1799134 + 2500 + 49*5000
+locy = -1299134 + 2500 + 49*5000
+# If num_species != 2, you shouldn't have to change anything below here
 
-number_species_name = [(i, species_list[i]) for i in range(num_species)]
-# Example simulation goes from 2022-3
+################################################################################################
+# THESE ARE UNUSED, AND SHOULD PROBABLY BE DELETED !!
+# death rate in 1/day for each sex, genotype and species.  Must be changed if num_species changes from 2.
+# instead muAdult and muLarvae are used in CellDynamics26.  They default to 0.125 and 0.05
+death_rate = [[[0.1 for m in range(num_species)] for g in range(len(genotype_list))] for s in range(len(sex_list))]
+# emergence rate in 1/day.  Must be changed if num_species changes from 2.  Instead, there is an aging_rate in CellDynamics26, which defaults to 0.1
+emergence_rate = [9.0, 9.0]
+# activity[female_of_species1][male_of_species2] is activity level in the proportionate mixing.  Must be changed if num_species changes from 2.  There is no such thing in CellDynamics26
+activity = [[0.998093641, 0.001906359], 
+            [0.001906359, 0.998093641]]
+# offspring_modifier[s][mM][mF] = suppression (if <1, or increased vigour if >1) offspring of sex s that arises from male of species mM and female of species mF.  There is no such thing in CellDynamics26
+offspring_modifier = [[[1, 1], [1, 1]], [[1, 1], [1, 1]]]
+################################################################################################
+
+# Example simulation runs through 2022 and 2023
 years_simulated = list(range(2022, 2024))
 year_begin = years_simulated[0]
-monthdays = [31,28,31,30,31,30,31,31,30,31,30,31] # No leap years
+monthdays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] # No leap years
 
 # add output folder
 try:
     os.mkdir(os.path.join(working_dir, output_dir))
 except:
     sys.stdout.write("Output folder already exists\n")
-# If num_species != 2, you shouldn't have to change anything below here
 
 ######################################################
 # Define the ODE
 sys.stdout.write("Defining the ODE...")
 start = timeit.default_timer()
 cell = CellDynamicsMosquito26()
+# Change the default parameters to ones appropriate to this demo
+# NO EFFECTOR (h_e, h_n, s_e, s_n)
+cell.setFitnessComponents26(0.0, 0.5, 0.0, 0.05)
+# offspring species is always equal to mother's species
+for father in range(num_species):
+    for mother in range(num_species):
+        for offspring in range(num_species):
+            cell.setHybridisationRate(father, mother, offspring, hybridisation[father][mother][offspring])
+# competition
+for sp0 in range(num_species):
+    for sp1 in range(num_species):
+        cell.setAlphaComponent(sp0, sp1, competition[sp0][sp1])
 cell.setTimeIntegrationMethod("runge_kutta4")
 cell.setMinCarryingCapacity(1.0)
 cell.setZeroCutoff(1.0)
-        # h_e = h_n = 0.5
-        # s_e = 0.1
-        # s_n = 0.05
-cell.setFitnessComponents26(0.0, 0.5, 0.0, 0.05) # NO EFFECTOR (h_e, h_n, s_e, s_n)
-cell.setHybridisationRate(0, 1, 1, 1.0) 
-cell.setHybridisationRate(0, 1, 0, 0.0) 
-cell.setHybridisationRate(1, 0, 0, 1.0)
-cell.setHybridisationRate(1, 0, 1, 0.0) 
-cell.setAlphaComponent(0, 1, 0.1)
-cell.setAlphaComponent(1, 0, 0.1)
 sys.stdout.write(f"  Time taken = {(timeit.default_timer() - start):.2g}s\n")
 
 ######################################################
