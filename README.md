@@ -157,7 +157,7 @@ The `cd primers` is necessary because of the way we manipulate `PATH` to pick up
 
 ## How to set up a simulation
 
-The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  The aforementioned primers contain simple examples, and now we describe `example1/runner.py` that contains all the components of a full-scale simulation.  There are other more sophisticated models in the other `example*` directories.  Run the simulations using, for example,
+The core code consists of python objects that you must instantiate in a "runner" python script that defines your mathematical model.  The aforementioned primers contain simple examples, and now we describe `example1/runner.py` that contains all the components of a full-scale simulation.  There are other more sophisticated models in the other `example*` directories, and in the demo directory.  Run the simulations using, for example,
 
 ```
 cd example1

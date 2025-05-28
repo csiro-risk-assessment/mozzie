@@ -97,11 +97,11 @@ Importantly, the numerical implementation of Mozzie is:
 
 This allows rapid simulation at continental scales to investigate sensitivity to input parameters, as required in risk assessments.  It is written in [Cython](https://cython.org) [@behnel2010cython] (a mixture of Python and C), and simulations are run using Python. The test coverage of the `Mozzie` codebase is over 99%, meaning it is also suitable for risk assessments that could be subject to considerable scrutiny.
 
-# Example
+# Demonstration
 
-\autoref{beetonfig} shows results from `Mozzie` simulations when using 2 inter-breeding, hybridising and competing mosquito species [@beetonplos].  A gene-drive is introduced into one of these species, and the modified individuals are released from one of 15 sites throughout sub-Saharan Africa.  The script and data to reproduce this result can be found on [CSIRO's data access portal](https://doi.org/10.25919/rgqc-7520).
+\autoref{demo} shows results from a `Mozzie` simulation using 2 inter-breeding, hybridising and competing mosquito species [@beetonplos].  A water body runs through the domain, effectively seperating it into two parts.  Mosquitoes can only traverse the water body via wind advection.  A gene-drive is introduced into one species, and the modified individuals are released at the center of the domain.  These modified individuals breed with wild mosquitoes, spreading the gene-drive, while after some time, the the genetic modification becomes ineffective in some individuals.  The wind blows in predominantly north-east or south-west directions, depending on the season, and it assumed that mosquitoes advect for 2 hours, which explains the clusters of rapid invasion shown in \autoref{demo}.  The code is found in the `demo` directory of the repository.
 
-![The invasion front of genetically-modified mosquito species, released from different points [@beetonplos].  Figure used under the [Creative Commons Attribution License](http://creativecommons.org/licenses/by/4.0/).\label{beetonfig}](journal.pcbi.1009526.g004.png)
+![The time taken for genetically-modified mosquito species to invade regions of the domain, after being released from the central point.  The water body is shown in cyan.\label{demo}](demo/demo.pdf)
 
 # Acknowledgements
 

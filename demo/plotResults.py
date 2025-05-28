@@ -29,7 +29,7 @@ reading_dir = "output"
 reading_dir = os.path.join(working_dir, reading_dir)
 
 # Different categories of populations (total 24 populations)
-# specie
+# species
 species = ["Ac", "Ag"]
 # genotype
 genotypes = ["ww", "wc", "wr", "cc", "cr", "rr"]
@@ -48,16 +48,16 @@ mozzies = np.zeros((2,6,2,2,12,31,100,100), dtype=float)
 sys.stdout.write("Reading abundances files:\n")
 for s in range(2):
     S = species[s]
-    print(S)
+    sys.stdout.write(S + "\n")
     for g in range(6):
         G = genotypes[g]
-        print(G)
+        sys.stdout.write("  " + G + "\n")
         for e in range(2):
            E = sexes[e]
-           print(E) 
+           sys.stdout.write("    " + E + "\n")
            for y in range(2):
               Y = years[y]
-              print(Y)
+              sys.stdout.write("      " + str(Y) + "\n")
               for m in range(12):
                  mo = m + 1
                  for d in range(monthdays[m]):
@@ -71,7 +71,7 @@ for s in range(2):
 
 # keep only genotypes with construct (c or r)
 mozzies = np.delete(mozzies, 0, axis=1)
-# sum of populations with c or for all sex and species
+# sum of populations with c or r for all sex and species
 gm = np.sum(mozzies, axis=(0, 1, 2))
 # 3D map with daily abundances
 gm = gm.reshape(2*12*31, 100, 100)
@@ -80,25 +80,31 @@ gm = gm.reshape(2*12*31, 100, 100)
 def safe_min(vec):
     return np.nan if vec[0].size == 0 else np.min(vec)
 gm = np.apply_along_axis(lambda x: safe_min(np.where(x > 1)), axis=0, arr=gm)
-gm = np.flipud(gm)
+gm = np.flipud(gm) - sum(monthdays[:5]) # release was on 1 June 2022
 
 
 # Get terrain colormap
 terrain_cmap = plt.get_cmap("terrain")
 terrain = ListedColormap(terrain_cmap(np.linspace(0, 1, 255))[::-1])
-# Plot the map (in months)
-plt.imshow(gm/31, cmap=terrain, extent=(-25,25,-25,25))
-plt.colorbar(label = "Simulation time (months)")
-plt.title("Gene drive movement evolution")
+# Plot the map (roughly in months)
+plt.imshow(gm * 12 / sum(monthdays), cmap=terrain, extent=(-25, 25, -25, 25), vmin = 0, vmax = 18)
+plt.colorbar(label = "Months")
+plt.title("Time taken for gene drive to invade domain")
 # Add contour lines (in km)
 # define centres of grid cells
 x = np.arange(-24.75, 25, 0.5)
 y = np.arange(24.75, -25, -0.5)
 X, Y = np.meshgrid(x, y)
-plt.contour(X, Y, gm, levels=10, colors="black")
+plt.contour(X, Y, gm, levels=10, colors="black", linewidths = 0.5)
 plt.xlabel("Distance east of release point (km)")
 plt.ylabel("Distance north of release point (km)")
-# Save the figure in pdf
-plt.savefig(os.path.join(working_dir,"figure.pdf"), format="pdf", dpi=300)
+# plot waterbody
+wb = np.genfromtxt('active.csv', delimiter = ',', skip_header = True)
+wb = np.flipud(wb) # because of upside-down convention used in mozzie
+custom = ListedColormap(['cyan', 'none'])
+plt.imshow(wb, extent=(-25, 25, -25, 25), cmap = custom)
+plt.text(23, -25, "Water body\nshown in cyan", ha = 'right', va = 'bottom')
+# Save the figure in png format
+plt.savefig(os.path.join(working_dir, "demo.pdf"), bbox_inches = 'tight')
 plt.close()
 

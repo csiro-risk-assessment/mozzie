@@ -70,17 +70,19 @@ genotype_list = ["ww", "wc", "wr", "cc", "cr", "rr"] # must be 6 genotypes becau
 num_species = len(species_list) # useful
 number_species_name = [(i, species_list[i]) for i in range(num_species)] # useful
 # multiply the carrying capacities found in the *cc* files by this number
-cc_scale = 100
+cc_scale = 0.5
 # competition between subspecies.  Must be changed if num_species changes from 2
-competition = [[1, 0.1], [0.1, 1]]
+competition = [[1.0, 0.1], [0.1, 1.0]]
 # hybridisation[mM][mF][m] = probability that offspring of species m results from male of species mM and female of species mF.  The current value means offspring is always same as mF.  Must be changed if num_species changes from 2
-hybridisation = [[[1, 0], [0, 1]],  # father Ac
-                 [[1, 0], [0, 1]]] # father Ag
+hybridisation = [[[1.0, 0.0],   # father Ac, mother Ac
+                  [0.1, 0.9]],  # father Ac, mother Ag
+                 [[0.9, 0.1],   # father Ag, mother Ac
+                  [0.0, 1.0]]]  # father Ag, mother Ag
 # diffusion coefficient in m^2/day (roughly equivalent to 30 m / day average mozzie movement)
 diffusion_coefficient = 900 
 # number of hours mosquitoes advect by wind, and advection fraction
 windhrs = 2
-advection_fraction = 2.6E-3
+advection_fraction = 0.005 #2.6E-3
 # Introduction location roughly in middle of grid
 locx = 0
 locy = 0
@@ -114,9 +116,8 @@ for father in range(num_species):
 for sp0 in range(num_species):
     for sp1 in range(num_species):
         cell.setAlphaComponent(sp0, sp1, competition[sp0][sp1])
-cell.setTimeIntegrationMethod("runge_kutta4")
-cell.setMinCarryingCapacity(1.0)
-cell.setZeroCutoff(1.0)
+cell.setMinCarryingCapacity(1E-2)
+cell.setZeroCutoff(1E-2)
 sys.stdout.write(f"  Time taken = {(timeit.default_timer() - start):.2g}s\n")
 
 ######################################################
