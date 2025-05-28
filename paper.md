@@ -1,37 +1,39 @@
 ---
-title: 'Mozzie: a computationally efficient simulator for the spatio-temporal modelling of mosquitoes'
+title: "Mozzie: a computationally efficient simulator for the spatio-temporal modelling
+  of mosquitoes"
 tags:
-  - Python
-  - Cython
-  - malaria
-  - mosquito
-  - risk analysis
+- Python
+- Cython
+- malaria
+- mosquito
+- risk analysis
+date: "1 July 2024"
+output: pdf_document
 authors:
-  - name: Andy Wilkins
-    orcid: 0000-0001-6472-9560
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
-    affiliation: "1" # (Multiple affiliations must be quoted)
-  - name: Nicholas J. Beeton
-    orcid: 0000-0002-8513-3165
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
-    affiliation: "1" # (Multiple affiliations must be quoted)
-  - name: Maud El-Hachem
-    orcid: 0000-0002-9312-6109
-    equal-contrib: false # (This is how you can denote equal contributions between multiple authors)
-    affiliation: "1" # (Multiple affiliations must be quoted)
-  - name: Keith R Hayes
-    orcid: 0000-0003-4094-3575
-    equal-contrib: false # (This is how you can denote equal contributions between multiple authors)
-    affiliation: "1" # (Multiple affiliations must be quoted)
-  - name: Geoffrey R. Hosack
-    orcid: 0000-0002-6462-6817
-    equal-contrib: false
-    affiliation: "1"
-affiliations:
- - name: Commonwealth Scientific and Industrial Organisation (CSIRO), Australia
-   index: 1
-date: 1 July 2024
+- name: Andy Wilkins
+  orcid: "0000-0001-6472-9560"
+  equal-contrib: yes
+  affiliation: '1'
+- name: Nicholas J. Beeton
+  orcid: "0000-0002-8513-3165"
+  equal-contrib: yes
+  affiliation: '1'
+- name: "Maud El-Hachem"
+  orcid: "0000-0002-9312-6109"
+  equal-contrib: no
+  affiliation: '1'
+- name: Keith R Hayes
+  orcid: "0000-0003-4094-3575"
+  equal-contrib: no
+  affiliation: '1'
+- name: Geoffrey R. Hosack
+  orcid: "0000-0002-6462-6817"
+  equal-contrib: no
+  affiliation: '1'
 bibliography: paper.bib
+affiliations:
+- name: Commonwealth Scientific and Industrial Organisation (CSIRO), Australia
+  index: 1
 ---
 
 <!---
@@ -99,7 +101,7 @@ This allows rapid simulation at continental scales to investigate sensitivity to
 
 # Demonstration
 
-\autoref{demo} shows results from a `Mozzie` simulation using 2 inter-breeding, hybridising and competing mosquito species [@beetonplos].  A water body runs through the domain, effectively seperating it into two parts.  Mosquitoes can only traverse the water body via wind advection.  A gene-drive is introduced into one species, and the modified individuals are released at the center of the domain.  These modified individuals breed with wild mosquitoes, spreading the gene-drive, while after some time, the the genetic modification becomes ineffective in some individuals.  The wind blows in predominantly north-east or south-west directions, depending on the season, and it assumed that mosquitoes advect for 2 hours, which explains the clusters of rapid invasion shown in \autoref{demo}.  The code is found in the `demo` directory of the repository.
+\autoref{demo} shows results from a `Mozzie` simulation using 2 interbreeding, hybridising and competing mosquito species [@beetonplos].  A water body runs through the domain, effectively separating it into two parts.  Mosquitoes can only traverse the water body via wind advection.  A gene-drive is introduced into one species, and the modified individuals are released at the center of the domain.  These modified individuals breed with wild mosquitoes, spreading the gene-drive. Over time, resistance forms and the genetic modification becomes ineffective in some individuals.  The wind blows in predominantly north-east or south-west directions, depending on the season, and it is assumed that a certain proportion of mosquitoes advect for 2 hours each night, which explains the clusters of rapid invasion shown in \autoref{demo}.  The code is found in the `demo` directory of the repository.
 
 ![The time taken for genetically-modified mosquito species to invade regions of the domain, after being released from the central point.  The water body is shown in cyan.\label{demo}](demo/demo.pdf)
 
