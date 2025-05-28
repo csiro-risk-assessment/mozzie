@@ -107,7 +107,7 @@ cell = CellDynamicsMosquito26()
 # Change the default parameters to ones appropriate to this demo
 # NO EFFECTOR (h_e, h_n, s_e, s_n)
 cell.setFitnessComponents26(0.0, 0.5, 0.0, 0.05)
-# offspring species is always equal to mother's species
+# set hybridisation (offspring species is usually equal to mother's species)
 for father in range(num_species):
     for mother in range(num_species):
         for offspring in range(num_species):
