@@ -56,7 +56,7 @@ More technically, `Mozzie` simulates a population-dynamics model that uses diffe
 
 Conversely, `Mozzie` does not contain human agents, nor does it consider the effect of genetic control strategies on the prevalence of pathogens such as the malaria parasite, among human or animal populations.
 
-`Mozzie` has been used by the authors to simulate the spread across sub-Saharan Africa of a theoretical, population-modifying, gene drive in _Anopheles gambiae s.s._ and _Anopheles coluzzii_ [@beetonplos] (that paper also describes the mathematics of a particular mosquito lifecycle model that is contained in `Mozzie`).  It has also been used to predict the spread of Target Malaria's Paternal Male Bias construct [@Galizi2014] following a proposed field-release of genetically modified _Anopheles coluzzi_ male mosquitoes in Burkina Faso [@Hosack2023].
+`Mozzie` has been used by the authors to simulate the spread across sub-Saharan Africa of a theoretical, population-modifying, gene drive in _Anopheles gambiae s.s._ and _Anopheles coluzzii_ [@beetonplos] (that paper also describes the mathematics of a particular mosquito lifecycle model that is contained in `Mozzie`).  It has also been used to predict the spread of Target Malaria's Paternal Male Bias construct [@Galizi2014] following a proposed field-release of genetically modified _Anopheles coluzzii_ male mosquitoes in Burkina Faso [@Hosack2023].
 
 
 <!---
